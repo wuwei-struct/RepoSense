@@ -1,0 +1,9 @@
+{
+  "gate_id": "demo",
+  "version": "1",
+  "rules": [
+    { "metric": "artifacts_missing_count", "op": ">", "value": 0, "level": "fail", "message": "关键产物缺失：请检查扫描输出或重新生成" },
+    { "metric": "budget_cut", "op": "==", "value": true, "level": "warn", "message": "预算触顶：建议切换更深预算或增大限额" }
+  ]
+}
+

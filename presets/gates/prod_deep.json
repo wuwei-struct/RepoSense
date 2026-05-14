@@ -1,0 +1,16 @@
+{
+  "gate_id": "prod_deep",
+  "version": "1",
+  "rules": [
+    { "metric": "artifacts_missing_count", "op": ">", "value": 0, "level": "fail", "message": "关键产物缺失：请检查扫描输出或重新生成" },
+    { "metric": "budget_cut", "op": "==", "value": true, "level": "fail", "message": "预算触顶：生产环境不允许截断，建议调整预算" },
+    { "metric": "findings_truncated", "op": "==", "value": true, "level": "fail", "message": "Findings 被截断：请增大 max_findings" },
+    { "metric": "events_truncated", "op": "==", "value": true, "level": "fail", "message": "Events 被截断：请增大 max_events" },
+    { "metric": "skipped_ratio", "op": ">=", "value": 0.50, "level": "warn", "message": "跳过文件比例过高（>=50%）：结果可能不可信" },
+    { "metric": "warnings_count", "op": ">=", "value": 5, "level": "warn", "message": "解析警告过多（>=5）：请查看 warnings" },
+    { "metric": "api.missing_in_spec_count", "op": ">=", "value": 1, "level": "warn", "message": "代码存在接口但契约未覆盖" },
+    { "metric": "api.missing_in_code_count", "op": ">=", "value": 1, "level": "warn", "message": "契约存在接口但代码未实现" },
+    { "metric": "graph_edges", "op": "<=", "value": 0, "level": "warn", "message": "概念图无边：请确认事件链接是否生成" }
+  ]
+}
+

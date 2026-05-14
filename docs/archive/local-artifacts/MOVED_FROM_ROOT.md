@@ -15,6 +15,8 @@ This migration was executed in **non-destructive mode**.
 | `.reposense_demo_localvenv_fix` | `docs/archive/local-artifacts/root-moved/.reposense_demo_localvenv_fix` | Local demo output should not stay in root for OSS release prep |
 | `.reposense_demo_prod05` | `docs/archive/local-artifacts/root-moved/.reposense_demo_prod05` | Local demo output should not stay in root for OSS release prep |
 | `.reposense_demo_release_assets` | `docs/archive/local-artifacts/root-moved/.reposense_demo_release_assets` | Local demo output should not stay in root for OSS release prep |
+| `ROADMAP.md` | `docs/archive/local-artifacts/root-moved/ROADMAP.md` | Legacy root roadmap moved out of root; docs roadmap is canonical under `docs/roadmap/ROADMAP.md` |
+| `learn/` | `docs/archive/local-artifacts/root-moved/learn/` | Root-level learn static resources moved out of root; source code lives under `reposense/learn` |
 
 ## Already missing before migration
 
