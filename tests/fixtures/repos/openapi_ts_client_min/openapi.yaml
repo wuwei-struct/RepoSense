@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: Demo API
+  version: "1.0.0"
+paths:
+  /health:
+    get:
+      summary: health
+      responses:
+        "200":
+          description: ok
+  /jobs:
+    post:
+      summary: create job
+      responses:
+        "200":
+          description: ok

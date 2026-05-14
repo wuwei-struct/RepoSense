@@ -1,0 +1,9 @@
+{
+  "nodes": [
+    {"id": "API", "label": "API"},
+    {"id": "Transaction", "label": "Transaction"},
+    {"id": "Cache", "label": "Cache"},
+    {"id": "Queue", "label": "Queue"}
+  ],
+  "edges": []
+}

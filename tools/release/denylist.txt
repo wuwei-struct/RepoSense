@@ -1,0 +1,6 @@
+rulesets/specs_v2/
+enterprise/
+customers/
+**/*secret*
+AKIA[0-9A-Z]{16}
+-----BEGIN PRIVATE KEY-----

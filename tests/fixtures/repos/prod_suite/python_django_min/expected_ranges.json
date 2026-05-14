@@ -1,0 +1,10 @@
+{
+  "concept_ranges": {
+    "API": [0, 10],
+    "Transaction": [1, 20],
+    "Queue": [0, 10],
+    "Cache": [0, 10],
+    "幂等性": [0, 10]
+  }
+}
+

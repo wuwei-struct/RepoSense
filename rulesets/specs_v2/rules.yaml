@@ -1,0 +1,136 @@
+- rule_id: api_openapi_openapi
+  rule_version: 1
+  concept: API
+  kind: openapi
+  parse_level: L2
+  confidence_base: 0.6
+  globs:
+  - '**/*.yaml'
+  - '**/*.yml'
+  - '**/*.json'
+  snippet: 5
+- rule_id: compose_kv_compose
+  rule_version: 1
+  concept: KV/Storage
+  kind: compose
+  parse_level: L2
+  confidence_base: 0.6
+  globs:
+  - '**/docker-compose.yml'
+  - '**/compose.yaml'
+  - '**/docker-compose.yaml'
+  snippet: 5
+- rule_id: concurrency_idempotency_text_text
+  rule_version: 1
+  concept: 幂等性
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs:
+  - '**/*'
+  snippet: 8
+  patterns: []
+  meta:
+    gating:
+      required_markers_all:
+      - request_identity
+      - pre_action_guard
+      anti_patterns_block_if:
+      - client_side_only
+    scoring:
+      weight_strong: 0.5
+      weight_medium: 0.35
+      penalty_negative: 0.6
+    signals:
+      strong:
+      - request_identity
+      - pre_action_guard
+      medium:
+      - unique_constraint
+      - dedup_store
+      - result_cache
+      negative:
+      - time_window_only
+- rule_id: gha_async_gha
+  rule_version: 1
+  concept: External IO
+  kind: gha
+  parse_level: L2
+  confidence_base: 0.6
+  globs:
+  - '**/.github/workflows/*.yml'
+  - '**/.github/workflows/*.yaml'
+  snippet: 5
+- rule_id: py_cache_python_ast
+  rule_version: 1
+  concept: Cache
+  kind: python_ast
+  matcher: py_cache
+  parse_level: L3
+  confidence_base: 0.7
+  confidence: 0.86
+  globs:
+  - '**/*.py'
+  snippet: 6
+- rule_id: py_celery_python_ast
+  rule_version: 1
+  concept: Queue
+  kind: python_ast
+  matcher: py_celery
+  parse_level: L3
+  confidence_base: 0.7
+  confidence: 0.86
+  globs:
+  - '**/*.py'
+  snippet: 6
+- rule_id: py_django_atomic_python_ast
+  rule_version: 1
+  concept: Transaction
+  kind: python_ast
+  matcher: py_django_atomic
+  parse_level: L3
+  confidence_base: 0.7
+  confidence: 0.88
+  globs:
+  - '**/*.py'
+  snippet: 6
+- rule_id: py_fastapi_route_python_ast
+  rule_version: 1
+  concept: API
+  kind: python_ast
+  matcher: py_fastapi_route
+  parse_level: L3
+  confidence_base: 0.7
+  confidence: 0.9
+  globs:
+  - '**/*.py'
+  snippet: 6
+- rule_id: py_flask_route_python_ast
+  rule_version: 1
+  concept: API
+  kind: python_ast
+  matcher: py_flask_route
+  parse_level: L3
+  confidence_base: 0.7
+  confidence: 0.88
+  globs:
+  - '**/*.py'
+  snippet: 6
+- rule_id: sql_storage_sql_ddl
+  rule_version: 1
+  concept: Storage
+  kind: sql_ddl
+  parse_level: L2
+  confidence_base: 0.6
+  globs:
+  - '**/*.sql'
+  snippet: 5
+- rule_id: sql_tx_boundary_sql_tx
+  rule_version: 1
+  concept: Transaction
+  kind: sql_tx
+  parse_level: L2
+  confidence_base: 0.6
+  globs:
+  - '**/*.sql'
+  snippet: 5

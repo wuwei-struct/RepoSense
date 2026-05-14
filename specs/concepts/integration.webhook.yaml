@@ -1,0 +1,37 @@
+spec_version: "1.0"
+id: "integration.webhook"
+title: "Webhook 集成"
+category: "integration"
+level: "core"
+stability: "evolving"
+definition:
+  what: "第三方系统通过回调（HTTP）推送事件到你的入口。"
+  why: "异步通知、支付回调、外部事件驱动常用模式。"
+  non_goals:
+    - "Webhook 天生可能重复/乱序（需验签/幂等/重放保护）"
+consequences_if_missing:
+  - "外部事件无法可靠接入"
+  - "重复回调导致重复副作用"
+  - "安全风险（未验签）"
+semantic_markers:
+  required:
+    - "external_callback_endpoint"
+  sufficient:
+    - "signature_verification"
+    - "idempotency_handling"
+  anti_patterns:
+    - "accept_without_auth"
+relationships:
+  related:
+    - "concurrency.idempotency"
+    - "reliability.timeout"
+  implies:
+    - "risk.security_leak"
+learning:
+  objectives:
+    - "理解 webhook 的重复/重放风险"
+    - "理解验签与幂等的必要性"
+  difficulty_ladder:
+    L1: "基础回调处理"
+    L2: "验签 + 幂等"
+    L3: "回放/对账/补偿与审计"

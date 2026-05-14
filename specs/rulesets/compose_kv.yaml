@@ -1,0 +1,7 @@
+spec_version: "1.0"
+id: "compose_kv"
+concept: "KV/Storage"
+detector:
+  kind: compose
+signals:
+  any_of: {}

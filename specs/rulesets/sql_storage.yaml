@@ -1,0 +1,7 @@
+spec_version: "1.0"
+id: "sql_storage"
+concept: "Storage"
+detector:
+  kind: sql_ddl
+signals:
+  any_of: {}

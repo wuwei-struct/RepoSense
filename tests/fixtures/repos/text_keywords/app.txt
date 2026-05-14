@@ -1,0 +1,4 @@
+this system uses a queue to process tasks
+we add a cache layer for performance
+we write files to disk for audit
+

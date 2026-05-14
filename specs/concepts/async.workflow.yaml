@@ -1,0 +1,37 @@
+spec_version: "1.0"
+id: "async.workflow"
+title: "工作流与流水线"
+category: "async"
+level: "core"
+stability: "evolving"
+definition:
+  what: "以步骤/任务为单位编排执行，强调依赖关系、并发控制与可复现。"
+  why: "CI/CD、数据管道、批处理需要可追溯的编排与执行。"
+  non_goals:
+    - "工作流不等价于业务状态机（但可相互映射）"
+consequences_if_missing:
+  - "流程不可审计、不可复现"
+  - "并发与依赖缺失导致失败率高"
+  - "难以定位问题与回放"
+semantic_markers:
+  required:
+    - "steps_and_dependencies"
+  sufficient:
+    - "concurrency_control"
+    - "artifacts"
+  anti_patterns:
+    - "implicit_steps_no_trace"
+relationships:
+  related:
+    - "async.scheduler"
+    - "observability.metrics_or_tracing"
+  implies:
+    - "risk.outage"
+learning:
+  objectives:
+    - "能解释 workflow 的并发与依赖控制价值"
+    - "能识别不可复现流程的风险"
+  difficulty_ladder:
+    L1: "线性 steps"
+    L2: "并发 + cache + artifacts"
+    L3: "复杂 DAG 与隔离/回滚策略"

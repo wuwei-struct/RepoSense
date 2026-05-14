@@ -1,0 +1,9 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "mix", "version": "1.0.0" },
+  "paths": {
+    "/pay/{id}": {
+      "post": { "summary": "pay api", "tags": ["pay"] }
+    }
+  }
+}

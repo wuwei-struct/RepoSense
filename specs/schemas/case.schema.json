@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "case_id": { "type": "string" },
+    "concept_id": { "type": "string" },
+    "title": { "type": "string" },
+    "finding_stable_id": { "type": "string" },
+    "level": { "type": "integer" },
+    "rule_id": { "type": "string" },
+    "confidence": { "type": "number" },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "anyOf": [
+          {
+            "required": ["kind", "file", "loc", "snippet", "hash"],
+            "properties": {
+              "kind": { "type": "string" },
+              "file": { "type": "string" },
+              "loc": {
+                "type": "object",
+                "required": ["start", "end"],
+                "properties": {
+                  "start": { "type": "integer" },
+                  "end": { "type": "integer" }
+                }
+              },
+              "snippet": { "type": "string" },
+              "hash": { "type": "string" }
+            }
+          },
+          {
+            "required": ["path", "start_line", "end_line", "snippet"],
+            "properties": {
+              "path": { "type": "string" },
+              "start_line": { "type": "integer" },
+              "end_line": { "type": "integer" },
+              "snippet": { "type": "string" },
+              "sha256": { "type": "string" }
+            }
+          },
+          {
+            "required": ["eid"],
+            "properties": { "eid": { "type": "string" } }
+          }
+        ]
+      }
+    },
+    "teach": { "type": "object" },
+    "questions": { "type": "object" },
+    "labels": { "type": "array", "items": { "type": "string" } }
+  },
+  "anyOf": [
+    { "required": ["concept_id", "evidence_refs"] },
+    { "required": ["concept_id", "title", "teach", "questions", "evidence_refs"] }
+  ]
+}

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reposense"
+version = "0.1.0"
+description = "RepoSense"
+requires-python = ">=3.8"
+[project.scripts]
+reposense = "reposense.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["reposense*"]
+exclude = ["rulesets*", "tests*", "docs*", "tools*", "scripts*", ".github*"]

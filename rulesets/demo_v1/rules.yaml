@@ -1,0 +1,213 @@
+- rule_id: demo_api_routes_express_text
+  rule_version: 1
+  concept: API
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs:
+    - '**/*'
+  snippet: 8
+  patterns: []
+  meta:
+    signals:
+      strong:
+        - app.get
+        - app.post
+        - app.put
+        - app.delete
+        - app.patch
+        - router.get
+        - router.post
+        - router.put
+        - router.delete
+        - router.patch
+    gating:
+      required_markers_all: []
+      anti_patterns_block_if: []
+    scoring:
+      weight_strong: 0.7
+      weight_medium: 0.2
+      penalty_negative: 0.1
+- rule_id: demo_api_routes_fastapi_text
+  rule_version: 1
+  concept: API
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs:
+    - '**/*'
+  snippet: 8
+  patterns: []
+  meta:
+    signals:
+      strong:
+        - '@app.get'
+        - '@app.post'
+        - '@app.put'
+        - '@app.delete'
+        - '@app.patch'
+        - '@router.get'
+        - '@router.post'
+        - '@router.put'
+        - '@router.delete'
+        - '@router.patch'
+    gating:
+      required_markers_all: []
+      anti_patterns_block_if: []
+    scoring:
+      weight_strong: 0.7
+      weight_medium: 0.2
+      penalty_negative: 0.1
+- rule_id: demo_api_routes_flask_text
+  rule_version: 1
+  concept: API
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs:
+    - '**/*'
+  snippet: 8
+  patterns: []
+  meta:
+    signals:
+      strong:
+        - '@app.route'
+        - '@bp.route'
+    gating:
+      required_markers_all: []
+      anti_patterns_block_if: []
+    scoring:
+      weight_strong: 0.7
+      weight_medium: 0.2
+      penalty_negative: 0.1
+- rule_id: demo_idempotency_write_endpoint_risk
+  rule_version: 1
+  concept: Idempotency
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs:
+    - '**/*'
+  snippet: 8
+  patterns: []
+  meta:
+    signals:
+      strong:
+        - app.post
+        - app.put
+        - app.delete
+        - app.patch
+        - router.post
+        - router.put
+        - router.delete
+        - router.patch
+        - '@app.post'
+        - '@router.post'
+        - POST
+    gating:
+      required_markers_all: []
+      anti_patterns_block_if: []
+    scoring:
+      weight_strong: 0.6
+      weight_medium: 0.25
+      penalty_negative: 0.15
+- rule_id: demo_transaction_atomic_text
+  rule_version: 1
+  concept: Transaction
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs:
+    - '**/*'
+  snippet: 8
+  patterns: []
+  meta:
+    signals:
+      strong:
+        - transaction.atomic
+        - '@transaction.atomic'
+        - with transaction.atomic
+    gating:
+      required_markers_all: []
+      anti_patterns_block_if: []
+    scoring:
+      weight_strong: 0.65
+      weight_medium: 0.25
+      penalty_negative: 0.1
+- rule_id: demo_sql_begin_commit_text
+  rule_version: 1
+  concept: Transaction
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs:
+    - '**/*'
+  snippet: 8
+  patterns: []
+  meta:
+    signals:
+      strong:
+        - BEGIN
+        - COMMIT
+    gating:
+      required_markers_all:
+        - BEGIN
+        - COMMIT
+      anti_patterns_block_if: []
+    scoring:
+      weight_strong: 0.7
+      weight_medium: 0.2
+      penalty_negative: 0.1
+- rule_id: demo_queue_celery_text
+  rule_version: 1
+  concept: Queue
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs:
+    - '**/*'
+  snippet: 8
+  patterns: []
+  meta:
+    signals:
+      strong:
+        - '@shared_task'
+        - '@app.task'
+        - .delay(
+        - .apply_async(
+    gating:
+      required_markers_all: []
+      anti_patterns_block_if: []
+    scoring:
+      weight_strong: 0.65
+      weight_medium: 0.25
+      penalty_negative: 0.1
+- rule_id: demo_cache_redis_django_text
+  rule_version: 1
+  concept: Cache
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs:
+    - '**/*'
+  snippet: 8
+  patterns: []
+  meta:
+    signals:
+      strong:
+        - cache.get(
+        - cache.set(
+        - cache.add(
+        - cache.delete(
+        - cache.incr(
+        - cache.decr(
+        - redis_client.get(
+        - redis_client.set(
+    gating:
+      required_markers_all: []
+      anti_patterns_block_if: []
+    scoring:
+      weight_strong: 0.6
+      weight_medium: 0.25
+      penalty_negative: 0.15
+

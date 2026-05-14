@@ -1,0 +1,7 @@
+spec_version: "1.0"
+id: "api_openapi"
+concept: "API"
+detector:
+  kind: openapi
+signals:
+  any_of: {}

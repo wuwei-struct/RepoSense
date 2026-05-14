@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Evidence",
+  "type": "object",
+  "required": ["path", "start_line", "end_line", "snippet", "sha256", "parse_level"],
+  "properties": {
+    "path": { "type": "string" },
+    "start_line": { "type": "integer", "minimum": 1 },
+    "end_line": { "type": "integer", "minimum": 1 },
+    "snippet": { "type": "string" },
+    "sha256": { "type": "string", "minLength": 16 },
+    "parse_level": { "type": "string", "enum": ["L1", "L2", "L3"] },
+    "node_type": { "type": "string" }
+  }
+}
+

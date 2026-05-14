@@ -1,0 +1,9 @@
+id: py_fastapi_route
+concept: API
+detector:
+  kind: python_ast
+  matcher: py_fastapi_route
+  confidence: 0.9
+  parse_level: L3
+  snippet: 6
+

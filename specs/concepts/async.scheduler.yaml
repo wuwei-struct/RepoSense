@@ -1,0 +1,38 @@
+spec_version: "1.0"
+id: "async.scheduler"
+title: "定时调度"
+category: "async"
+level: "core"
+stability: "evolving"
+definition:
+  what: "按时间或周期触发任务执行（cron/定时器/调度器）。"
+  why: "批处理、对账、清理、周期性同步等需要可控的时间触发。"
+  non_goals:
+    - "调度不保证任务只执行一次（需幂等/锁/去重）"
+consequences_if_missing:
+  - "周期性任务无法可靠执行"
+  - "手工操作频繁且易错"
+  - "积压清理与对账不可控"
+semantic_markers:
+  required:
+    - "time_trigger"
+  sufficient:
+    - "cron_expression"
+    - "job_runner"
+  anti_patterns:
+    - "no_dedup_or_lock"
+relationships:
+  related:
+    - "concurrency.idempotency"
+    - "concurrency.lock"
+    - "observability.metrics_or_tracing"
+  implies:
+    - "risk.duplicate_side_effect"
+learning:
+  objectives:
+    - "理解 cron 的重复触发风险"
+    - "理解定时任务的锁与幂等治理"
+  difficulty_ladder:
+    L1: "单机 cron"
+    L2: "多实例调度去重/leader"
+    L3: "分布式调度与可观测治理"

@@ -1,0 +1,426 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>RepoSense Studio</title>
+  <link rel="stylesheet" href="/static/reposense.css">
+  <style>
+    /* Studio specific layout */
+    .studio-layout {
+      display: flex;
+      height: 100vh;
+    }
+    .studio-sidebar {
+      width: 240px;
+      background: var(--color-surface);
+      border-right: 1px solid var(--color-border);
+      display: flex;
+      flex-direction: column;
+    }
+    .studio-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--color-bg);
+      overflow: hidden;
+    }
+    .studio-header {
+      height: 60px;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      justify-content: space-between;
+    }
+    .studio-content {
+      padding: 24px;
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .nav-item {
+      padding: 12px 24px;
+      cursor: pointer;
+      color: var(--color-text);
+      display: flex;
+      align-items: center;
+    }
+    .nav-item:hover { background: var(--color-bg); }
+    .nav-item.active { 
+      color: var(--color-primary); 
+      background: var(--color-primary-light); 
+      font-weight: 600;
+      border-right: 3px solid var(--color-primary);
+    }
+
+    /* Components */
+    .dropzone {
+      border: 2px dashed var(--color-border);
+      border-radius: 12px;
+      padding: 48px;
+      text-align: center;
+      background: var(--color-surface);
+      transition: all 0.2s;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-light);
+    }
+    
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: var(--color-primary);
+      color: white;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary {
+      background: #eee;
+      color: #333;
+    }
+    .btn-secondary:hover { background: #ddd; }
+
+    .run-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .log-window {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      font-family: var(--font-mono);
+      padding: 16px;
+      border-radius: 8px;
+      height: 300px;
+      overflow-y: auto;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .status-running { background: #e3f2fd; color: #1976d2; }
+    .status-completed { background: #e8f5e9; color: #388e3c; }
+    .status-failed { background: #ffebee; color: #d32f2f; }
+  </style>
+</head>
+<body>
+  <div class="studio-layout">
+    <!-- Sidebar -->
+    <div class="studio-sidebar">
+      <div style="padding:24px;font-size:18px;font-weight:bold;color:var(--color-primary)">
+        RepoSense Studio
+      </div>
+      <div class="nav-item active" onclick="switchTab('overview')">概览</div>
+      <div class="nav-item" onclick="switchTab('analyze')">分析</div>
+      <div style="margin-top:auto;padding:24px;font-size:12px;color:var(--color-text-muted)">
+        Version 0.1.0<br>Localhost Mode
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="studio-main">
+      <div class="studio-header">
+        <div style="font-size:16px;font-weight:600" id="header-title">概览</div>
+        <div id="header-actions"></div>
+      </div>
+      
+      <div class="studio-content" id="view-overview">
+        <h2>欢迎使用 RepoSense</h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-bottom:32px">
+          <div class="card">
+            <div style="font-size:32px;color:var(--color-primary)" id="stat-runs">0</div>
+            <div style="color:var(--color-text-muted)">总运行次数</div>
+          </div>
+        </div>
+        <h3>最近运行</h3>
+        <div id="runs-list"></div>
+      </div>
+
+      <div class="studio-content hidden" id="view-analyze">
+        <div id="analyze-step-1">
+          <div class="dropzone" id="dropzone">
+            <div style="font-size:48px;margin-bottom:16px">📦</div>
+            <div style="font-size:18px;font-weight:600;margin-bottom:8px">导入仓库代码</div>
+            <div style="color:var(--color-text-muted);margin-bottom:24px">
+              本地运行，仅解析与抽取证据，不执行仓库代码
+            </div>
+            <input type="file" id="file-input" accept=".zip" style="display:none">
+            <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+              选择 ZIP 文件
+            </button>
+          </div>
+        </div>
+
+        <div id="analyze-step-2" class="hidden">
+          <h3>配置分析任务</h3>
+          <div class="run-card">
+            <div style="margin-bottom:16px">
+              <label style="display:block;margin-bottom:8px;font-weight:500">Profile</label>
+              <select id="cfg-profile" onchange="applyProfile()" style="width:100%;padding:8px;border-radius:4px;border:1px solid var(--color-border)">
+                <option value="prod_lite">prod_lite (默认)</option>
+                <option value="prod_deep">prod_deep</option>
+                <option value="demo">demo</option>
+              </select>
+            </div>
+            <div style="margin-bottom:16px">
+              <label style="display:block;margin-bottom:8px;font-weight:500">Ruleset</label>
+              <select id="cfg-ruleset" style="width:100%;padding:8px;border-radius:4px;border:1px solid var(--color-border)">
+                <option value="rulesets/basic">rulesets/basic</option>
+                <option value="rulesets/specs_v2">rulesets/specs_v2</option>
+                <option value="rulesets/demo_v1">rulesets/demo_v1</option>
+              </select>
+            </div>
+            <div style="margin-bottom:24px">
+              <label style="display:block;margin-bottom:8px;font-weight:500">Specs</label>
+              <input type="text" id="cfg-specs" value="specs" style="width:100%;padding:8px;border-radius:4px;border:1px solid var(--color-border)">
+            </div>
+            <button class="btn btn-primary" onclick="startRun()">开始分析</button>
+          </div>
+        </div>
+
+        <div id="analyze-step-3" class="hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 id="run-status-title">正在运行...</h3>
+            <div id="run-actions" class="hidden">
+              <a href="#" id="link-report" target="_blank" class="btn btn-primary" style="text-decoration:none">查看报告</a>
+              <a href="#" id="link-learn" target="_blank" class="btn btn-secondary" style="text-decoration:none;margin-left:8px">进入学习</a>
+            </div>
+          </div>
+          
+          <div class="log-window" id="run-logs"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentProjectId = null;
+    let currentRunId = null;
+    let pollInterval = null;
+    function apiUrl(path) {
+      return new URL(path, window.location.origin).toString();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      document.getElementById('view-overview').classList.add('hidden');
+      document.getElementById('view-analyze').classList.add('hidden');
+      
+      document.getElementById('view-' + tab).classList.remove('hidden');
+      document.getElementById('header-title').textContent = tab === 'overview' ? '概览' : '分析';
+      
+      if (tab === 'overview') loadRuns();
+    }
+
+    // Drag & Drop
+    const dz = document.getElementById('dropzone');
+    dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+    dz.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dz.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) uploadFile(files[0]);
+    });
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      if (e.target.files.length > 0) uploadFile(e.target.files[0]);
+    });
+
+    function uploadFile(file) {
+      const fd = new FormData();
+      fd.append('file', file);
+      
+      dz.innerHTML = '正在上传并解压...';
+      
+      fetch(apiUrl('/api/projects/import-zip'), { method: 'POST', body: fd })
+        .then(r => r.json())
+        .then(data => {
+          currentProjectId = data.project_id;
+          document.getElementById('analyze-step-1').classList.add('hidden');
+          document.getElementById('analyze-step-2').classList.remove('hidden');
+        })
+        .catch(err => {
+          dz.innerHTML = '上传失败: ' + err;
+          console.error(err);
+        });
+    }
+
+    function applyProfile() {
+      const p = document.getElementById('cfg-profile').value;
+      const rulesetEl = document.getElementById('cfg-ruleset');
+      if (p === 'demo') {
+        rulesetEl.value = 'rulesets/demo_v1';
+      } else if (p === 'prod_deep') {
+        rulesetEl.value = 'rulesets/basic';
+      } else {
+        rulesetEl.value = 'rulesets/specs_v2';
+      }
+    }
+
+    function startRun() {
+      const profile = document.getElementById('cfg-profile').value;
+      const ruleset = document.getElementById('cfg-ruleset').value;
+      const specs = document.getElementById('cfg-specs').value;
+      const budget = profile === 'demo' ? 'presets/demo.json' : (profile === 'prod_deep' ? 'presets/prod_deep.json' : 'presets/prod_lite.json');
+      
+      fetch(apiUrl('/api/runs'), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          project_id: currentProjectId,
+          ruleset: ruleset,
+          budget: budget,
+          specs: specs
+        })
+      })
+      .then(r => r.json())
+      .then(data => {
+        const rid = data.run_id || data.id || data.runId;
+        if (!rid) { throw new Error("创建运行失败：后端未返回 run_id"); }
+        currentRunId = rid;
+        document.getElementById('analyze-step-2').classList.add('hidden');
+        document.getElementById('analyze-step-3').classList.remove('hidden');
+        startPolling();
+      })
+      .catch(err => {
+        const logs = document.getElementById('run-logs');
+        logs.textContent = '启动失败：' + err + '\n（请打开控制台查看详情）';
+      });
+    }
+
+    function startPolling() {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(checkStatus, 1000);
+      checkStatus();
+    }
+
+    function checkStatus() {
+      if (!currentRunId) return;
+      
+      fetch(apiUrl('/api/runs/' + encodeURIComponent(currentRunId)))
+        .then(r => {
+          if (r.status === 404) {
+            stopPolling();
+            currentRunId = null;
+            const logsEl = document.getElementById('run-logs');
+            logsEl.textContent = '运行记录不存在（服务可能已重启）。请从概览选择历史运行或重新开始。';
+            switchTab('overview');
+            loadRuns();
+            return null;
+          }
+          return r.json();
+        })
+        .then(data => {
+          if (!data) return;
+          const logsEl = document.getElementById('run-logs');
+          const lines = data.logs_tail || data.logs || [];
+          if (lines.length === 0) {
+            logsEl.textContent = '等待输出/暂无日志';
+          } else {
+          logsEl.textContent = lines.join('\n');
+        }
+        logsEl.scrollTop = logsEl.scrollHeight;
+        
+        const err = data.error_message || '';
+        const title = document.getElementById('run-status-title');
+        title.textContent = `状态: ${data.status} (阶段: ${data.phase})` + (err ? `｜错误：${err}` : '');
+        
+          if (data.status === 'completed') {
+            clearInterval(pollInterval);
+            document.getElementById('run-actions').classList.remove('hidden');
+            document.getElementById('link-report').href = `/runs/${currentRunId}/report.html`;
+            document.getElementById('link-learn').href = `/runs/${currentRunId}/learn/`;
+            const actions = document.getElementById('run-actions');
+            const sarif = document.createElement('a');
+            sarif.href = `/runs/${currentRunId}/exports/report.sarif.json`;
+            sarif.target = '_blank';
+            sarif.className = 'btn btn-secondary';
+            sarif.style = 'text-decoration:none;margin-left:8px';
+            sarif.textContent = '下载 SARIF';
+            actions.appendChild(sarif);
+            const ctx = document.createElement('a');
+            ctx.href = `/runs/${currentRunId}/context_pack/manifest.json`;
+            ctx.target = '_blank';
+            ctx.className = 'btn btn-secondary';
+            ctx.style = 'text-decoration:none;margin-left:8px';
+            ctx.textContent = '打开 Context Pack';
+            actions.appendChild(ctx);
+          } else if (data.status === 'failed') {
+            clearInterval(pollInterval);
+          }
+      })
+      .catch(err => {
+        const logsEl = document.getElementById('run-logs');
+        logsEl.textContent = '轮询失败：' + err + '\n（请打开控制台查看）';
+      });
+    }
+    function stopPolling() {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+    }
+
+    function loadRuns() {
+      fetch(apiUrl('/api/runs'))
+        .then(r => r.json())
+        .then(runs => {
+          document.getElementById('stat-runs').textContent = runs.length;
+          const list = document.getElementById('runs-list');
+          list.innerHTML = '';
+          
+          // Sort desc
+          runs.sort((a,b) => b.start_time - a.start_time);
+          
+          runs.forEach(run => {
+            const date = new Date(run.start_time * 1000).toLocaleString();
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <div style="font-weight:600">${run.run_id}</div>
+                  <div style="color:var(--color-text-muted);font-size:12px">${date}</div>
+                </div>
+                <div>
+                  <span class="status-badge status-${run.status}">${run.status}</span>
+                  ${run.summary ? `<span class="badge">F ${run.summary.findings_count}</span>` : ''}
+                  ${run.summary ? `<span class="badge">E ${run.summary.events_count}</span>` : ''}
+                  ${run.summary ? `<span class="badge">Edges ${run.summary.graph_edges}</span>` : ''}
+                  ${run.summary && run.summary.top_skip_reason ? `<span class="badge">${run.summary.top_skip_reason}</span>` : ''}
+                  ${run.summary && run.summary.truncation && (run.summary.truncation.budget_cut || run.summary.truncation.findings_truncated) ? '<span class="badge danger">truncated</span>' : ''}
+                  ${run.status === 'completed' ? 
+                    `<a href="/runs/${run.run_id}/report/" target="_blank" class="btn btn-secondary" style="font-size:12px;padding:4px 8px;text-decoration:none;margin-left:8px">报告</a>` : ''}
+                </div>
+              </div>
+            `;
+            list.appendChild(div);
+          });
+        });
+    }
+    
+    // Init
+    loadRuns();
+  </script>
+</body>
+</html>

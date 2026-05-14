@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec_version", "id", "title", "category", "level", "stability", "definition", "semantic_markers", "relationships", "learning"],
+  "properties": {
+    "spec_version": { "type": "string" },
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "category": { "type": "string" },
+    "level": { "type": "string" },
+    "stability": { "type": "string" },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["what"],
+      "properties": {
+        "what": { "type": "string" },
+        "why": { "type": "string" },
+        "non_goals": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "consequences_if_missing": { "type": "array", "items": { "type": "string" } },
+    "semantic_markers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "array", "items": { "type": "string" } },
+        "sufficient": { "type": "array", "items": { "type": "string" } },
+        "anti_patterns": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "relationships": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "related": { "type": "array", "items": { "type": "string" } },
+        "implies": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "learning": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "objectives": { "type": "array", "items": { "type": "string" } },
+        "difficulty_ladder": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "L1": { "type": "string" },
+            "L2": { "type": "string" },
+            "L3": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

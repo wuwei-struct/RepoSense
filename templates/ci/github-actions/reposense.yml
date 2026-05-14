@@ -1,0 +1,25 @@
+name: RepoSense CI
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+jobs:
+  reposense:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install RepoSense
+        run: |
+          pip install -e .
+      - name: Run RepoSense CI
+        run: |
+          python -m reposense ci run --repo . --profile prod_lite --out .reposense_ci --json
+      - name: Upload SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: reposense-sarif
+          path: .reposense_ci/**/exports/report.sarif.json

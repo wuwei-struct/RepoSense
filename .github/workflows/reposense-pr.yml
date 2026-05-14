@@ -1,0 +1,81 @@
+name: RepoSense PR Baseline Gate
+on:
+  pull_request:
+    branches: ["**"]
+permissions:
+  contents: read
+  security-events: write
+  pull-requests: write
+jobs:
+  reposense-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install RepoSense
+        run: |
+          pip install -e .
+      - name: Fetch baseline branch
+        run: |
+          git fetch origin reposense-baselines:reposense-baselines || true
+      - name: Check baseline
+        id: baseline
+        run: |
+          if [ -f baselines/prod_lite/specs_v2/baseline.json ]; then
+            echo "found=true" >> $GITHUB_OUTPUT
+          else
+            echo "found=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Run RepoSense CI with baseline
+        if: steps.baseline.outputs.found == 'true'
+        run: |
+          python -m reposense ci run --repo . --profile prod_lite --out .reposense_ci --baseline-in baselines/prod_lite/specs_v2/baseline.json --json
+      - name: Strict Verify
+        run: |
+          RUN_DIR=$(ls -d .reposense_ci/run-* | head -n 1)
+          python -m reposense verify "$RUN_DIR" --strict || (echo "Strict verify failed. Remediation: python -m reposense run upgrade \"$RUN_DIR\" --inplace && re-run verify." && exit 2)
+      - name: Run RepoSense CI (no baseline)
+        if: steps.baseline.outputs.found != 'true'
+        run: |
+          python -m reposense ci run --repo . --profile prod_lite --out .reposense_ci --json
+      - name: Find SARIF
+        id: find_sarif
+        run: |
+          echo "path=$(ls .reposense_ci/*/exports/report.sarif.json | head -n 1)" >> $GITHUB_OUTPUT
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.find_sarif.outputs.path }}
+      - name: Prepare PR comment
+        id: prep_comment
+        run: |
+          GATE_JSON=$(ls .reposense_ci/*/quality_gate.json | head -n 1)
+          DIFF_MD=$(ls .reposense_ci/*/baseline_diff.md | head -n 1 || true)
+          STATUS=$(jq -r '.status' "$GATE_JSON")
+          REG=$(jq -r '.regressions | "+E:\(.added_error) ↑S:\(.severity_upgrades) +W:\(.added_warning) total:\(.total)"' "$GATE_JSON")
+          echo "<!-- reposense:baseline-diff -->" > comment.md
+          echo "Gate: $STATUS $REG" >> comment.md
+          if [ -f "$DIFF_MD" ]; then
+            cat "$DIFF_MD" >> comment.md
+          else
+            echo "Baseline missing or not used." >> comment.md
+          fi
+      - name: Create or Update PR Comment
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: peter-evans/create-or-update-comment@v5
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-file: comment.md
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: reposense-artifacts
+          path: |
+            .reposense_ci/*/ci_summary.json
+            .reposense_ci/*/quality_gate.json
+            .reposense_ci/*/exports/report.sarif.json
+            .reposense_ci/*/baseline_diff.md

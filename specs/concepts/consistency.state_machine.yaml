@@ -1,0 +1,38 @@
+spec_version: "1.0"
+id: "consistency.state_machine"
+title: "状态机一致性"
+category: "consistency"
+level: "core"
+stability: "evolving"
+definition:
+  what: "状态只能沿允许的迁移边推进，禁止跳跃与重复推进，确保业务不变量成立。"
+  why: "订单/支付/审批等流程需要可审计、可恢复的状态演化。"
+  non_goals:
+    - "不等价于简单枚举字段（关键在于迁移约束）"
+consequences_if_missing:
+  - "状态跳跃导致业务不变量被破坏"
+  - "重复推进导致不可逆错误"
+  - "补偿与回滚成本巨大"
+semantic_markers:
+  required:
+    - "allowed_transitions"
+  sufficient:
+    - "transition_guard"
+    - "version_or_cas"
+  anti_patterns:
+    - "free_form_state_write"
+relationships:
+  related:
+    - "consistency.transaction"
+    - "concurrency.idempotency"
+    - "concurrency.lock"
+  implies:
+    - "risk.inconsistent_state"
+learning:
+  objectives:
+    - "能描述状态迁移约束的意义"
+    - "能识别无 guard 的任意写状态风险"
+  difficulty_ladder:
+    L1: "单表状态字段 + guard"
+    L2: "并发下的 CAS/version"
+    L3: "跨服务状态一致：事件驱动/补偿"

@@ -1,0 +1,11 @@
+name: CI
+on:
+  schedule:
+    - cron: "0 0 * * *"
+concurrency: group1
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4

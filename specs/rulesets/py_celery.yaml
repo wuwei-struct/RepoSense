@@ -1,0 +1,9 @@
+id: py_celery
+concept: Queue
+detector:
+  kind: python_ast
+  matcher: py_celery
+  confidence: 0.86
+  parse_level: L3
+  snippet: 6
+

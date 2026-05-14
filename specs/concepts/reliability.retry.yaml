@@ -1,0 +1,39 @@
+spec_version: "1.0"
+id: "reliability.retry"
+title: "重试机制"
+category: "reliability"
+level: "core"
+stability: "stable"
+definition:
+  what: "失败后按策略再次尝试以提高成功率（常伴随退避、限次、抖动）。"
+  why: "网络抖动、瞬时故障是常态；合理重试可提高鲁棒性。"
+  non_goals:
+    - "重试不能替代幂等与限流（否则放大故障）"
+consequences_if_missing:
+  - "瞬时故障导致整体可用性下降"
+  - "用户体验波动"
+  - "恢复能力弱"
+semantic_markers:
+  required:
+    - "retry_policy"
+  sufficient:
+    - "backoff"
+    - "max_attempts"
+  anti_patterns:
+    - "retry_without_idempotency"
+    - "unbounded_retry"
+relationships:
+  related:
+    - "reliability.timeout"
+    - "concurrency.idempotency"
+    - "observability.metrics_or_tracing"
+  implies:
+    - "risk.timeout_cascade"
+learning:
+  objectives:
+    - "能解释重试为何必须配合幂等"
+    - "能识别无限重试/无退避的灾难模式"
+  difficulty_ladder:
+    L1: "固定次数重试"
+    L2: "指数退避 + 抖动"
+    L3: "结合熔断/限流/幂等的弹性策略"

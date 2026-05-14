@@ -1,0 +1,39 @@
+spec_version: "1.0"
+id: "concurrency.lock"
+title: "锁与互斥"
+category: "concurrency"
+level: "core"
+stability: "stable"
+definition:
+  what: "通过互斥机制限制并发访问，保证关键区段在同一时刻只被一个执行单元进入。"
+  why: "避免竞态条件导致的数据错乱、重复执行、破坏不变量。"
+  non_goals:
+    - "锁不是性能优化工具（过度使用会放大延迟与死锁风险）"
+consequences_if_missing:
+  - "竞态条件（race）导致状态不一致"
+  - "重复执行副作用"
+  - "高并发下出现不可复现 bug"
+semantic_markers:
+  required:
+    - "critical_section"
+  sufficient:
+    - "mutex_or_lock"
+    - "lock_scope_defined"
+  anti_patterns:
+    - "lock_too_wide"
+    - "lock_order_inconsistent"
+relationships:
+  related:
+    - "consistency.transaction"
+    - "consistency.state_machine"
+    - "reliability.timeout"
+  implies:
+    - "risk.deadlock"
+learning:
+  objectives:
+    - "能识别关键区段与共享资源"
+    - "理解死锁的基本成因与规避方式"
+  difficulty_ladder:
+    L1: "单进程 mutex"
+    L2: "多进程/分布式锁"
+    L3: "锁 + 事务 + 幂等的组合治理"

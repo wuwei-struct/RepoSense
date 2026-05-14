@@ -1,0 +1,38 @@
+spec_version: "1.0"
+id: "async.queue"
+title: "消息队列"
+category: "async"
+level: "core"
+stability: "stable"
+definition:
+  what: "通过队列实现异步解耦与削峰填谷，生产者与消费者解耦。"
+  why: "提高吞吐与弹性，隔离慢服务，支持异步处理。"
+  non_goals:
+    - "队列不自动保证幂等（通常至少一次投递）"
+consequences_if_missing:
+  - "同步链路过长导致延迟与故障扩散"
+  - "高峰期无法削峰"
+  - "难以扩展消费者能力"
+semantic_markers:
+  required:
+    - "producer_consumer"
+  sufficient:
+    - "topic_or_queue"
+    - "ack_or_retry"
+  anti_patterns:
+    - "consume_without_idempotency"
+relationships:
+  related:
+    - "concurrency.idempotency"
+    - "reliability.retry"
+    - "async.workflow"
+  implies:
+    - "risk.queue_backlog"
+learning:
+  objectives:
+    - "理解至少一次投递与幂等的关系"
+    - "理解积压与重试的联动风险"
+  difficulty_ladder:
+    L1: "单队列异步处理"
+    L2: "重试/死信/延迟队列"
+    L3: "Outbox/事务消息/最终一致"

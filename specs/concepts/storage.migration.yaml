@@ -1,0 +1,37 @@
+spec_version: "1.0"
+id: "storage.migration"
+title: "数据迁移与演进"
+category: "storage"
+level: "core"
+stability: "evolving"
+definition:
+  what: "以可回滚、可验证方式演进数据库 schema 与数据形态。"
+  why: "业务变化要求结构演进，需避免停机与数据破坏。"
+  non_goals:
+    - "迁移不是一次性脚本（需要版本化与回滚策略）"
+consequences_if_missing:
+  - "schema 漂移与线上事故"
+  - "发布不可控，回滚困难"
+  - "数据一致性被破坏"
+semantic_markers:
+  required:
+    - "versioned_migrations"
+  sufficient:
+    - "forward_and_backward"
+    - "online_migration_strategy"
+  anti_patterns:
+    - "manual_schema_change"
+relationships:
+  related:
+    - "storage.index"
+    - "consistency.transaction"
+  implies:
+    - "risk.schema_drift"
+learning:
+  objectives:
+    - "理解迁移版本化与回滚的必要性"
+    - "能识别手工改表的风险"
+  difficulty_ladder:
+    L1: "版本化 DDL"
+    L2: "可回滚迁移"
+    L3: "在线迁移与双写/回填"

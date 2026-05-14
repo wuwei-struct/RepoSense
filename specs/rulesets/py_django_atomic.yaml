@@ -1,0 +1,9 @@
+id: py_django_atomic
+concept: Transaction
+detector:
+  kind: python_ast
+  matcher: py_django_atomic
+  confidence: 0.88
+  parse_level: L3
+  snippet: 6
+

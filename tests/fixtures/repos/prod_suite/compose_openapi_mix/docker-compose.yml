@@ -1,0 +1,6 @@
+services:
+  redis:
+    image: redis:7
+  rabbitmq:
+    image: rabbitmq:3
+

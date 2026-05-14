@@ -1,0 +1,9 @@
+id: py_cache
+concept: Cache
+detector:
+  kind: python_ast
+  matcher: py_cache
+  confidence: 0.86
+  parse_level: L3
+  snippet: 6
+

@@ -1,0 +1,36 @@
+spec_version: "1.0"
+id: "storage.kv"
+title: "KV 存储"
+category: "storage"
+level: "core"
+stability: "stable"
+definition:
+  what: "以 key→value 形式存取数据，常用于去重、缓存、分布式协调等。"
+  why: "支持快速查找与简单结构，适用于幂等键、锁、缓存等场景。"
+  non_goals:
+    - "不等价于关系型事务能力"
+consequences_if_missing:
+  - "去重/缓存/锁等机制难以落地"
+  - "需要用 DB 代替导致成本高"
+  - "性能受限"
+semantic_markers:
+  required:
+    - "key_space"
+  sufficient:
+    - "setnx_or_compare_and_set"
+    - "ttl"
+  anti_patterns:
+    - "kv_as_db_without_model"
+relationships:
+  related:
+    - "storage.cache"
+    - "concurrency.idempotency"
+    - "concurrency.lock"
+learning:
+  objectives:
+    - "理解 KV 与事务/一致性的边界"
+    - "理解 setnx/cas 在去重/锁中的作用"
+  difficulty_ladder:
+    L1: "基础 get/set"
+    L2: "setnx/cas + ttl"
+    L3: "一致性/过期/热 key 治理"

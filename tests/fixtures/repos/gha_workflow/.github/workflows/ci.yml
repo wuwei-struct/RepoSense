@@ -1,0 +1,21 @@
+name: CI
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      API_TOKEN: ${{ secrets.API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache
+          key: cache-key
+      - run: curl -s https://example.com
+concurrency: 
+  group: ci-${{ github.ref }}
+

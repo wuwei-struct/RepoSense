@@ -1,0 +1,25 @@
+spec_version: "1.0"
+id: "concurrency.idempotency.text"
+concept: "幂等性"
+detector:
+  kind: text
+signals:
+  strong:
+    - "request_identity"
+    - "pre_action_guard"
+  medium:
+    - "unique_constraint"
+    - "dedup_store"
+    - "result_cache"
+  negative:
+    - "time_window_only"
+gating:
+  required_markers_all:
+    - "request_identity"
+    - "pre_action_guard"
+  anti_patterns_block_if:
+    - "client_side_only"
+scoring:
+  weight_strong: 0.5
+  weight_medium: 0.35
+  penalty_negative: 0.6

@@ -1,0 +1,44 @@
+spec_version: "1.0"
+id: "concurrency.idempotency"
+title: "幂等性"
+category: "concurrency"
+level: "core"
+stability: "stable"
+definition:
+  what: "相同语义的请求重复执行多次，最终外部可观察结果与执行一次一致。"
+  why: "网络重试、消息重复投递、用户重复点击、超时回放都会制造重复触发。"
+  non_goals:
+    - "不等价于去抖/节流（debounce/throttle）"
+    - "不等价于最终一致性"
+consequences_if_missing:
+  - "重复扣款/重复下单"
+  - "重复发送通知/消息"
+  - "状态机被推进多次导致不可逆错误"
+semantic_markers:
+  required:
+    - "request_identity"
+    - "pre_action_guard"
+  sufficient:
+    - "unique_constraint"
+    - "dedup_store"
+    - "result_cache"
+  anti_patterns:
+    - "time_window_only"
+    - "client_side_only"
+    - "log_only_no_guard"
+relationships:
+  related:
+    - "consistency.transaction"
+    - "concurrency.lock"
+    - "reliability.retry"
+    - "reliability.timeout"
+  implies:
+    - "risk.duplicate_side_effect"
+learning:
+  objectives:
+    - "能区分幂等、去抖、重试的差异"
+    - "能识别假幂等（anti_patterns）"
+  difficulty_ladder:
+    L1: "单体：内存去重（帮助理解，但不推荐）"
+    L2: "单库：唯一约束/事务保护"
+    L3: "分布式：跨服务去重 + 结果复用 + 过期治理"

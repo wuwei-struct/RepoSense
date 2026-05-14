@@ -1,0 +1,54 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://reposense.dev/schemas/pattern.schema.json",
+  "title": "RepoSense Pattern Public Contract",
+  "type": "object",
+  "required": [
+    "rule_id",
+    "category",
+    "severity",
+    "language",
+    "signals",
+    "evidence_required",
+    "confidence_policy",
+    "public_description",
+    "commercial_insight_reserved"
+  ],
+  "properties": {
+    "rule_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "minLength": 1
+    },
+    "severity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "language": {
+      "type": "string",
+      "minLength": 1
+    },
+    "signals": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "evidence_required": {
+      "type": "boolean"
+    },
+    "confidence_policy": {
+      "type": "string",
+      "enum": ["conservative", "balanced", "strict"]
+    },
+    "public_description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "commercial_insight_reserved": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": true
+}

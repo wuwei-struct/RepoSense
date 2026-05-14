@@ -1,0 +1,38 @@
+spec_version: "1.0"
+id: "reliability.timeout"
+title: "超时与取消"
+category: "reliability"
+level: "core"
+stability: "stable"
+definition:
+  what: "为操作设置最大等待时间，超过则失败/取消，避免资源被无界占用。"
+  why: "无超时会导致线程/连接/队列堆积，引发级联故障。"
+  non_goals:
+    - "超时不是性能优化，而是故障隔离手段"
+consequences_if_missing:
+  - "请求堆积与线程耗尽"
+  - "延迟尖刺，最终雪崩"
+  - "故障扩散到上下游"
+semantic_markers:
+  required:
+    - "timeout_budget"
+  sufficient:
+    - "cancel_or_abort"
+    - "deadline_propagation"
+  anti_patterns:
+    - "infinite_wait"
+relationships:
+  related:
+    - "reliability.retry"
+    - "observability.metrics_or_tracing"
+    - "concurrency.lock"
+  implies:
+    - "risk.timeout_cascade"
+learning:
+  objectives:
+    - "能解释为什么超时是隔离故障的第一道闸"
+    - "能识别无 deadline 的调用链风险"
+  difficulty_ladder:
+    L1: "单点超时"
+    L2: "调用链 deadline 传递"
+    L3: "与重试/熔断/限流组合治理"

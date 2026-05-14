@@ -1,0 +1,37 @@
+spec_version: "1.0"
+id: "storage.index"
+title: "索引"
+category: "storage"
+level: "core"
+stability: "stable"
+definition:
+  what: "通过额外结构加速查询（如 BTree/Hash/GIN），以空间换时间。"
+  why: "降低查询延迟与资源消耗，支撑增长后的性能需求。"
+  non_goals:
+    - "索引不是越多越好（写放大/维护成本）"
+consequences_if_missing:
+  - "查询慢导致延迟尖刺"
+  - "高负载下数据库压力过大"
+  - "性能问题难定位"
+semantic_markers:
+  required:
+    - "indexed_access_path"
+  sufficient:
+    - "create_index"
+    - "index_usage"
+  anti_patterns:
+    - "over_indexing"
+relationships:
+  related:
+    - "storage.migration"
+    - "observability.metrics_or_tracing"
+  implies:
+    - "risk.latency_spike"
+learning:
+  objectives:
+    - "理解索引与查询性能的关系"
+    - "能识别缺失索引或过度索引"
+  difficulty_ladder:
+    L1: "单列索引"
+    L2: "联合索引/覆盖索引"
+    L3: "索引治理与迁移策略"

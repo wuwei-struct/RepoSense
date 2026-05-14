@@ -1,0 +1,5 @@
+id: sql_tx_boundary
+concept: Transaction
+detector:
+  kind: sql_tx
+

@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["spec_version", "id", "concept", "signals"],
+  "properties": {
+    "spec_version": { "type": "string" },
+    "id": { "type": "string" },
+    "concept": { "type": "string" },
+    "detector": { 
+      "oneOf": [
+        { "type": "string" },
+        { 
+          "type": "object",
+          "required": ["kind"],
+          "properties": {
+            "kind": { "type": "string", "enum": ["text","openapi","compose","sql_ddl","gha"] }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "evidence_kinds": { "type": "array", "items": { "type": "string" } },
+    "signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strong": { "type": "array", "items": { "type": "string" } },
+        "medium": { "type": "array", "items": { "type": "string" } },
+        "negative": { "type": "array", "items": { "type": "string" } },
+        "any_of": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "keywords": { "type": "array", "items": { "type": "string" } },
+            "patterns": { "type": "array", "items": { "type": "string" } },
+            "openapi": {
+              "type": "object",
+              "properties": {
+                "methods": { "type": "array", "items": { "type": "string" } },
+                "paths": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "compose": {
+              "type": "object",
+              "properties": {
+                "infra_type": { "type": "array", "items": { "type": "string" } },
+                "infra_kind": { "type": "array", "items": { "type": "string" } },
+                "service_name": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "sql_ddl": {
+              "type": "object",
+              "properties": {
+                "tables": { "type": "array", "items": { "type": "string" } },
+                "indexes": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            "gha": {
+              "type": "object",
+              "properties": {
+                "item_kind": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "gating": {
+      "type": "object",
+      "properties": {
+        "required_markers_all": { "type": "array", "items": { "type": "string" } },
+        "anti_patterns_block_if": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "scoring": { "type": "object" },
+    "emission": { "type": "object" }
+  }
+}

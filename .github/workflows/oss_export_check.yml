@@ -1,0 +1,29 @@
+name: OSS Export Check
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: pip install -e .
+      - name: Tests
+        run: python -m unittest -v
+      - name: Export OSS Snapshot with Smoke
+        run: python tools/release/export_oss.py --out dist/oss_snapshot --smoke
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: oss-snapshot-artifacts
+          path: |
+            dist/oss_snapshot/_demo_out/**/report.html
+            dist/oss_snapshot/_demo_out/**/exports/report.sarif.json
+            dist/oss_snapshot/_demo_out/**/exports/context_pack.zip
+            dist/oss_snapshot/_demo_out/**/quality_gate.json
+            dist/oss_snapshot/_demo_out/**/baseline_diff.md
+            dist/oss_snapshot/OSS_SNAPSHOT_MANIFEST.json

@@ -1,0 +1,39 @@
+spec_version: "1.0"
+id: "observability.metrics_or_tracing"
+title: "指标与链路追踪"
+category: "observability"
+level: "core"
+stability: "stable"
+definition:
+  what: "通过指标/日志/追踪描述系统行为，以支持诊断、告警与容量规划。"
+  why: "没有可观测性就无法定位问题、验证改动效果与评估风险。"
+  non_goals:
+    - "可观测性不自动修复问题，但能显著降低 MTTR"
+consequences_if_missing:
+  - "事故定位困难，恢复慢"
+  - "容量与性能治理失控"
+  - "变更不可验证"
+semantic_markers:
+  required:
+    - "signals_emitted"
+  sufficient:
+    - "metrics"
+    - "tracing"
+    - "structured_logging"
+  anti_patterns:
+    - "no_context_logs"
+relationships:
+  related:
+    - "reliability.timeout"
+    - "reliability.retry"
+    - "async.workflow"
+  implies:
+    - "risk.outage"
+learning:
+  objectives:
+    - "理解指标/日志/追踪各自解决什么问题"
+    - "能识别缺少关键上下文的观测盲区"
+  difficulty_ladder:
+    L1: "基础 metrics"
+    L2: "trace + correlation id"
+    L3: "SLO/告警/容量与回归验证"

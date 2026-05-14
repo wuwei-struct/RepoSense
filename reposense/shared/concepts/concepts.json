@@ -1,0 +1,62 @@
+{
+  "version": "learn-phase-a-v1",
+  "concepts": [
+    {
+      "concept_id": "reliability.idempotency",
+      "name": "幂等",
+      "category": "reliability",
+      "summary": "通过去重键或存在性检查避免重复副作用。",
+      "tags": ["reliability", "dedupe", "api", "queue", "db"],
+      "prerequisites": [],
+      "related": ["data.transaction_boundary", "concurrency.locking_or_guard"],
+      "learning_objectives": [
+        "识别重复请求保护证据",
+        "理解 exists-before-write 的保守模式",
+        "识别队列消费中的去重线索"
+      ],
+      "anti_patterns": [
+        "缺失幂等键导致重复写入",
+        "重试路径没有去重保护",
+        "仅依赖客户端不可靠防重"
+      ]
+    },
+    {
+      "concept_id": "data.transaction_boundary",
+      "name": "事务边界",
+      "category": "data",
+      "summary": "通过显式事务保证一组操作要么全部成功要么全部回滚。",
+      "tags": ["data", "transaction", "atomicity", "consistency"],
+      "prerequisites": [],
+      "related": ["concurrency.locking_or_guard", "reliability.idempotency"],
+      "learning_objectives": [
+        "识别语言框架中的事务边界证据",
+        "区分事务单点与事务+DB共现",
+        "识别事务与 API/Queue/DB 闭环迹象"
+      ],
+      "anti_patterns": [
+        "跨多步写操作无事务保护",
+        "事务范围过大导致锁争用",
+        "异常路径遗漏回滚语义"
+      ]
+    },
+    {
+      "concept_id": "concurrency.locking_or_guard",
+      "name": "锁与并发保护",
+      "category": "concurrency",
+      "summary": "通过锁、互斥、guard 或悲观更新避免并发冲突。",
+      "tags": ["concurrency", "locking", "guard", "safety"],
+      "prerequisites": ["data.transaction_boundary"],
+      "related": ["reliability.idempotency", "data.transaction_boundary"],
+      "learning_objectives": [
+        "识别 synchronized/mutex/lock 等保护证据",
+        "识别 guard/semaphore/for update 线索",
+        "理解锁与事务组合的保守判级"
+      ],
+      "anti_patterns": [
+        "临界区无同步保护",
+        "锁粒度过粗造成性能退化",
+        "锁与事务边界不一致导致死锁风险"
+      ]
+    }
+  ]
+}

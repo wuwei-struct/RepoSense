@@ -1,0 +1,37 @@
+spec_version: "1.0"
+id: "storage.filesystem"
+title: "文件系统 IO"
+category: "storage"
+level: "core"
+stability: "evolving"
+definition:
+  what: "对文件/目录进行读写、上传下载、持久化与权限管理。"
+  why: "日志、导入导出、资源存储、临时文件都依赖文件系统语义。"
+  non_goals:
+    - "文件系统写入不天然具备事务与一致性保证"
+consequences_if_missing:
+  - "数据落盘不可靠"
+  - "权限/路径风险导致安全问题"
+  - "清理缺失导致磁盘耗尽"
+semantic_markers:
+  required:
+    - "file_read_write"
+  sufficient:
+    - "path_validation"
+    - "atomic_write"
+  anti_patterns:
+    - "path_traversal_risk"
+    - "no_cleanup"
+relationships:
+  related:
+    - "observability.metrics_or_tracing"
+  implies:
+    - "risk.data_loss"
+learning:
+  objectives:
+    - "理解原子写/临时文件/权限的重要性"
+    - "能识别路径穿越与清理缺失"
+  difficulty_ladder:
+    L1: "基础读写"
+    L2: "原子写 + 权限/路径校验"
+    L3: "分布式存储/对象存储语义"

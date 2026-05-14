@@ -1,0 +1,190 @@
+- rule_id: text_api_keywords
+  rule_version: 1
+  concept: API
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\b(endpoint|api|route|controller)\\b"
+- rule_id: text_state_keywords
+  rule_version: 1
+  concept: State
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\bstate\\b"
+- rule_id: text_concurrency_keywords
+  rule_version: 1
+  concept: Concurrency
+  kind: text
+  parse_level: L1
+  confidence_base: 0.4
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\bthread|goroutine|async|await|Promise|Executor|ThreadPool\\b"
+- rule_id: text_lock_keywords
+  rule_version: 1
+  concept: Lock
+  kind: text
+  parse_level: L1
+  confidence_base: 0.4
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\block\\b|\\bmutex\\b|\\bsynchronized\\b"
+- rule_id: text_transaction_keywords
+  rule_version: 1
+  concept: Transaction
+  kind: text
+  parse_level: L1
+  confidence_base: 0.45
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\btransaction\\b|\\bcommit\\b|\\brollback\\b"
+- rule_id: text_idempotency_keywords
+  rule_version: 1
+  concept: Idempotency
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\bidempotent\\b"
+- rule_id: text_kv_keywords
+  rule_version: 1
+  concept: KV
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\bkv\\b|\\bredis\\b|\\bmemcache\\b"
+- rule_id: text_index_keywords
+  rule_version: 1
+  concept: Index
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\bindex\\b"
+- rule_id: text_queue_keywords
+  rule_version: 1
+  concept: Queue
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\bqueue\\b|\\bkafka\\b|\\brabbitmq\\b"
+- rule_id: text_cache_keywords
+  rule_version: 1
+  concept: Cache
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\bcache\\b"
+- rule_id: text_filesystem_keywords
+  rule_version: 1
+  concept: FileSystem
+  kind: text
+  parse_level: L1
+  confidence_base: 0.35
+  globs: ["**/*"]
+  snippet: 8
+  patterns:
+    - regex: "\\bwrite\\b|\\bread\\b|\\bfs\\b|\\bfile\\b"
+- rule_id: config_openapi
+  rule_version: 1
+  concept: API
+  kind: openapi
+  parse_level: L2
+  confidence_base: 0.85
+  globs: ["**/*.yaml", "**/*.yml", "**/*.json"]
+  snippet: 0
+- rule_id: gha_workflow
+  rule_version: 1
+  concept: External IO
+  kind: gha
+  parse_level: L2
+  confidence_base: 0.6
+  globs: ["**/.github/workflows/*.yml", "**/.github/workflows/*.yaml"]
+  snippet: 5
+- rule_id: dockerfile_main
+  rule_version: 1
+  concept: FileSystem
+  kind: dockerfile
+  parse_level: L2
+  confidence_base: 0.6
+  globs: ["**/Dockerfile"]
+  snippet: 5
+- rule_id: compose_services
+  rule_version: 1
+  concept: KV/Storage
+  kind: compose
+  parse_level: L2
+  confidence_base: 0.6
+  globs: ["**/docker-compose.yml", "**/compose.yaml", "**/docker-compose.yaml"]
+  snippet: 5
+- rule_id: sql_ddl_basic
+  rule_version: 1
+  concept: Storage
+  kind: sql_ddl
+  parse_level: L2
+  confidence_base: 0.6
+  globs: ["**/*.sql"]
+  snippet: 5
+- rule_id: deps_manifest
+  rule_version: 1
+  concept: Config
+  kind: deps
+  parse_level: L2
+  confidence_base: 0.5
+  globs: ["**/package.json", "**/requirements.txt", "**/go.mod"]
+  snippet: 0
+- rule_id: L3_EXPRESS_ROUTE
+  rule_version: 1
+  concept: API
+  kind: ast
+  matcher: express_route
+  lang: [js,ts]
+  globs: ["**/*.js","**/*.jsx","**/*.ts","**/*.tsx"]
+  confidence: 0.88
+- rule_id: L3_FASTAPI_ROUTE
+  rule_version: 1
+  concept: API
+  kind: ast
+  matcher: fastapi_route
+  lang: [py]
+  globs: ["**/*.py"]
+  confidence: 0.90
+- rule_id: L3_PY_LOCK
+  rule_version: 1
+  concept: Lock
+  kind: ast
+  matcher: py_lock
+  lang: [py]
+  globs: ["**/*.py"]
+  confidence: 0.86
+- rule_id: L3_JS_CONCURRENCY
+  rule_version: 1
+  concept: Concurrency
+  kind: ast
+  matcher: js_concurrency
+  lang: [js,ts]
+  globs: ["**/*.js","**/*.ts","**/*.tsx"]
+  confidence: 0.84

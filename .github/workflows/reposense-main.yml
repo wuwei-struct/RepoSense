@@ -1,0 +1,47 @@
+name: RepoSense Baseline Refresh
+on:
+  push:
+    branches: ["main"]
+permissions:
+  contents: write
+  security-events: write
+jobs:
+  refresh-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install RepoSense
+        run: |
+          pip install -e .
+      - name: Run RepoSense CI
+        run: |
+          python -m reposense ci run --repo . --profile prod_lite --out .reposense_ci --baseline-out .reposense_ci/baseline.json --json
+      - name: Strict Verify
+        run: |
+          RUN_DIR=$(ls -d .reposense_ci/run-* | head -n 1)
+          python -m reposense verify "$RUN_DIR" --strict || (echo "Strict verify failed. To fix legacy runs, run: python -m reposense run upgrade \"$RUN_DIR\" --inplace && re-run verify." && exit 2)
+      - name: Commit baseline to branch
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git fetch origin reposense-baselines:reposense-baselines || true
+          git checkout reposense-baselines || git checkout -b reposense-baselines
+          mkdir -p baselines/prod_lite/specs_v2
+          cp .reposense_ci/baseline.json baselines/prod_lite/specs_v2/baseline.json
+          git add baselines/prod_lite/specs_v2/baseline.json
+          git commit -m "Update RepoSense baseline"
+          git push origin reposense-baselines
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.find_sarif.outputs.path }}
+        if: always()
+      - name: Find SARIF
+        id: find_sarif
+        run: |
+          echo "path=$(ls .reposense_ci/*/exports/report.sarif.json | head -n 1)" >> $GITHUB_OUTPUT

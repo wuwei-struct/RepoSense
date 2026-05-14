@@ -1,0 +1,38 @@
+spec_version: "1.0"
+id: "consistency.transaction"
+title: "事务"
+category: "consistency"
+level: "core"
+stability: "stable"
+definition:
+  what: "将一组读写操作作为一个原子单元执行，要么全部成功，要么全部回滚。"
+  why: "避免部分写入导致的不一致状态，提供原子性/隔离性等保证。"
+  non_goals:
+    - "不保证跨服务全局一致（需分布式协议或补偿）"
+consequences_if_missing:
+  - "部分写入导致数据不一致"
+  - "并发下出现脏写/丢失更新"
+  - "错误恢复困难（回滚缺失）"
+semantic_markers:
+  required:
+    - "atomic_boundary"
+  sufficient:
+    - "db_transaction"
+    - "commit_or_rollback"
+  anti_patterns:
+    - "multi_step_write_no_guard"
+relationships:
+  related:
+    - "consistency.state_machine"
+    - "concurrency.lock"
+    - "reliability.timeout"
+  implies:
+    - "risk.inconsistent_state"
+learning:
+  objectives:
+    - "能解释事务解决什么一致性问题"
+    - "能识别缺失事务边界的多步写入风险"
+  difficulty_ladder:
+    L1: "单表写入的事务边界"
+    L2: "多表写入 + 读写隔离"
+    L3: "跨服务一致性：补偿/Outbox/消息最终一致"

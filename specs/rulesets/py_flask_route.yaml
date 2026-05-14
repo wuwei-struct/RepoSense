@@ -1,0 +1,9 @@
+id: py_flask_route
+concept: API
+detector:
+  kind: python_ast
+  matcher: py_flask_route
+  confidence: 0.88
+  parse_level: L3
+  snippet: 6
+

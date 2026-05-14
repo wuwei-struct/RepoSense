@@ -1,0 +1,8 @@
+{
+  "concept_ranges": {
+    "API": [0, 10],
+    "Transaction": [0, 20],
+    "Queue": [0, 10],
+    "Cache": [0, 10]
+  }
+}

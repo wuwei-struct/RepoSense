@@ -1,0 +1,7 @@
+spec_version: "1.0"
+id: "gha_async"
+concept: "External IO"
+detector:
+  kind: gha
+signals:
+  any_of: {}

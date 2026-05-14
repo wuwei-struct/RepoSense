@@ -1,0 +1,37 @@
+spec_version: "1.0"
+id: "storage.cache"
+title: "缓存"
+category: "storage"
+level: "core"
+stability: "stable"
+definition:
+  what: "用更快的存储层保存热点数据，降低延迟与后端压力。"
+  why: "热点读、昂贵计算、外部依赖不稳定时需要缓存缓冲。"
+  non_goals:
+    - "缓存不是一致性保证（需要失效策略）"
+consequences_if_missing:
+  - "延迟升高、吞吐下降"
+  - "数据库/外部依赖压力过大"
+  - "高峰期易雪崩"
+semantic_markers:
+  required:
+    - "cache_store"
+  sufficient:
+    - "ttl_or_invalidation"
+    - "cache_key"
+  anti_patterns:
+    - "cache_without_invalidation"
+relationships:
+  related:
+    - "storage.kv"
+    - "observability.metrics_or_tracing"
+  implies:
+    - "risk.latency_spike"
+learning:
+  objectives:
+    - "理解缓存命中/失效对一致性的影响"
+    - "能识别无失效策略的风险"
+  difficulty_ladder:
+    L1: "读缓存"
+    L2: "写穿/写回与失效"
+    L3: "缓存一致性与雪崩治理"
