@@ -6,8 +6,11 @@ class DemoAssetsIndexExistsTest(unittest.TestCase):
     def test_asset_index_exists_and_core_entries(self):
         idx = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "docs", "assets", "ASSET_INDEX.md"))
         self.assertTrue(os.path.isfile(idx))
-        txt = open(idx, "r", encoding="utf-8").read()
+        with open(idx, "r", encoding="utf-8") as f:
+            txt = f.read()
         self.assertIn("report-overview", txt)
+        self.assertIn("backend-events", txt)
+        self.assertIn("api-surface", txt)
         self.assertIn("learn-overview", txt)
         self.assertIn("ai-risks-panel", txt)
         self.assertIn("ai-explain-detail", txt)

@@ -136,6 +136,18 @@ RepoSense AI outputs follow a grounded contract: Facts-only by default, constrai
 - [docs/AI_GROUNDED_PRINCIPLES.md](docs/AI_GROUNDED_PRINCIPLES.md)
 - Full docs index: [docs/INDEX.md](docs/INDEX.md)
 
+## Screenshots / Demo Assets
+
+Release screenshots are tracked in [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md).
+
+Current stable screenshot targets include:
+
+- Overview
+- Backend Events
+- API Surface
+
+Learn / AI Risks / AI Explain screenshots require a release demo run with corresponding generated data.
+
 ## FAQ
 
 ### Q1. Why not let AI read the whole repository directly?

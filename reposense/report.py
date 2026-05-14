@@ -97,16 +97,19 @@ def copy_assets(run_dir):
     if os.path.exists(src):
         shutil.copytree(src, dst)
 
-def _render_demo_tour_card():
+def _render_demo_tour_card(run_dir):
     links = [
-        ('Report', 'report.html'),
-        ('Learn', 'learn/index.html'),
+        ('REPORT', 'report.html'),
+        ('LEARN', 'learn/index.html'),
         ('SARIF', 'exports/report.sarif.json'),
-        ('Pack', 'exports/context_pack.zip'),
-        ('Gate', 'quality_gate.json'),
-        ('Baseline Diff', 'baseline_diff.json'),
+        ('PACK', 'exports/context_pack.zip'),
+        ('GATE', 'quality_gate.json'),
     ]
     items = "".join([f'<a class="badge" style="margin-right:8px" href="{h}" target="_blank">{l}</a>' for (l,h) in links])
+    if os.path.isfile(os.path.join(run_dir, "baseline_diff.json")):
+        items += '<a class="badge" style="margin-right:8px" href="baseline_diff.json" target="_blank">BASELINE DIFF</a>'
+    else:
+        items += '<span class="badge" style="margin-right:8px;opacity:0.65">BASELINE DIFF: N/A</span>'
     return f"""<!-- REPOSENSE_DEMO_TOUR_CARD -->
         <div class="card" id="demo-tour-card" style="border:1px dashed var(--color-border);background:var(--color-bg-muted)">
           <div style="font-weight:600;margin-bottom:8px">Demo 导览</div>
@@ -158,7 +161,7 @@ def build_report_html(run_dir):
     elif gst == "WARN":
         gcls = "warning"
     
-    demo_card_html = _render_demo_tour_card() if demo_mode else ""
+    demo_card_html = _render_demo_tour_card(run_dir) if demo_mode else ""
     html = """<!doctype html>
 <html>
 <head>

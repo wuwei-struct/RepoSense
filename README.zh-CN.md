@@ -136,6 +136,18 @@ RepoSense 的 AI 输出遵循 grounded 契约：默认 facts-only，必要时才
 - [docs/AI_GROUNDED_PRINCIPLES.md](docs/AI_GROUNDED_PRINCIPLES.md)
 - 完整文档索引：[docs/INDEX.md](docs/INDEX.md)
 
+## 截图 / Demo 素材
+
+发布截图清单统一维护在 [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md)。
+
+当前稳定截图目标包括：
+
+- Overview
+- Backend Events
+- API Surface
+
+Learn、AI Risks、AI Explain 截图需要先生成带对应数据的 release demo run。
+
 ## FAQ
 
 ### Q1. 为什么不直接让 AI 读整个仓库？
