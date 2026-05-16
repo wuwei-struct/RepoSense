@@ -140,13 +140,36 @@ RepoSense AI outputs follow a grounded contract: Facts-only by default, constrai
 
 Release screenshots are tracked in [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md).
 
+Canonical release screenshots are captured from:
+
+- `.reposense_release_demo/current/`
+- Regenerate with: `powershell -ExecutionPolicy Bypass -File tools/release_demo.ps1`
+
 Current stable screenshot targets include:
 
 - Overview
 - Backend Events
 - API Surface
 
-Learn / AI Risks / AI Explain screenshots require a release demo run with corresponding generated data.
+Learn / AI Risks / AI Explain screenshots are captured from the same canonical release demo run.
+
+## Screenshots
+
+RepoSense generates local, evidence-backed reports for backend transaction, side-effect, and upgrade-context inspection.
+
+### Backend Events
+
+![Backend Events](docs/assets/screenshots/backend-events.png)
+
+### API Surface
+
+![API Surface](docs/assets/screenshots/api-surface.png)
+
+### Backend Verifier Report
+
+![Backend Verifier Report](docs/assets/screenshots/backend-verifier-report.png)
+
+More screenshots and release assets are tracked in [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md).
 
 ## FAQ
 

@@ -2,7 +2,10 @@ _demo_out/
 .reposense_ci/
 .reposense_ci*/
 .reposense_demo*/
+.reposense_demo_release_assets_current/
+.reposense_demo_release_assets/
 .reposense_learn_cases/
+.reposense_release_demo/
 .tmp_test_runs/
 .tmp_test/
 .local_archive/

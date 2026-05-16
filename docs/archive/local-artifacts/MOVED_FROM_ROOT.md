@@ -42,3 +42,39 @@ This migration was executed in **non-destructive mode**.
 | `.tmp_test/` | Kept in place in this step; not moved to avoid destructive side effects |
 | `analysis_runs/` | Kept in place in this step; ignored by `.gitignore` |
 | `.reposense_studio/` | Kept in place in this step; local runtime/state folder |
+| $src | $dst | archive legacy demo output directory |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | $dst | archive previous canonical release demo |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | $dst | archive previous canonical release demo |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | $dst | archive previous canonical release demo |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | $dst | archive previous canonical release demo |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+| $src | missing | legacy demo directory not present |
+
+## Canonical release demo migration (latest)
+
+| original_path | new_path | reason |
+|---|---|---|
+| .reposense_demo_release_assets_current | docs/archive/local-artifacts/root-moved/.reposense_demo_release_assets_current-20260516-104146 | archived legacy demo output directory |
+| .reposense_release_demo/current | docs/archive/local-artifacts/root-moved/current-20260516-104306 | archived previous canonical release demo before regeneration |

@@ -1,29 +1,31 @@
 # Asset Index
 
-All assets in this folder are tied to a real local demo run for traceability.
+All assets in this folder are tied to a real canonical local release demo for traceability.
 
-Source run policy:
+Canonical source run policy:
 
 - Generate with:
-  - `powershell -ExecutionPolicy Bypass -File tools/demo_run.ps1 -Out .reposense_demo_release_assets_current`
-- Use latest run directory under:
-  - `.reposense_demo_release_assets_current/<latest-run>/`
-- If historical run folders were archived or removed, regenerate a new release asset run instead of relying on old paths.
+  - `powershell -ExecutionPolicy Bypass -File tools/release_demo.ps1`
+- Use fixed path:
+  - `.reposense_release_demo/current/`
+- If old demo folders were archived or removed, regenerate canonical demo.
 
-Current run_dir used for this index update:
+Current canonical source path:
 
-- `.reposense_demo_release_assets_current/run-1778741929-c53ae7d1`
+- `.reposense_release_demo/current/`
 
 ## Screenshot Status (Release Materials)
 
 | asset | target_path | source_page | status | purpose | privacy_note |
 |---|---|---|---|---|---|
-| report-overview | `docs/assets/screenshots/report-overview.png` | `report.html` -> Overview | pending_manual_capture | Show report summary cards and structure view | Crop out absolute local paths and browser chrome |
-| backend-events | `docs/assets/screenshots/backend-events.png` | `report.html` -> Events | pending_manual_capture | Show backend event signals (`queue_dispatch`, `tx_boundary`, `db_op`, `api`) | Crop out absolute local paths and browser chrome |
-| api-surface | `docs/assets/screenshots/api-surface.png` | `report.html` -> API Surface | pending_manual_capture | Show endpoint surface and mismatch area | Crop out absolute local paths and browser chrome |
-| learn-overview | `docs/assets/screenshots/learn-overview.png` | `learn/index.html` | pending_manual_capture | Show non-empty Learn concepts/cases cards | Crop out absolute local paths and browser chrome |
-| ai-risks-panel | `docs/assets/screenshots/ai-risks-panel.png` | `report.html` -> AI Risks | pending_manual_capture | Show grouped risk panels | Crop out absolute local paths and browser chrome |
-| ai-explain-detail | `docs/assets/screenshots/ai-explain-detail.png` | `report.html` -> Explain detail | pending_manual_capture | Show confirmed/inferred/unknown explain blocks | Crop out absolute local paths and browser chrome |
+| report-overview (P0) | `docs/assets/screenshots/report-overview.png` | `.reposense_release_demo/current/report.html` -> Overview | captured | Show report summary cards and structure view | Crop out absolute local paths and browser chrome |
+| backend-events (P0) | `docs/assets/screenshots/backend-events.png` | `.reposense_release_demo/current/report.html` -> Events | captured | Show backend event signals (`queue_dispatch`, `tx_boundary`, `db_op`, `api`) | Crop out absolute local paths and browser chrome |
+| api-surface (P0) | `docs/assets/screenshots/api-surface.png` | `.reposense_release_demo/current/report.html` -> API Surface | captured | Show endpoint surface and mismatch area | Crop out absolute local paths and browser chrome |
+| backend-verifier-report (P1) | `docs/assets/screenshots/backend-verifier-report.png` | `.reposense_release_demo/current/backend_verifier_report.md` | captured | Show verifier report sections (`API Surface Summary`, `Side-effect Map`, `Limitations`) | Crop out absolute local paths and browser chrome |
+| demo-outputs (P1) | `docs/assets/screenshots/demo-outputs.png` | `.reposense_release_demo/current/` output file listing | captured | Show key generated outputs from one canonical run | Crop out absolute local paths and browser chrome |
+| learn-overview (P1) | `docs/assets/screenshots/learn-overview.png` | `.reposense_release_demo/current/learn/index.html` | captured | Show non-empty Learn concepts/cases cards | Crop out absolute local paths and browser chrome |
+| ai-risks-panel (P2) | `docs/assets/screenshots/ai-risks-panel.png` | `.reposense_release_demo/current/ai_risks/risks.md` or report AI Risks | captured | Show grouped risk panels / priority actions | Crop out absolute local paths and browser chrome |
+| ai-explain-detail (P2) | `docs/assets/screenshots/ai-explain-detail.png` | `.reposense_release_demo/current/ai_explain/*/explain.md` or report Explain | captured | Show confirmed/inferred/unknown explain blocks | Crop out absolute local paths and browser chrome |
 
 ## Non-image assets
 

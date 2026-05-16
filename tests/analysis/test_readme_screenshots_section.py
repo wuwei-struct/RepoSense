@@ -10,6 +10,7 @@ class ReadmeScreenshotsSectionTest(unittest.TestCase):
         with open(p, "r", encoding="utf-8") as f:
             txt = f.read()
         self.assertIn("docs/assets/ASSET_INDEX.md", txt)
+        self.assertIn(".reposense_release_demo/current", txt)
 
     def test_readme_does_not_embed_missing_png(self):
         root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))

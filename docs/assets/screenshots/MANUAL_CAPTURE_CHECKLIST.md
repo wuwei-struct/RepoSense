@@ -1,56 +1,67 @@
 # Manual Capture Checklist
 
-Source run should be generated from the latest local demo, not hardcoded to a stale run id.
+Canonical release screenshots must come from one fixed demo directory:
 
-- Generate source run:
-  - `powershell -ExecutionPolicy Bypass -File tools/demo_run.ps1 -Out .reposense_demo_release_assets_current`
-- Use latest run directory under:
-  - `.reposense_demo_release_assets_current/<latest-run>/`
-- If historical run folders were archived or removed, regenerate a new release asset run instead of relying on old paths.
-- Record the actual run_dir used in `docs/assets/ASSET_INDEX.md`.
-- Learn screenshot requirement:
-  - `learn/index.html` must show non-empty concept or case cards.
-  - If Learn is empty, do not mark `learn-overview.png` as captured; use `pending_data_fixture`.
+- Generate canonical demo:
+  - `powershell -ExecutionPolicy Bypass -File tools/release_demo.ps1`
+- Canonical source path:
+  - `.reposense_release_demo/current/`
+- If an old demo path was archived or removed, regenerate canonical demo instead of using stale run folders.
+- Record capture status in `docs/assets/ASSET_INDEX.md`.
+- Learn requirement:
+  - `learn/index.html` must be non-empty (concept/case cards visible) before `learn-overview.png` can be marked `captured`.
 
-## 1) report-overview.png
+## 1) report-overview.png (P0)
 
-- Open: `.reposense_demo_release_assets_current/<latest-run>/report.html`
+- Open: `.reposense_release_demo/current/report.html`
 - Page: Overview
-- Capture region: summary/overview cards (findings/events/edges + structure summary)
+- Capture region: summary/overview cards (`findings/events/edges` + structure summary)
 - Save to: `docs/assets/screenshots/report-overview.png`
 
-## 2) backend-events.png
+## 2) backend-events.png (P0)
 
-- Open: `.reposense_demo_release_assets_current/<latest-run>/report.html`
+- Open: `.reposense_release_demo/current/report.html`
 - Page: Events
-- Capture region: backend event signal area (`queue_dispatch`, `tx_boundary`, `db_op`, `api`)
+- Capture region: backend event signals (`queue_dispatch`, `tx_boundary`, `db_op`, `api`)
 - Save to: `docs/assets/screenshots/backend-events.png`
 
-## 3) api-surface.png
+## 3) api-surface.png (P0)
 
-- Open: `.reposense_demo_release_assets_current/<latest-run>/report.html`
+- Open: `.reposense_release_demo/current/report.html`
 - Page: API Surface
-- Capture region: API surface summary + mismatch info
+- Capture region: endpoint summary + mismatch area
 - Save to: `docs/assets/screenshots/api-surface.png`
 
-## 4) learn-overview.png
+## 4) backend-verifier-report.png (P1)
 
-- Open: `.reposense_demo_release_assets_current/<latest-run>/learn/index.html`
-- Capture region: Concept Navigator / Case Browser high-density area
+- Open: `.reposense_release_demo/current/backend_verifier_report.md`
+- Capture region: `API Surface Summary` / `Side-effect Map` / `Limitations`
+- Save to: `docs/assets/screenshots/backend-verifier-report.png`
+
+## 5) demo-outputs.png (P1)
+
+- Open folder: `.reposense_release_demo/current/`
+- Capture region: key output files list
+- Save to: `docs/assets/screenshots/demo-outputs.png`
+
+## 6) learn-overview.png (P1)
+
+- Open: `.reposense_release_demo/current/learn/index.html`
+- Capture region: Concepts / Cases area
 - Save to: `docs/assets/screenshots/learn-overview.png`
 
-## 5) ai-risks-panel.png
+## 7) ai-risks-panel.png (P2)
 
-- Open: `.reposense_demo_release_assets_current/<latest-run>/report.html`
-- Navigate to AI Risks section
-- Capture region: Immediate attention / Needs review / Contextual watchlist groups
+- Open: `.reposense_release_demo/current/ai_risks/risks.md`
+  - or `.reposense_release_demo/current/report.html` AI Risks section
+- Capture region: risk groups / priority actions
 - Save to: `docs/assets/screenshots/ai-risks-panel.png`
 
-## 6) ai-explain-detail.png
+## 8) ai-explain-detail.png (P2)
 
-- Open: `.reposense_demo_release_assets_current/<latest-run>/report.html`
-- Open Explain detail panel
-- Capture region: confirmed / inferred / unknown blocks
+- Open: `.reposense_release_demo/current/ai_explain/*/explain.md`
+  - or `.reposense_release_demo/current/report.html` Explain section
+- Capture region: `confirmed / inferred / unknown`
 - Save to: `docs/assets/screenshots/ai-explain-detail.png`
 
 ## Privacy / quality checks before commit

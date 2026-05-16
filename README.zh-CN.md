@@ -140,13 +140,36 @@ RepoSense 的 AI 输出遵循 grounded 契约：默认 facts-only，必要时才
 
 发布截图清单统一维护在 [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md)。
 
+发布截图统一来自：
+
+- `.reposense_release_demo/current/`
+- 可通过 `powershell -ExecutionPolicy Bypass -File tools/release_demo.ps1` 重新生成
+
 当前稳定截图目标包括：
 
 - Overview
 - Backend Events
 - API Surface
 
-Learn、AI Risks、AI Explain 截图需要先生成带对应数据的 release demo run。
+Learn、AI Risks、AI Explain 截图也来自同一个 canonical release demo run。
+
+## 截图预览
+
+RepoSense 会生成本地、可追证据的后端事务、副作用与升级上下文报告。
+
+### 后端事件
+
+![Backend Events](docs/assets/screenshots/backend-events.png)
+
+### API Surface
+
+![API Surface](docs/assets/screenshots/api-surface.png)
+
+### 后端验证报告
+
+![Backend Verifier Report](docs/assets/screenshots/backend-verifier-report.png)
+
+更多截图与发布素材见 [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md)。
 
 ## FAQ
 

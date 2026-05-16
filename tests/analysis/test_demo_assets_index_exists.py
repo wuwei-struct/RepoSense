@@ -11,6 +11,8 @@ class DemoAssetsIndexExistsTest(unittest.TestCase):
         self.assertIn("report-overview", txt)
         self.assertIn("backend-events", txt)
         self.assertIn("api-surface", txt)
+        self.assertIn("backend-verifier-report", txt)
+        self.assertIn("demo-outputs", txt)
         self.assertIn("learn-overview", txt)
         self.assertIn("ai-risks-panel", txt)
         self.assertIn("ai-explain-detail", txt)

@@ -16,21 +16,24 @@ class DemoAssetsFilesExistTest(unittest.TestCase):
             cap_txt = f.read()
         with open(mcc, "r", encoding="utf-8") as f:
             mcc_txt = f.read()
-        self.assertIn(".reposense_demo_release_assets_current", cap_txt)
-        self.assertIn("<latest-run>", cap_txt)
-        self.assertIn(".reposense_demo_release_assets_current", mcc_txt)
-        self.assertIn("<latest-run>", mcc_txt)
+        self.assertIn(".reposense_release_demo/current", cap_txt)
+        self.assertIn("tools/release_demo.ps1", cap_txt)
+        self.assertIn(".reposense_release_demo/current", mcc_txt)
+        self.assertIn("tools/release_demo.ps1", mcc_txt)
 
-    def test_asset_index_lists_six_recommended_screenshots(self):
+    def test_asset_index_lists_eight_recommended_screenshots(self):
         root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
         idx = os.path.join(root, "docs", "assets", "ASSET_INDEX.md")
         self.assertTrue(os.path.isfile(idx))
         with open(idx, "r", encoding="utf-8") as f:
             txt = f.read()
+        self.assertIn(".reposense_release_demo/current", txt)
         required = [
             "report-overview.png",
             "backend-events.png",
             "api-surface.png",
+            "backend-verifier-report.png",
+            "demo-outputs.png",
             "learn-overview.png",
             "ai-risks-panel.png",
             "ai-explain-detail.png",
