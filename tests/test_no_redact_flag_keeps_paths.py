@@ -22,8 +22,12 @@ class NoRedactFlagKeepsPathsTest(unittest.TestCase):
         self.assertIn(code, (0,2))
         rd = sorted([os.path.join(out, d) for d in os.listdir(out) if d.startswith("run-")])[-1]
         ci = json.load(open(os.path.join(rd, "ci_summary.json"), "r", encoding="utf-8"))
+        run_dir = os.path.abspath(ci.get("run_dir") or "")
+        self.assertIn(os.path.abspath(out), run_dir)
+        self.assertEqual(run_dir, os.path.abspath(rd))
         s = json.dumps(ci)
-        self.assertIn(".tmp_test_runs", s)
+        self.assertNotIn("<REPO_ROOT>", s)
+        self.assertNotIn("<REDACTED>", s)
         self.assertFalse(ci.get("redaction_enabled"))
 
 

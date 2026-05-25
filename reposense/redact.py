@@ -6,6 +6,9 @@ def _home_patterns():
     return [re.compile(r"[A-Za-z]:\\Users\\[^\\]+", re.IGNORECASE), re.compile(r"/home/[^/]+", re.IGNORECASE)]
 def _drive_pattern():
     return re.compile(r"[A-Za-z]:\\[^\\\n]+", re.IGNORECASE)
+def _tmp_abs_pattern():
+    # CI/Linux temp roots such as /tmp/repo_ctx_xxx or /var/tmp/...
+    return re.compile(r"/(?:tmp|var/tmp)/[^\s\"'<>]+", re.IGNORECASE)
 def build_ctx(run_dir, repo_root):
     plat = "win" if os.name == "nt" else "posix"
     return {"repo_root_abs": os.path.abspath(repo_root), "repo_root_token": "<REPO_ROOT>", "home_tokens": {"home": "<HOME>", "abs": "<ABS_PATH>"}, "platform": plat, "run_dir": os.path.abspath(run_dir)}
@@ -16,6 +19,7 @@ def redact_text(text, ctx):
     for hp in _home_patterns():
         text = hp.sub(lambda m: (counts.__setitem__("home", counts["home"]+1)) or (ctx["home_tokens"]["home"]), text)
     text = _drive_pattern().sub(lambda m: (counts.__setitem__("abs", counts["abs"]+1)) or (ctx["home_tokens"]["abs"]), text)
+    text = _tmp_abs_pattern().sub(lambda m: (counts.__setitem__("abs", counts["abs"]+1)) or (ctx["home_tokens"]["abs"]), text)
     return text, counts
 def _redact_json_obj(obj, ctx, acc):
     if isinstance(obj, dict):
