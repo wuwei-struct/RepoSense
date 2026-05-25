@@ -26,6 +26,7 @@ Current canonical source path:
 | learn-overview (P1) | `docs/assets/screenshots/learn-overview.png` | `.reposense_release_demo/current/learn/index.html` | captured | Show non-empty Learn concepts/cases cards | Crop out absolute local paths and browser chrome |
 | ai-risks-panel (P2) | `docs/assets/screenshots/ai-risks-panel.png` | `.reposense_release_demo/current/ai_risks/risks.md` or report AI Risks | captured | Show grouped risk panels / priority actions | Crop out absolute local paths and browser chrome |
 | ai-explain-detail (P2) | `docs/assets/screenshots/ai-explain-detail.png` | `.reposense_release_demo/current/ai_explain/*/explain.md` or report Explain | captured | Show confirmed/inferred/unknown explain blocks | Crop out absolute local paths and browser chrome |
+| studio-ui (P1) | `docs/assets/screenshots/studio-ui.png` | `http://127.0.0.1:8010` Studio analyze view | captured | Show local Studio UI (ZIP upload + local path analysis entry) | Crop out absolute local paths and browser chrome |
 
 ## Non-image assets
 

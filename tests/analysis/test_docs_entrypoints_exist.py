@@ -7,6 +7,7 @@ class DocsEntrypointsExistTest(unittest.TestCase):
         docs = [
             "docs/ARCHITECTURE.md",
             "docs/DEMO_QUICKSTART.md",
+            "docs/studio/STUDIO_UI.md",
             "docs/FACTS_PATTERNS_INSIGHTS.md",
             "docs/LEARN_OVERVIEW.md",
             "docs/AI_GROUNDED_PRINCIPLES.md",

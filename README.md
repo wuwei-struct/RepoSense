@@ -67,6 +67,62 @@ powershell -ExecutionPolicy Bypass -File tools/demo_run.ps1
 - `exports/context_pack.zip`
 - `run_manifest.json`
 
+## Studio UI
+
+RepoSense includes a local Studio UI for interactive analysis.
+
+Start it with:
+
+```powershell
+python -m reposense studio serve --port 8010
+```
+
+Or, when using the local virtual environment:
+
+```powershell
+.\.venv\Scripts\python.exe -m reposense studio serve --port 8010
+```
+
+Then open:
+
+`http://127.0.0.1:8010`
+
+### Studio UI
+
+![Studio UI](docs/assets/screenshots/studio-ui.png)
+
+Studio currently supports two local workflows:
+
+1. Upload repository ZIP.
+2. Analyze a local repository path.
+
+Current Studio flow:
+
+- Import by ZIP upload or local path.
+- Start an analysis run.
+- Track run status.
+- Open generated artifacts:
+  - `report.html`
+  - Learn UI
+  - SARIF
+  - Context Pack
+  - run manifest
+  - backend verifier / AI-derived outputs when available
+
+Boundary:
+
+- Studio is a local developer UI.
+- Local path analysis is for local Studio use on your machine.
+- Browser workflow does not upload the full local directory to a hosted cloud service by default.
+- RepoSense performs static reading for analysis and does not execute repository code.
+- CLI remains recommended for scripted/local automation.
+
+CLI local directory example:
+
+```powershell
+python -m reposense ci run --repo <path-to-repo> --out .reposense_runs --profile demo --with-context-pack
+```
+
 ## What RepoSense Can Do Today
 
 ### OSS Local Capabilities

@@ -5,6 +5,7 @@ import os
 import shutil
 import tempfile
 import urllib.parse
+from pathlib import Path
 from .workspace import WorkspaceManager
 from .jobs import JobManager
 
@@ -13,6 +14,23 @@ STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.pat
 
 workspace = WorkspaceManager()
 jobs = JobManager(workspace)
+
+
+def resolve_local_repo_path(repo_path):
+    raw = str(repo_path or "").strip()
+    if not raw:
+        raise ValueError("repo_path is required")
+    if raw.startswith("\\\\"):
+        raise ValueError("UNC/network paths are not supported in Studio local path mode")
+    try:
+        p = Path(raw).expanduser().resolve()
+    except Exception:
+        raise ValueError("invalid repo_path")
+    if not p.exists():
+        raise ValueError(f"repo_path not found: {p}")
+    if not p.is_dir():
+        raise ValueError(f"repo_path is not a directory: {p}")
+    return str(p)
 
 class StudioHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -296,6 +314,22 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json({"run_id": run_id, "id": run_id, "status": "queued"})
             except Exception as e:
                 self.send_error(500, str(e))
+        elif self.path == "/api/projects/import-path":
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length)
+            try:
+                data = json.loads(body or b"{}")
+            except Exception:
+                self.send_json_error(400, {"error": "invalid_json", "message": "invalid JSON body"})
+                return
+            try:
+                repo_path = resolve_local_repo_path(data.get("repo_path"))
+                project_id = workspace.import_local_path(repo_path)
+                self.send_json({"project_id": project_id, "repo_path": repo_path})
+            except ValueError as e:
+                self.send_json_error(400, {"error": "invalid_repo_path", "message": str(e)})
+            except Exception as e:
+                self.send_json_error(500, {"error": "import_path_failed", "message": str(e)})
         else:
             self.send_error(404, "API endpoint not found")
 

@@ -167,6 +167,15 @@
               选择 ZIP 文件
             </button>
           </div>
+          <div class="run-card" style="margin-top:16px">
+            <h3 style="margin-top:0">Analyze local repository path</h3>
+            <div style="margin-bottom:8px;color:var(--color-text-muted)">
+              Local path analysis runs on your machine. RepoSense reads repository files for static analysis and does not execute repository code.
+            </div>
+            <input type="text" id="local-repo-path" placeholder="E:\path\to\repo or /Users/me/project" style="width:100%;padding:8px;border-radius:4px;border:1px solid var(--color-border);margin-bottom:8px">
+            <div id="local-path-error" style="color:#d32f2f;min-height:20px"></div>
+            <button class="btn btn-secondary" onclick="startLocalPathFlow()">Analyze local path</button>
+          </div>
         </div>
 
         <div id="analyze-step-2" class="hidden">
@@ -263,6 +272,37 @@
           dz.innerHTML = '上传失败: ' + err;
           console.error(err);
         });
+    }
+
+    function startLocalPathFlow() {
+      const inp = document.getElementById('local-repo-path');
+      const errEl = document.getElementById('local-path-error');
+      const repoPath = (inp.value || '').trim();
+      errEl.textContent = '';
+      if (!repoPath) {
+        errEl.textContent = 'Local repository path is required.';
+        return;
+      }
+      fetch(apiUrl('/api/projects/import-path'), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ repo_path: repoPath })
+      })
+      .then(async r => {
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          throw new Error((data && data.message) || ('HTTP ' + r.status));
+        }
+        return data;
+      })
+      .then(data => {
+        currentProjectId = data.project_id;
+        document.getElementById('analyze-step-1').classList.add('hidden');
+        document.getElementById('analyze-step-2').classList.remove('hidden');
+      })
+      .catch(err => {
+        errEl.textContent = 'Local path import failed: ' + err.message;
+      });
     }
 
     function applyProfile() {

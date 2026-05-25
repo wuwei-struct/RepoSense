@@ -67,6 +67,48 @@ powershell -ExecutionPolicy Bypass -File tools/demo_run.ps1
 - `exports/context_pack.zip`
 - `run_manifest.json`
 
+## Studio UI
+
+RepoSense 已包含一个本地 Studio UI，用于交互式分析仓库。
+
+启动：
+
+```powershell
+.\.venv\Scripts\python.exe -m reposense studio serve --port 8010
+```
+
+然后打开：
+
+`http://127.0.0.1:8010`
+
+### Studio UI
+
+![Studio UI](docs/assets/screenshots/studio-ui.png)
+
+Studio 当前支持两种本地流程：
+
+1. 上传仓库 ZIP；
+2. 输入本地仓库路径并分析。
+
+当前 Studio 支持：
+
+- 通过 ZIP 或本地路径导入仓库；
+- 点击开始分析；
+- 查看 run 状态；
+- 打开生成的 report、Learn、SARIF、Context Pack、run manifest 等产物。
+
+边界说明：
+
+- Studio 是本地开发者 UI，不是云端 SaaS。
+- 本地路径分析只适用于本机 Studio。
+- 浏览器不会默认把整个本地目录上传到云端。
+- RepoSense 做静态读取分析，不执行仓库代码。
+- 如果要分析本地目录，继续使用 CLI。
+
+```powershell
+.\.venv\Scripts\python.exe -m reposense ci run --repo <repo-path> --out .reposense_runs --profile demo --with-context-pack
+```
+
 ## RepoSense 当前能力
 
 ### 已落地能力（OSS Local Capabilities）

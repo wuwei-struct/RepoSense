@@ -26,6 +26,19 @@ class WorkspaceManager:
             shutil.rmtree(project_path, ignore_errors=True)
             raise e
 
+    def import_local_path(self, repo_path):
+        project_id = str(uuid.uuid4())
+        project_path = os.path.join(self.projects_dir, project_id)
+        os.makedirs(project_path, exist_ok=True)
+        marker = os.path.join(project_path, "source_path.txt")
+        try:
+            with open(marker, "w", encoding="utf-8") as f:
+                f.write(repo_path)
+            return project_id
+        except Exception as e:
+            shutil.rmtree(project_path, ignore_errors=True)
+            raise e
+
     def create_run(self, project_id):
         run_id = f"run-{int(time.time())}-{str(uuid.uuid4())[:8]}"
         run_dir = os.path.join(self.runs_dir, run_id)
@@ -50,7 +63,17 @@ class WorkspaceManager:
         return run_id, run_dir
 
     def get_project_path(self, project_id):
-        return os.path.join(self.projects_dir, project_id)
+        project_path = os.path.join(self.projects_dir, project_id)
+        marker = os.path.join(project_path, "source_path.txt")
+        if os.path.isfile(marker):
+            try:
+                with open(marker, "r", encoding="utf-8") as f:
+                    p = (f.read() or "").strip()
+                if p:
+                    return p
+            except Exception:
+                pass
+        return project_path
     
     def get_run_dir(self, run_id):
         return os.path.join(self.runs_dir, run_id)

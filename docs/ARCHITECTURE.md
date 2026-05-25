@@ -26,6 +26,9 @@ Code Repo
 - Learn is the grounded learning layer. It organizes Concepts and Cases and links back to Evidence.
 - AI Insights is the derived reasoning layer. It consumes Facts + Patterns first, then optionally uses constrained source drill-down.
 - Studio is the local read UI layer for run outputs, risks, explain, snippets, and links into Learn.
+- Studio UI is the local interactive surface for ZIP import or local-path analysis, run orchestration, and artifact navigation.
+- Studio reuses the existing scanning/run/artifact pipeline and does not change Fact Engine semantics.
+- Studio is not a hosted cloud platform by default.
 
 ## Facts / Patterns / Insights Separation
 
