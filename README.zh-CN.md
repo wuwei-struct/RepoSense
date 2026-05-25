@@ -5,7 +5,7 @@
 RepoSense 会把仓库转成可审计的工程事实、副作用地图和面向下一轮 AI 升级的上下文包。
 RepoSense 将代码沉淀为可复核的工程事实、确定性模式和 grounded 工程洞察。
 
-**语言：** [English](README.md) | 简体中文
+**语言：** [English](./README.md) | 简体中文
 
 ## 为什么需要 RepoSense
 

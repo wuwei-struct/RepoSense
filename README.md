@@ -5,7 +5,7 @@
 RepoSense turns repositories into evidence-backed engineering facts, side-effect maps, and upgrade-ready context.
 RepoSense turns repositories into auditable engineering facts, deterministic patterns, and grounded engineering insights.
 
-**Language:** English | [简体中文](README.zh-CN.md)
+**Language:** English | [简体中文](./README.zh-CN.md)
 
 ## Why RepoSense
 

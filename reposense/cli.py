@@ -344,6 +344,14 @@ def main():
             except Exception as e:
                 print(str(e))
                 sys.exit(1)
+        elif args.ctx_sub == "brief":
+            out_dir = build_brief(args.run_dir, args.out, max_items=args.max_items, as_json=args.json)
+            if not args.json:
+                print(out_dir)
+        elif args.ctx_sub == "diff":
+            out_dir = build_context_diff(args.packA, args.packB, args.out, as_json=args.json)
+            if not args.json:
+                print(out_dir)
     elif args.cmd == "gate":
         if getattr(args, "gate", None):
             from .quality_gate import load_gate_config, collect_metrics, evaluate, write_quality_gate

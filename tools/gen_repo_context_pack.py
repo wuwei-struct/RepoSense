@@ -28,6 +28,10 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 DEFAULT_EXCLUDES = {
     ".git",
+    ".tmp_test_runs",
+    ".reposense_ci",
+    ".reposense_demo",
+    ".reposense_release_demo",
     "node_modules",
     "__pycache__",
     ".pytest_cache",
@@ -47,6 +51,8 @@ DEFAULT_EXCLUDES = {
     "packs",
     "context_out",
     "learn_out",
+    "local-artifacts",
+    "root-moved",
 }
 
 EXCLUDE_SUFFIXES = {
@@ -336,7 +342,12 @@ def build_tree(root: Path, excludes: set) -> str:
 
     def walk(dir_path: Path, prefix: str = "") -> None:
         entries = []
-        for child in dir_path.iterdir():
+        try:
+            children = list(dir_path.iterdir())
+        except FileNotFoundError:
+            # Concurrent temp cleanup can remove transient folders while walking.
+            return
+        for child in children:
             try:
                 rel = safe_relpath(child, root)
             except Exception:

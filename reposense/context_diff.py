@@ -33,12 +33,65 @@ def _sha256_dir(d):
             entries[rel] = h
     return [{"path": k, "sha256": entries[k]} for k in sorted(entries.keys())]
 def _collect_events(snap):
-    return {(e.get("type"), e.get("key")) for e in snap.get("events", [])}
+    events = snap.get("events", [])
+    if isinstance(events, list):
+        return {
+            (e.get("type"), e.get("key"))
+            for e in events
+            if isinstance(e, dict)
+        }
+    if isinstance(events, dict):
+        # Some snapshots store summarized counts under "events" instead of
+        # event entries. Only consume iterable event objects when present.
+        items = events.get("items")
+        if isinstance(items, list):
+            return {
+                (e.get("type"), e.get("key"))
+                for e in items
+                if isinstance(e, dict)
+            }
+        return set()
+    # Count/scalar/unknown shape: no event entries to diff.
+    return set()
+def _collect_events_from_pack(pack_dir):
+    eg = _read_json(Path(pack_dir) / "artifacts" / "event_graph.json") or {}
+    nodes = eg.get("nodes")
+    if not isinstance(nodes, list):
+        return set()
+    return {
+        (n.get("type"), n.get("key"))
+        for n in nodes
+        if isinstance(n, dict) and n.get("type") and n.get("key")
+    }
+def _collect_data_names_from_pack_events(pack_dir):
+    events = _collect_events_from_pack(pack_dir)
+    tables = set()
+    indexes = set()
+    for t, k in events:
+        if t == "table" and isinstance(k, str):
+            tables.add(k.split("table:", 1)[1] if k.startswith("table:") else k)
+        if t == "index" and isinstance(k, str):
+            indexes.add(k.split("index:", 1)[1] if k.startswith("index:") else k)
+    return tables, indexes
 def _collect_findings_stable(pack_dir):
     # use detections.sqlite to compute stable ids
     import sqlite3
-    conn = sqlite3.connect(str(Path(pack_dir) / "artifacts" / "detections.sqlite"))
+    dbp = Path(pack_dir) / "artifacts" / "detections.sqlite"
+    if not dbp.exists():
+        return set()
+    conn = sqlite3.connect(str(dbp))
     c = conn.cursor()
+    tables = {
+        r[0]
+        for r in c.execute("select name from sqlite_master where type='table'").fetchall()
+    }
+    # Older/minimal packs may not include findings/evidence tables.
+    if "findings" not in tables or "evidence" not in tables:
+        try:
+            conn.close()
+        except:
+            pass
+        return set()
     rows = c.execute("select f.fid, f.concept, f.rule_id, e.parse_level, f.confidence, f.primary_eid, f.meta_json, e.path from findings f join evidence e on e.eid=f.primary_eid").fetchall()
     items = set()
     for fid, concept, rule_id, parse_level, confidence, primary_eid, meta_json, path in rows:
@@ -72,8 +125,21 @@ def _collect_data_from_db(pack_dir):
     import sqlite3
     tables = set()
     indexes = set()
-    conn = sqlite3.connect(str(Path(pack_dir) / "artifacts" / "detections.sqlite"))
+    dbp = Path(pack_dir) / "artifacts" / "detections.sqlite"
+    if not dbp.exists():
+        return tables, indexes
+    conn = sqlite3.connect(str(dbp))
     c = conn.cursor()
+    db_tables = {
+        r[0]
+        for r in c.execute("select name from sqlite_master where type='table'").fetchall()
+    }
+    if "findings" not in db_tables:
+        try:
+            conn.close()
+        except:
+            pass
+        return tables, indexes
     for fid, concept, meta_json in c.execute("select fid, concept, meta_json from findings").fetchall():
         try:
             m = json.loads(meta_json or "{}")
@@ -113,6 +179,10 @@ def build_context_diff(packA, packB, out_dir, as_json=False):
     snapA = _read_json(Path(a_dir)/"snapshot.json") or {"events": [], "findings": []}
     snapB = _read_json(Path(b_dir)/"snapshot.json") or {"events": [], "findings": []}
     evA = _collect_events(snapA); evB = _collect_events(snapB)
+    if not evA:
+        evA = _collect_events_from_pack(a_dir)
+    if not evB:
+        evB = _collect_events_from_pack(b_dir)
     events_added = sorted(list(evB - evA))
     events_removed = sorted(list(evA - evB))
     fA = _collect_findings_stable(a_dir); fB = _collect_findings_stable(b_dir)
@@ -134,6 +204,13 @@ def build_context_diff(packA, packB, out_dir, as_json=False):
     if not tables_added and not tables_removed and not indexes_added and not indexes_removed:
         tbA, ixA = _collect_data_from_db(a_dir)
         tbB, ixB = _collect_data_from_db(b_dir)
+        tables_added = sorted(list(tbB - tbA))
+        tables_removed = sorted(list(tbA - tbB))
+        indexes_added = sorted(list(ixB - ixA))
+        indexes_removed = sorted(list(ixA - ixB))
+    if not tables_added and not tables_removed and not indexes_added and not indexes_removed:
+        tbA, ixA = _collect_data_names_from_pack_events(a_dir)
+        tbB, ixB = _collect_data_names_from_pack_events(b_dir)
         tables_added = sorted(list(tbB - tbA))
         tables_removed = sorted(list(tbA - tbB))
         indexes_added = sorted(list(ixB - ixA))
