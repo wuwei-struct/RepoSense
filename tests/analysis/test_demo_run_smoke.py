@@ -22,17 +22,21 @@ class DemoRunSmokeTest(unittest.TestCase):
                     "-Repo",
                     "tests/fixtures/repos/java_api_queue_db_closure_min",
                 ]
+                env = None
             else:
                 cmd = [
                     "bash",
                     "scripts/demo_run.sh",
                 ]
+                env = os.environ.copy()
+                env["OUT"] = out_root
             p = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=900,
                 cwd=os.getcwd(),
+                env=env,
             )
             self.assertEqual(
                 p.returncode,
