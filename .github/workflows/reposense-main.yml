@@ -34,8 +34,12 @@ jobs:
           mkdir -p baselines/prod_lite/specs_v2
           cp .reposense_ci/baseline.json baselines/prod_lite/specs_v2/baseline.json
           git add baselines/prod_lite/specs_v2/baseline.json
-          git commit -m "Update RepoSense baseline"
-          git push origin reposense-baselines
+          if git diff --cached --quiet; then
+            echo "No baseline changes to commit."
+          else
+            git commit -m "Update RepoSense baseline"
+            git push origin reposense-baselines
+          fi
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:

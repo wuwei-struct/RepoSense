@@ -10,17 +10,23 @@ class DemoRunSmokeTest(unittest.TestCase):
     def test_demo_run_generates_required_artifacts(self):
         out_root = make_temp_dir(prefix="reposense_demo_smoke_")
         try:
-            cmd = [
-                "powershell",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "tools/demo_run.ps1",
-                "-Out",
-                out_root,
-                "-Repo",
-                "tests/fixtures/repos/java_api_queue_db_closure_min",
-            ]
+            if os.name == "nt":
+                cmd = [
+                    "powershell",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    "tools/demo_run.ps1",
+                    "-Out",
+                    out_root,
+                    "-Repo",
+                    "tests/fixtures/repos/java_api_queue_db_closure_min",
+                ]
+            else:
+                cmd = [
+                    "bash",
+                    "scripts/demo_run.sh",
+                ]
             p = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
