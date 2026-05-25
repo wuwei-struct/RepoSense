@@ -22,6 +22,11 @@ def redact_text(text, ctx):
     text = _tmp_abs_pattern().sub(lambda m: (counts.__setitem__("abs", counts["abs"]+1)) or (ctx["home_tokens"]["abs"]), text)
     return text, counts
 def _redact_json_obj(obj, ctx, acc):
+    if isinstance(obj, str):
+        nv, c = redact_text(obj, ctx)
+        for kk in c:
+            acc[kk] = acc.get(kk, 0) + c[kk]
+        return nv
     if isinstance(obj, dict):
         out = {}
         for k, v in obj.items():
