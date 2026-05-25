@@ -7,6 +7,9 @@ name = "reposense"
 version = "0.1.0"
 description = "RepoSense"
 requires-python = ">=3.8"
+dependencies = [
+  "PyYAML>=6.0",
+]
 [project.scripts]
 reposense = "reposense.cli:main"
 

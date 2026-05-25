@@ -17,7 +17,7 @@ jobs:
       - name: Export OSS Snapshot with Smoke
         run: python tools/release/export_oss.py --out dist/oss_snapshot --smoke
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: oss-snapshot-artifacts
           path: |

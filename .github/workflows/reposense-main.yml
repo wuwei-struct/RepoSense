@@ -40,12 +40,13 @@ jobs:
             git commit -m "Update RepoSense baseline"
             git push origin reposense-baselines
           fi
+      - name: Find SARIF
+        id: find_sarif
+        run: |
+          SARIF_PATH=$(ls .reposense_ci/*/exports/report.sarif.json 2>/dev/null | head -n 1 || true)
+          echo "path=$SARIF_PATH" >> $GITHUB_OUTPUT
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.find_sarif.outputs.path }}
-        if: always()
-      - name: Find SARIF
-        id: find_sarif
-        run: |
-          echo "path=$(ls .reposense_ci/*/exports/report.sarif.json | head -n 1)" >> $GITHUB_OUTPUT
+        if: always() && steps.find_sarif.outputs.path != ''
