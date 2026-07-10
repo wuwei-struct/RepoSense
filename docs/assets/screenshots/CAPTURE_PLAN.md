@@ -41,3 +41,36 @@ Notes:
 - Prefer focused content-area crops over full-page screenshots.
 - Keep text readable at normal README width.
 - If `learn/index.html` is empty, do not mark `learn-overview.png` as captured.
+
+## Repository Review Demo Screenshots
+
+Use the canonical review demo source for review screenshots:
+
+- Generate review demo:
+  - `powershell -ExecutionPolicy Bypass -File tools/review_demo.ps1`
+- Canonical review demo path:
+  - `.reposense_review_demo/current/`
+
+Recommended review screenshot targets:
+
+P0:
+
+1. `docs/assets/screenshots/repository-review-report.png`
+   - Open: `.reposense_review_demo/current/repository_review_report.md`
+2. `docs/assets/screenshots/human-review-required.png`
+   - Open: `.reposense_review_demo/current/human_review_required.md`
+3. `docs/assets/screenshots/studio-review-panel.png`
+   - Open Studio and select the run/artifacts from `.reposense_review_demo/current/`
+
+P1:
+
+4. `docs/assets/screenshots/code-health-summary.png`
+   - Open: `.reposense_review_demo/current/code_health_summary.json`
+5. `docs/assets/screenshots/permission-risk-report.png`
+   - Open: `.reposense_review_demo/current/permission_risk_report.md`
+6. `docs/assets/screenshots/authz-matrix-report.png`
+   - Open: `.reposense_review_demo/current/authz_matrix_report.md`
+7. `docs/assets/screenshots/context-pack-review-section.png`
+   - Open: `.reposense_review_demo/current/context_pack/REVIEW/README.md`
+
+Do not embed these screenshots in README until the PNG files are captured and reviewed.

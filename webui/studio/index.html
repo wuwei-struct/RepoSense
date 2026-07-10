@@ -119,6 +119,27 @@
     .status-running { background: #e3f2fd; color: #1976d2; }
     .status-completed { background: #e8f5e9; color: #388e3c; }
     .status-failed { background: #ffebee; color: #d32f2f; }
+    .review-panel {
+      margin-top: 16px;
+      border-top: 1px solid var(--color-border);
+      padding-top: 16px;
+    }
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin: 12px 0;
+    }
+    .review-card {
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--color-bg);
+    }
+    .review-links a {
+      display: inline-block;
+      margin: 4px 8px 4px 0;
+    }
   </style>
 </head>
 <body>
@@ -215,6 +236,7 @@
           </div>
           
           <div class="log-window" id="run-logs"></div>
+          <div id="current-review-panel"></div>
         </div>
       </div>
     </div>
@@ -384,6 +406,10 @@
         const err = data.error_message || '';
         const title = document.getElementById('run-status-title');
         title.textContent = `状态: ${data.status} (阶段: ${data.phase})` + (err ? `｜错误：${err}` : '');
+        const reviewPanel = document.getElementById('current-review-panel');
+        if (reviewPanel) {
+          reviewPanel.innerHTML = renderReviewPanel(data);
+        }
         
           if (data.status === 'completed') {
             clearInterval(pollInterval);
@@ -421,6 +447,87 @@
       }
     }
 
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function artifactLink(artifact, fallbackName) {
+      if (!artifact || !artifact.url) return '';
+      const label = artifact.label || fallbackName || artifact.path || 'artifact';
+      return `<a href="${escapeHtml(artifact.url)}" target="_blank" class="btn btn-secondary" style="font-size:12px;padding:4px 8px;text-decoration:none">${escapeHtml(label)}</a>`;
+    }
+
+    function renderReviewPanel(run) {
+      const review = (run && run.review) || {};
+      const artifacts = review.artifacts || {};
+      if (!review.available) {
+        return `
+          <div class="review-panel">
+            <h3>Repository Review</h3>
+            <p style="color:var(--color-text-muted)">Repository Review artifacts are not generated yet.</p>
+            <pre class="log-window" style="height:auto;white-space:pre-wrap">reposense review report &lt;run_dir&gt;
+reposense health scan &lt;run_dir&gt; --repo &lt;repo_path&gt;
+reposense authz scan &lt;run_dir&gt; --repo &lt;repo_path&gt;
+reposense authz matrix &lt;run_dir&gt; --repo &lt;repo_path&gt;</pre>
+          </div>
+        `;
+      }
+      const decision = review.decision || 'N/A';
+      const humanCount = review.human_review_required_count == null ? 'N/A' : review.human_review_required_count;
+      const codeHealth = review.code_health || {};
+      const permission = review.permission || {};
+      const authz = review.authz_matrix || {};
+      const authzSummary = authz.summary || {};
+      return `
+        <div class="review-panel">
+          <h3>Repository Review</h3>
+          <p style="color:var(--color-text-muted)">Evidence-backed review artifacts for human review and AI-assisted maintenance. This does not replace code review.</p>
+          <div class="review-grid">
+            <div class="review-card">
+              <div style="font-weight:600">Review Decision</div>
+              <span class="status-badge status-completed">${escapeHtml(decision)}</span>
+            </div>
+            <div class="review-card">
+              <div style="font-weight:600">Human Review Required</div>
+              <div>${escapeHtml(humanCount)}</div>
+              <div class="review-links">${artifactLink(artifacts.human_review_required, 'human_review_required.md')}</div>
+            </div>
+            <div class="review-card">
+              <div style="font-weight:600">Code Health</div>
+              <div>${escapeHtml(codeHealth.total_findings == null ? 'available when generated' : codeHealth.total_findings + ' findings')}</div>
+              <div class="review-links">${artifactLink(artifacts.code_health_summary, 'code_health_summary.json')}${artifactLink(artifacts.maintainability_risks, 'maintainability_risks.json')}</div>
+            </div>
+            <div class="review-card">
+              <div style="font-weight:600">Permission Review</div>
+              <div>${escapeHtml(permission.total_risks == null ? 'available when generated' : permission.total_risks + ' risks')}</div>
+              <div class="review-links">${artifactLink(artifacts.permission_risk_report, 'permission_risk_report.md')}${artifactLink(artifacts.human_permission_review_required, 'human_permission_review_required.md')}</div>
+            </div>
+            <div class="review-card">
+              <div style="font-weight:600">AuthZ Matrix</div>
+              <div>${escapeHtml(authz.mode || 'available when generated')}</div>
+              <div>${authzSummary.missing_auth == null ? '' : 'missing auth: ' + escapeHtml(authzSummary.missing_auth)}</div>
+              <div class="review-links">${artifactLink(artifacts.authz_matrix_report, 'authz_matrix_report.md')}${artifactLink(artifacts.authz_negative_test_plan, 'authz_negative_test_plan.md')}</div>
+            </div>
+            <div class="review-card">
+              <div style="font-weight:600">Context Pack REVIEW</div>
+              <div class="review-links">${artifactLink(artifacts.review_context, 'Context Pack REVIEW')}${artifactLink(artifacts.ai_maintenance_constraints, 'ai_maintenance_constraints.md')}</div>
+            </div>
+          </div>
+          <div class="review-links">
+            ${artifactLink(artifacts.repository_review_report, 'repository_review_report.md')}
+            ${artifactLink(artifacts.backend_verifier_report, 'backend_verifier_report.md')}
+            ${artifactLink(artifacts.review_risk_matrix, 'review_risk_matrix.json')}
+            ${artifactLink(artifacts.authz_matrix_diff, 'authz_matrix_diff.json')}
+          </div>
+        </div>
+      `;
+    }
+
     function loadRuns() {
       fetch(apiUrl('/api/runs'))
         .then(r => r.json())
@@ -453,6 +560,7 @@
                     `<a href="/runs/${run.run_id}/report/" target="_blank" class="btn btn-secondary" style="font-size:12px;padding:4px 8px;text-decoration:none;margin-left:8px">报告</a>` : ''}
                 </div>
               </div>
+              ${renderReviewPanel(run)}
             `;
             list.appendChild(div);
           });

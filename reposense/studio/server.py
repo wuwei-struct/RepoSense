@@ -16,6 +16,135 @@ workspace = WorkspaceManager()
 jobs = JobManager(workspace)
 
 
+REVIEW_ARTIFACTS = {
+    "repository_review_report": {
+        "label": "Repository Review Report",
+        "path": "repository_review_report.md",
+    },
+    "repository_review_report_json": {
+        "label": "Repository Review Report JSON",
+        "path": "repository_review_report.json",
+    },
+    "review_risk_matrix": {
+        "label": "Review Risk Matrix",
+        "path": "review_risk_matrix.json",
+    },
+    "human_review_required": {
+        "label": "Human Review Required",
+        "path": "human_review_required.md",
+    },
+    "backend_verifier_report": {
+        "label": "Backend Verifier Report",
+        "path": "backend_verifier_report.md",
+    },
+    "code_health_summary": {
+        "label": "Code Health Summary",
+        "path": "code_health_summary.json",
+    },
+    "maintainability_risks": {
+        "label": "Maintainability Risks",
+        "path": "maintainability_risks.json",
+    },
+    "permission_risk_report": {
+        "label": "Permission Risk Report",
+        "path": "permission_risk_report.md",
+    },
+    "human_permission_review_required": {
+        "label": "Human Permission Review Required",
+        "path": "human_permission_review_required.md",
+    },
+    "authz_matrix_report": {
+        "label": "AuthZ Matrix Report",
+        "path": "authz_matrix_report.md",
+    },
+    "authz_matrix_diff": {
+        "label": "AuthZ Matrix Diff",
+        "path": "authz_matrix_diff.json",
+    },
+    "authz_negative_test_plan": {
+        "label": "AuthZ Negative Test Plan",
+        "path": "authz_negative_test_plan.md",
+    },
+    "review_context": {
+        "label": "Context Pack REVIEW",
+        "path": "context_pack/REVIEW/README.md",
+    },
+    "ai_maintenance_constraints": {
+        "label": "AI Maintenance Constraints",
+        "path": "context_pack/REVIEW/ai_maintenance_constraints.md",
+    },
+}
+
+
+def _read_json_file(path):
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def _artifact_url(run_id, rel_path):
+    safe_run = urllib.parse.quote(str(run_id), safe="")
+    safe_path = urllib.parse.quote(str(rel_path).replace("\\", "/"), safe="/")
+    return f"/runs/{safe_run}/{safe_path}"
+
+
+def build_review_metadata(run_id, run_dir):
+    artifacts = {}
+    for key, spec in REVIEW_ARTIFACTS.items():
+        rel = spec["path"]
+        if os.path.isfile(os.path.join(run_dir, rel)):
+            artifacts[key] = {
+                "label": spec["label"],
+                "path": rel,
+                "url": _artifact_url(run_id, rel),
+            }
+
+    review = {
+        "available": bool(artifacts),
+        "artifacts": artifacts,
+    }
+    if not artifacts:
+        return review
+
+    matrix_path = os.path.join(run_dir, "review_risk_matrix.json")
+    matrix = _read_json_file(matrix_path)
+    if isinstance(matrix, dict):
+        review["decision"] = matrix.get("decision")
+        review["counts"] = matrix.get("counts") or {}
+        review["top_risks"] = matrix.get("top_risks") or []
+        review["human_review_required_count"] = matrix.get("human_review_required_count", 0)
+    elif os.path.isfile(matrix_path):
+        review["parse_warning"] = "review_risk_matrix.json could not be parsed"
+
+    code_health = _read_json_file(os.path.join(run_dir, "code_health_summary.json"))
+    if isinstance(code_health, dict):
+        review["code_health"] = {
+            "total_findings": code_health.get("total_findings", 0),
+            "counts_by_severity": code_health.get("counts_by_severity") or {},
+            "health_score": code_health.get("health_score") or {},
+        }
+
+    permission = _read_json_file(os.path.join(run_dir, "permission_risks.json"))
+    if isinstance(permission, dict):
+        risks = permission.get("risks") or []
+        review["permission"] = {
+            "total_risks": len(risks),
+            "high": sum(1 for x in risks if str(x.get("severity") or "").lower() == "high"),
+            "medium": sum(1 for x in risks if str(x.get("severity") or "").lower() == "medium"),
+        }
+
+    authz = _read_json_file(os.path.join(run_dir, "authz_matrix_diff.json"))
+    if isinstance(authz, dict):
+        review["authz_matrix"] = {
+            "mode": authz.get("mode"),
+            "summary": authz.get("summary") or {},
+        }
+
+    return review
+
+
 def resolve_local_repo_path(repo_path):
     raw = str(repo_path or "").strip()
     if not raw:
@@ -202,6 +331,7 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                         pr["summary"]["baseline_used"] = bool(gate.get("baseline_used"))
                         pr["summary"]["regressions"] = {"total": reg.get("total",0), "added_error": reg.get("added_error",0), "severity_upgrades": reg.get("severity_upgrades",0), "added_warning": reg.get("added_warning",0)}
                         pr["summary"]["baseline_compatible"] = bool(gate.get("baseline_compatible", True))
+                    pr["review"] = build_review_metadata(rid, run_dir)
                 except Exception:
                     pass
                 out.append(pr)
@@ -224,6 +354,10 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                     status["logs_tail"] = status.get("logs", [])
                 status.setdefault("phase", "")
                 status.setdefault("status", "")
+                try:
+                    status["review"] = build_review_metadata(run_id, workspace.get_run_dir(run_id))
+                except Exception:
+                    pass
                 self.send_json(status)
                 return
             # fallback to persisted state
@@ -238,6 +372,10 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                     "updated_at": st.get("updated_at", 0),
                     "log_path": st.get("log_path", ""),
                 }
+                try:
+                    out["review"] = build_review_metadata(run_id, workspace.get_run_dir(run_id))
+                except Exception:
+                    pass
                 self.send_json(out)
             else:
                 self.send_json_error(404, {"error": "run_not_found", "message": "Run not found"})

@@ -64,6 +64,63 @@ Canonical release screenshots must come from one fixed demo directory:
 - Capture region: `confirmed / inferred / unknown`
 - Save to: `docs/assets/screenshots/ai-explain-detail.png`
 
+## Repository Review Demo Targets
+
+Generate the canonical review demo first:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/review_demo.ps1
+```
+
+Use only:
+
+`.reposense_review_demo/current/`
+
+Do not use older run folders for review screenshots.
+
+## 9) repository-review-report.png (P0)
+
+- Open: `.reposense_review_demo/current/repository_review_report.md`
+- Capture region: review summary, decision, and major review sections
+- Save to: `docs/assets/screenshots/repository-review-report.png`
+
+## 10) human-review-required.png (P0)
+
+- Open: `.reposense_review_demo/current/human_review_required.md`
+- Capture region: first human review items and required decisions
+- Save to: `docs/assets/screenshots/human-review-required.png`
+
+## 11) studio-review-panel.png (P0)
+
+- Open Studio: `http://127.0.0.1:8010`
+- Use a run with review artifacts from `.reposense_review_demo/current/`
+- Capture region: Repository Review panel
+- Save to: `docs/assets/screenshots/studio-review-panel.png`
+
+## 12) code-health-summary.png (P1)
+
+- Open: `.reposense_review_demo/current/code_health_summary.json`
+- Capture region: total findings, severity/status counts, health score note
+- Save to: `docs/assets/screenshots/code-health-summary.png`
+
+## 13) permission-risk-report.png (P1)
+
+- Open: `.reposense_review_demo/current/permission_risk_report.md`
+- Capture region: summary and high-risk permission findings
+- Save to: `docs/assets/screenshots/permission-risk-report.png`
+
+## 14) authz-matrix-report.png (P1)
+
+- Open: `.reposense_review_demo/current/authz_matrix_report.md`
+- Capture region: matrix mode, missing expected signals, limitations
+- Save to: `docs/assets/screenshots/authz-matrix-report.png`
+
+## 15) context-pack-review-section.png (P1)
+
+- Open: `.reposense_review_demo/current/context_pack/REVIEW/README.md`
+- Capture region: recommended reading order and available review artifacts
+- Save to: `docs/assets/screenshots/context-pack-review-section.png`
+
 ## Privacy / quality checks before commit
 
 - Do not expose local absolute paths (for example `E:/projects ide/RepoSense`).

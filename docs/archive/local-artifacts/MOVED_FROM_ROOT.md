@@ -78,3 +78,4 @@ This migration was executed in **non-destructive mode**.
 |---|---|---|
 | .reposense_demo_release_assets_current | docs/archive/local-artifacts/root-moved/.reposense_demo_release_assets_current-20260516-104146 | archived legacy demo output directory |
 | .reposense_release_demo/current | docs/archive/local-artifacts/root-moved/current-20260516-104306 | archived previous canonical release demo before regeneration |
+| E:\projects ide\RepoSense\.reposense_review_demo\current | E:\projects ide\RepoSense\docs\archive\local-artifacts\root-moved\review-demo-current-20260705-153712 | archive previous canonical review demo |

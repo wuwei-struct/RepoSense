@@ -6,6 +6,7 @@ Use Context Pack as a facts-first handoff before asking an assistant to plan or 
 
 ## Recommended Reading Order
 
+0. `REVIEW/README.md` and `REVIEW/human_review_required.md` when the pack contains a REVIEW section
 1. `README.md`
 2. `MAP/index.json`
 3. `ARTIFACTS/quality_gate.json`

@@ -1,0 +1,24 @@
+resources:
+  order:
+    actions:
+      refund:
+        allow:
+          - role: admin
+          - permission: order:refund
+        requires:
+          - transaction
+          - audit_log
+
+routes:
+  POST /api/orders/:id/refund:
+    resource: order
+    action: refund
+    expected:
+      auth: required
+      permissions:
+        - order:refund
+      ownership_check: required
+      tenant_boundary: required
+      transaction: required
+      audit_log: required
+

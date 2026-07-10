@@ -6,6 +6,7 @@ _demo_out/
 .reposense_demo_release_assets/
 .reposense_learn_cases/
 .reposense_release_demo/
+.reposense_review_demo/
 .tmp_test_runs/
 .tmp_test/
 .local_archive/

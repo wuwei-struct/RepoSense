@@ -28,6 +28,25 @@ Current canonical source path:
 | ai-explain-detail (P2) | `docs/assets/screenshots/ai-explain-detail.png` | `.reposense_release_demo/current/ai_explain/*/explain.md` or report Explain | captured | Show confirmed/inferred/unknown explain blocks | Crop out absolute local paths and browser chrome |
 | studio-ui (P1) | `docs/assets/screenshots/studio-ui.png` | `http://127.0.0.1:8010` Studio analyze view | captured | Show local Studio UI (ZIP upload + local path analysis entry) | Crop out absolute local paths and browser chrome |
 
+## Screenshot Status (Repository Review Demo)
+
+Review demo screenshots are captured from the canonical review demo:
+
+- Generate with:
+  - `powershell -ExecutionPolicy Bypass -File tools/review_demo.ps1`
+- Use fixed path:
+  - `.reposense_review_demo/current/`
+
+| asset | target_path | source_page | status | purpose | privacy_note |
+|---|---|---|---|---|---|
+| repository-review-report (P0) | `docs/assets/screenshots/repository-review-report.png` | `.reposense_review_demo/current/repository_review_report.md` | pending_manual_capture | Show repository-level review summary and decision | Crop out absolute local paths and browser chrome |
+| human-review-required (P0) | `docs/assets/screenshots/human-review-required.png` | `.reposense_review_demo/current/human_review_required.md` | pending_manual_capture | Show human review queue for risky areas | Crop out absolute local paths and browser chrome |
+| studio-review-panel (P0) | `docs/assets/screenshots/studio-review-panel.png` | Studio run detail for `.reposense_review_demo/current/` artifacts | pending_manual_capture | Show Repository Review panel in Studio | Crop out absolute local paths and browser chrome |
+| code-health-summary (P1) | `docs/assets/screenshots/code-health-summary.png` | `.reposense_review_demo/current/code_health_summary.json` | pending_manual_capture | Show Code Health Radar summary artifact | Crop out absolute local paths and browser chrome |
+| permission-risk-report (P1) | `docs/assets/screenshots/permission-risk-report.png` | `.reposense_review_demo/current/permission_risk_report.md` | pending_manual_capture | Show Permission Auditor report | Crop out absolute local paths and browser chrome |
+| authz-matrix-report (P1) | `docs/assets/screenshots/authz-matrix-report.png` | `.reposense_review_demo/current/authz_matrix_report.md` | pending_manual_capture | Show AuthZ Matrix expected-vs-observed diff report | Crop out absolute local paths and browser chrome |
+| context-pack-review-section (P1) | `docs/assets/screenshots/context-pack-review-section.png` | `.reposense_review_demo/current/context_pack/REVIEW/README.md` | pending_manual_capture | Show Context Pack REVIEW handoff section | Crop out absolute local paths and browser chrome |
+
 ## Non-image assets
 
 | asset | path | status | purpose |

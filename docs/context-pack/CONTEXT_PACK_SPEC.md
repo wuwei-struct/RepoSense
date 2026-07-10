@@ -54,6 +54,7 @@ A typical context pack includes:
 - `SPEC/*`
 - `EVIDENCE/*`
 - `ARTIFACTS/*`
+- `REVIEW/*`
 - `manifest.json`
 
 Depending on run content/version, additional map/artifact files may exist.
@@ -65,6 +66,7 @@ Depending on run content/version, additional map/artifact files may exist.
 - `SPEC/*`: schema and shape references
 - `EVIDENCE/*`: evidence snippets/references for grounded tracing
 - `ARTIFACTS/*`: packaged facts and derived outputs
+- `REVIEW/*`: evidence-backed repository review handoff for AI-assisted maintenance and human review
 - `manifest.json`: package-level contract/traceability metadata
 
 ## Facts vs Derived/Export
@@ -107,3 +109,11 @@ Context Pack provides evidence-backed context for AI collaboration and project m
 It is not a full backend correctness proof.
 
 It supports conservative, reproducible inspection and handoff.
+
+## REVIEW Directory
+
+`context_pack/REVIEW/` is the review handoff section for AI-assisted maintenance and human code review.
+
+It packages existing review outputs such as Repository Review, Backend Verifier, Code Health Radar, Permission Auditor, AuthZ Matrix, Human Review Required, and AI maintenance constraints.
+
+Only generated artifacts are copied. Missing review artifacts are listed as missing in `REVIEW/README.md`.

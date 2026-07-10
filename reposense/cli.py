@@ -35,6 +35,10 @@ from .analysis.ai.explain_export import export_ai_explain
 from .analysis.ai.risks_export import export_ai_risks
 from .analysis.ai.ask_export import export_ai_ask
 from .analysis.reports.backend_verifier_report import export_backend_verifier_report
+from .analysis.review.review_export import export_repository_review_report
+from .analysis.health.health_export import export_code_health
+from .analysis.authz.authz_export import export_permission_auditor
+from .analysis.authz.authz_matrix_export import export_authz_matrix
 def main():
     if "--version" in sys.argv or "-V" in sys.argv:
         try:
@@ -332,6 +336,32 @@ def main():
     p_backend_report.add_argument("run_dir")
     p_backend_report.add_argument("--json", action="store_true")
     p_backend_report.add_argument("--markdown", action="store_true")
+    p_review = subparsers.add_parser("review")
+    sub_review = p_review.add_subparsers(dest="review_sub")
+    p_review_report = sub_review.add_parser("report")
+    p_review_report.add_argument("run_dir")
+    p_review_report.add_argument("--json", action="store_true")
+    p_review_report.add_argument("--markdown", action="store_true")
+    p_health = subparsers.add_parser("health")
+    sub_health = p_health.add_subparsers(dest="health_sub")
+    p_health_scan = sub_health.add_parser("scan")
+    p_health_scan.add_argument("run_dir")
+    p_health_scan.add_argument("--repo")
+    p_health_scan.add_argument("--json", action="store_true")
+    p_health_scan.add_argument("--markdown", action="store_true")
+    p_authz = subparsers.add_parser("authz")
+    sub_authz = p_authz.add_subparsers(dest="authz_sub")
+    p_authz_scan = sub_authz.add_parser("scan")
+    p_authz_scan.add_argument("run_dir")
+    p_authz_scan.add_argument("--repo")
+    p_authz_scan.add_argument("--json", action="store_true")
+    p_authz_scan.add_argument("--markdown", action="store_true")
+    p_authz_matrix = sub_authz.add_parser("matrix")
+    p_authz_matrix.add_argument("run_dir")
+    p_authz_matrix.add_argument("--repo")
+    p_authz_matrix.add_argument("--contract")
+    p_authz_matrix.add_argument("--json", action="store_true")
+    p_authz_matrix.add_argument("--markdown", action="store_true")
     args = parser.parse_args()
     if args.cmd == "scan":
         run_scan(args.input, args.out, args.ruleset, args.budget, base_run_dir=args.base, specs_dir=args.specs)
@@ -814,4 +844,151 @@ def main():
                 print(res.get("markdown") or "")
             if args.json:
                 print(json.dumps({"ok": True, "json_path": res.get("json_path"), "markdown_path": res.get("markdown_path"), "report": rpt}, ensure_ascii=False))
+    elif args.cmd == "review":
+        if args.review_sub == "report":
+            res = export_repository_review_report(args.run_dir)
+            matrix = res.get("risk_matrix") or {}
+            report = res.get("report") or {}
+            summary = report.get("review_summary") or {}
+            print(
+                "repository_review decision={d} risks={r} human_review_required={h}".format(
+                    d=str(matrix.get("decision") or "PASS"),
+                    r=int(summary.get("total_risks") or 0),
+                    h=int(matrix.get("human_review_required_count") or 0),
+                )
+            )
+            print(res.get("report_json_path") or "")
+            print(res.get("report_markdown_path") or "")
+            print(res.get("risk_matrix_path") or "")
+            print(res.get("human_review_path") or "")
+            if args.markdown:
+                print(res.get("markdown") or "")
+            if args.json:
+                print(json.dumps({"ok": True, "report": report, "risk_matrix": matrix, "paths": {
+                    "repository_review_report_json": res.get("report_json_path"),
+                    "repository_review_report_md": res.get("report_markdown_path"),
+                    "review_risk_matrix_json": res.get("risk_matrix_path"),
+                    "human_review_required_md": res.get("human_review_path"),
+                }}, ensure_ascii=False))
+    elif args.cmd == "health":
+        if args.health_sub == "scan":
+            try:
+                res = export_code_health(args.run_dir, repo_path=args.repo, write_markdown=bool(args.markdown))
+            except ValueError as e:
+                print(str(e))
+                sys.exit(2)
+            summary = res.get("summary") or {}
+            sev = summary.get("counts_by_severity") or {}
+            score = (summary.get("health_score") or {}).get("score")
+            print(
+                "code_health findings={f} high={h} medium={m} score={s}".format(
+                    f=int(summary.get("total_findings") or 0),
+                    h=int(sev.get("high") or 0),
+                    m=int(sev.get("medium") or 0),
+                    s=int(score or 0),
+                )
+            )
+            print(res.get("code_health_path") or "")
+            print(res.get("summary_path") or "")
+            print(res.get("risks_path") or "")
+            if args.markdown:
+                print(res.get("markdown") or "")
+            if args.json:
+                print(
+                    json.dumps(
+                        {
+                            "ok": True,
+                            "summary": summary,
+                            "paths": {
+                                "code_health": res.get("code_health_path"),
+                                "code_health_summary": res.get("summary_path"),
+                                "maintainability_risks": res.get("risks_path"),
+                            },
+                        },
+                        ensure_ascii=False,
+                    )
+                )
+    elif args.cmd == "authz":
+        if args.authz_sub == "scan":
+            try:
+                res = export_permission_auditor(args.run_dir, repo_path=args.repo)
+            except ValueError as e:
+                print(str(e))
+                sys.exit(2)
+            summary = res.get("summary") or {}
+            sev = summary.get("counts_by_severity") or {}
+            print(
+                "permission_auditor risks={r} high={h} medium={m} routes={routes}".format(
+                    r=int(summary.get("total_risks") or 0),
+                    h=int(sev.get("high") or 0),
+                    m=int(sev.get("medium") or 0),
+                    routes=int(summary.get("routes") or 0),
+                )
+            )
+            print(res.get("surface_path") or "")
+            print(res.get("risks_path") or "")
+            print(res.get("report_path") or "")
+            print(res.get("human_review_path") or "")
+            print(res.get("negative_test_plan_path") or "")
+            if args.markdown:
+                print(res.get("report_markdown") or "")
+            if args.json:
+                print(
+                    json.dumps(
+                        {
+                            "ok": True,
+                            "summary": summary,
+                            "paths": {
+                                "permission_surface": res.get("surface_path"),
+                                "permission_risks": res.get("risks_path"),
+                                "permission_risk_report": res.get("report_path"),
+                                "human_permission_review_required": res.get("human_review_path"),
+                                "authz_negative_test_plan": res.get("negative_test_plan_path"),
+                            },
+                        },
+                        ensure_ascii=False,
+                    )
+                )
+        elif args.authz_sub == "matrix":
+            try:
+                res = export_authz_matrix(args.run_dir, repo_path=args.repo, contract_path=args.contract)
+            except ValueError as e:
+                print(str(e))
+                sys.exit(2)
+            diff = res.get("diff") or {}
+            summary = diff.get("summary") or {}
+            print(
+                "authz_matrix mode={mode} routes={routes} missing_auth={ma} missing_permission={mp}".format(
+                    mode=str(diff.get("mode") or "inferred_only"),
+                    routes=int(summary.get("total_routes") or 0),
+                    ma=int(summary.get("missing_auth") or 0),
+                    mp=int(summary.get("missing_permission") or 0),
+                )
+            )
+            if res.get("loaded_path"):
+                print(res.get("loaded_path"))
+            print(res.get("inferred_path") or "")
+            print(res.get("diff_path") or "")
+            print(res.get("report_path") or "")
+            print(res.get("negative_test_plan_path") or "")
+            if args.markdown:
+                print(res.get("report_markdown") or "")
+            if args.json:
+                print(
+                    json.dumps(
+                        {
+                            "ok": True,
+                            "mode": diff.get("mode"),
+                            "summary": summary,
+                            "paths": {
+                                "authz_matrix_loaded": res.get("loaded_path"),
+                                "authz_matrix_inferred": res.get("inferred_path"),
+                                "authz_matrix_diff": res.get("diff_path"),
+                                "authz_matrix_report": res.get("report_path"),
+                                "authz_negative_test_plan": res.get("negative_test_plan_path"),
+                            },
+                        },
+                        ensure_ascii=False,
+                    )
+                )
 

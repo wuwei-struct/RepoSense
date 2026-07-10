@@ -109,6 +109,16 @@ Current Studio flow:
   - run manifest
   - backend verifier / AI-derived outputs when available
 
+Studio can also surface Repository Review artifacts, including human review required items, Code Health, Permission Review, AuthZ Matrix, and the Context Pack REVIEW section when those artifacts are generated.
+
+For a complete review demo run that feeds the Studio Review panel and release screenshots:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/review_demo.ps1
+```
+
+The canonical output is `.reposense_review_demo/current/`.
+
 Boundary:
 
 - Studio is a local developer UI.
@@ -136,6 +146,7 @@ python -m reposense ci run --repo <path-to-repo> --out .reposense_runs --profile
 - Quality Gate
 - Baseline & Diff
 - Run Manifest
+- Repository Review Mode, Code Health Radar MVP, Permission Auditor MVP, and optional AuthZ Matrix
 - Learn local site (`learn/index.html`)
 - Deterministic pattern outputs:
   - `patterns.json` / `pattern_summary.json`
@@ -158,6 +169,8 @@ python -m reposense ci run --repo <path-to-repo> --out .reposense_runs --profile
 Context Pack is the handoff layer for the next AI-assisted change.
 
 It packages API surface, backend events, findings, evidence, quality gate, baseline diff, and run manifest into a reproducible context bundle.
+
+Context Pack now includes a `REVIEW/` section for AI-assisted maintenance and human review handoff.
 
 ## What RepoSense Is Not
 
@@ -188,6 +201,10 @@ RepoSense AI outputs follow a grounded contract: Facts-only by default, constrai
 - [docs/DEMO_QUICKSTART.md](docs/DEMO_QUICKSTART.md)
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - [docs/reports/BACKEND_VERIFIER_REPORT.md](docs/reports/BACKEND_VERIFIER_REPORT.md)
+- [docs/review/REPOSITORY_REVIEW_MODE.md](docs/review/REPOSITORY_REVIEW_MODE.md)
+- [docs/review/CODE_HEALTH_RADAR.md](docs/review/CODE_HEALTH_RADAR.md)
+- [docs/review/PERMISSION_AUDITOR.md](docs/review/PERMISSION_AUDITOR.md)
+- [docs/review/AUTHZ_MATRIX.md](docs/review/AUTHZ_MATRIX.md)
 - [docs/context-pack/CONTEXT_PACK_SPEC.md](docs/context-pack/CONTEXT_PACK_SPEC.md)
 - [docs/AI_GROUNDED_PRINCIPLES.md](docs/AI_GROUNDED_PRINCIPLES.md)
 - Full docs index: [docs/INDEX.md](docs/INDEX.md)
@@ -208,6 +225,8 @@ Current stable screenshot targets include:
 - API Surface
 
 Learn / AI Risks / AI Explain screenshots are captured from the same canonical release demo run.
+
+More Repository Review screenshots are tracked in [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md), including Human Review Required, Code Health, Permission Review, AuthZ Matrix, and Context Pack REVIEW section.
 
 ## Screenshots
 

@@ -17,6 +17,178 @@ def _read_json(path, default=None):
         return default if default is not None else {}
 
 
+REVIEW_ARTIFACTS = [
+    ("repository_review_report.md", "Repository-level evidence-guided review report."),
+    ("review_risk_matrix.json", "Repository review decision and risk matrix."),
+    ("human_review_required.md", "Human review queue for risky paths and artifacts."),
+    ("backend_verifier_report.md", "Backend transaction, side-effect, and evidence summary."),
+    ("code_health_summary.json", "Code Health Radar counts, top files, and experimental score."),
+    ("maintainability_risks.json", "Code Health risks normalized for repository review."),
+    ("permission_risk_report.md", "Permission Auditor findings and review summary."),
+    ("human_permission_review_required.md", "Permission-specific human review queue."),
+    ("authz_matrix_report.md", "AuthZ Matrix inferred/contract diff report."),
+    ("authz_matrix_diff.json", "AuthZ Matrix expected-vs-observed diff data."),
+    ("authz_negative_test_plan.md", "Suggested negative authorization tests."),
+]
+
+
+def _copy_review_artifacts(run_dir, pack_root):
+    review_dir = os.path.join(pack_root, "REVIEW")
+    os.makedirs(review_dir, exist_ok=True)
+    rows = []
+    for rel, purpose in REVIEW_ARTIFACTS:
+        src = os.path.join(run_dir, rel)
+        dst = os.path.join(review_dir, rel)
+        if os.path.isfile(src):
+            try:
+                with open(src, "rb") as fi, open(dst, "wb") as fo:
+                    fo.write(fi.read())
+                rows.append({"path": rel, "purpose": purpose, "status": "available"})
+            except Exception:
+                rows.append({"path": rel, "purpose": purpose, "status": "missing"})
+        else:
+            rows.append({"path": rel, "purpose": purpose, "status": "missing"})
+    return rows
+
+
+def _review_outputs(rows):
+    outputs = {
+        "review_section": "context_pack/REVIEW/",
+        "review_readme": "context_pack/REVIEW/README.md",
+        "ai_maintenance_constraints": "context_pack/REVIEW/ai_maintenance_constraints.md",
+    }
+    key_map = {
+        "repository_review_report.md": "repository_review_report",
+        "review_risk_matrix.json": "review_risk_matrix",
+        "human_review_required.md": "human_review_required",
+        "backend_verifier_report.md": "backend_verifier_report",
+        "code_health_summary.json": "code_health_summary",
+        "maintainability_risks.json": "maintainability_risks",
+        "permission_risk_report.md": "permission_risk_report",
+        "human_permission_review_required.md": "human_permission_review_required",
+        "authz_matrix_report.md": "authz_matrix_report",
+        "authz_matrix_diff.json": "authz_matrix_diff",
+        "authz_negative_test_plan.md": "authz_negative_test_plan",
+    }
+    for row in rows:
+        if row.get("status") == "available":
+            outputs[key_map[row["path"]]] = "context_pack/REVIEW/" + row["path"]
+    return outputs
+
+
+def _write_review_readme(run_dir, pack_root, rows):
+    review_dir = os.path.join(pack_root, "REVIEW")
+    lines = [
+        "# Repository Review Context",
+        "",
+        "## What this section is",
+        "",
+        "This REVIEW section packages the evidence-backed review outputs that should be read before the next AI-assisted maintenance or upgrade.",
+        "",
+        "## Recommended reading order",
+        "",
+        "1. repository_review_report.md",
+        "2. human_review_required.md",
+        "3. backend_verifier_report.md",
+        "4. code_health_summary.json",
+        "5. permission_risk_report.md",
+        "6. authz_matrix_report.md",
+        "7. authz_negative_test_plan.md",
+        "8. ai_maintenance_constraints.md",
+        "",
+        "## Available review artifacts",
+        "",
+        "path | purpose | status",
+        "--- | --- | ---",
+    ]
+    for row in rows:
+        lines.append(f"{row['path']} | {row['purpose']} | {row['status']}")
+    lines += [
+        "",
+        "## Boundaries",
+        "",
+        "- This is not a correctness proof.",
+        "- This does not replace human code review.",
+        "- Suspected findings require human confirmation.",
+        "- AI assistants should not make broad changes without checking human_review_required.md.",
+        "",
+        "## Suggested use",
+        "",
+        "- Use this section before asking an AI assistant to modify the repository.",
+        "- Use human_review_required.md to identify risky areas.",
+        "- Use authz_negative_test_plan.md before changing permission-sensitive code.",
+        "- Use backend_verifier_report.md before modifying side-effect-heavy code.",
+        "",
+    ]
+    with open(os.path.join(review_dir, "README.md"), "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+
+
+def _top_review_files(run_dir):
+    out = []
+    for rel, artifact, reason_key in [
+        ("human_review_required.md", "human_review_required.md", "human review required"),
+        ("maintainability_risks.json", "maintainability_risks.json", "code health risk"),
+        ("permission_risks.json", "permission_risks.json", "permission risk"),
+        ("authz_matrix_diff.json", "authz_matrix_diff.json", "authz matrix diff"),
+    ]:
+        obj = _read_json(os.path.join(run_dir, rel), {})
+        rows = []
+        if isinstance(obj, dict):
+            rows = obj.get("risks") or obj.get("diffs") or []
+        for row in rows[:5]:
+            path = row.get("file") or ((row.get("route") or {}).get("path")) or ""
+            reason = row.get("reason") or row.get("title") or reason_key
+            if path:
+                out.append({"file": path, "reason": reason, "artifact": artifact})
+        if len(out) >= 10:
+            break
+    return out[:10]
+
+
+def _write_ai_maintenance_constraints(run_dir, pack_root):
+    review_dir = os.path.join(pack_root, "REVIEW")
+    lines = [
+        "# AI Maintenance Constraints",
+        "",
+        "## Before modifying code",
+        "",
+        "- Read repository_review_report.md first.",
+        "- Check human_review_required.md before editing high-risk files.",
+        "- Do not assume missing evidence means absence of risk.",
+        "- Do not remove guards, transactions, queue consumers, or audit-related code without review.",
+        "- Treat suspected permission findings as requiring human confirmation.",
+        "- Preserve Context Pack / Run Manifest / evidence outputs when changing analysis logic.",
+        "",
+        "## High-risk areas",
+        "",
+    ]
+    top = _top_review_files(run_dir)
+    if top:
+        for item in top:
+            lines.append(f"- file: {item['file']}")
+            lines.append(f"  - reason: {item['reason']}")
+            lines.append(f"  - related artifact: {item['artifact']}")
+            lines.append("  - suggested human decision: confirm before modifying this area")
+    else:
+        lines.append("- No high-risk review files were available in generated review artifacts.")
+    lines += [
+        "",
+        "## Safe AI-assisted workflow",
+        "",
+        "1. Read REVIEW/README.md.",
+        "2. Inspect human_review_required.md.",
+        "3. Identify affected files.",
+        "4. Make narrow changes.",
+        "5. Re-run RepoSense.",
+        "6. Compare reports / run manifest.",
+        "7. Do not claim correctness without evidence.",
+        "",
+    ]
+    with open(os.path.join(review_dir, "ai_maintenance_constraints.md"), "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+
+
 def _top_strength_rank(s):
     order = ["python_ast", "typescript_l2", "openapi", "sql_ddl", "compose", "gha", "deps", "text"]
     try:
@@ -31,21 +203,25 @@ def _stable_name(rank, sid):
 
 def build_context_pack(run_dir, top_n=10):
     pack_root = os.path.join(run_dir, "context_pack")
-    _ensure_dirs(pack_root, ["MAP", "SPEC", "EVIDENCE/top_findings", "EVIDENCE/top_events", "ARTIFACTS"])
+    _ensure_dirs(pack_root, ["MAP", "SPEC", "EVIDENCE/top_findings", "EVIDENCE/top_events", "ARTIFACTS", "REVIEW"])
     rep = _read_json(os.path.join(run_dir, "report.json"), {})
     cov = _read_json(os.path.join(run_dir, "coverage.json"), {})
     graph = _read_json(os.path.join(run_dir, "event_graph.json"), {"nodes": [], "edges": []})
     run_sum = rep.get("run_summary") or {}
     # copy artifacts
-    for nm in ["report.json", "event_graph.json", "language_capabilities.json", "api_callers.json", "cross_language_summary.json", "patterns.json", "pattern_summary.json", "ai_summary.json", "ai_summary.md"]:
+    for nm in ["report.json", "event_graph.json", "language_capabilities.json", "api_callers.json", "cross_language_summary.json", "patterns.json", "pattern_summary.json", "ai_summary.json", "ai_summary.md", "code_health.json", "code_health_summary.json", "maintainability_risks.json", "permission_surface.json", "permission_risks.json", "permission_risk_report.md", "human_permission_review_required.md", "authz_negative_test_plan.md", "authz_matrix_loaded.json", "authz_matrix_inferred.yaml", "authz_matrix_diff.json", "authz_matrix_report.md"]:
         src = os.path.join(run_dir, nm)
         dst = os.path.join(pack_root, "ARTIFACTS", nm)
         if os.path.isfile(src):
             try:
-                with open(src, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                with open(dst, "w", encoding="utf-8") as f2:
-                    json.dump(data, f2, ensure_ascii=False)
+                if nm.endswith(".json"):
+                    with open(src, "r", encoding="utf-8") as f:
+                        data = json.load(f)
+                    with open(dst, "w", encoding="utf-8") as f2:
+                        json.dump(data, f2, ensure_ascii=False)
+                else:
+                    with open(src, "rb") as f, open(dst, "wb") as f2:
+                        f2.write(f.read())
             except Exception:
                 pass
     for nm in ["cross_language_links.json", "api_topology.json"]:
@@ -92,6 +268,9 @@ def build_context_pack(run_dir, top_n=10):
                 fo.write(fi.read())
         except Exception:
             pass
+    review_rows = _copy_review_artifacts(run_dir, pack_root)
+    _write_review_readme(run_dir, pack_root, review_rows)
+    _write_ai_maintenance_constraints(run_dir, pack_root)
     # content ids
     stats = cov if isinstance(cov, dict) else {}
     content_id = (stats.get("content_id") or (stats.get("stats") or {}).get("content_id"))
@@ -232,6 +411,18 @@ def build_context_pack(run_dir, top_n=10):
             "pattern_summary": "pattern_summary.json",
             "ai_summary_json": "ai_summary.json",
             "ai_summary_md": "ai_summary.md",
+            "code_health": "context_pack/ARTIFACTS/code_health.json",
+            "code_health_summary": "context_pack/ARTIFACTS/code_health_summary.json",
+            "maintainability_risks": "context_pack/ARTIFACTS/maintainability_risks.json",
+            "permission_surface": "context_pack/ARTIFACTS/permission_surface.json",
+            "permission_risks": "context_pack/ARTIFACTS/permission_risks.json",
+            "permission_risk_report": "context_pack/ARTIFACTS/permission_risk_report.md",
+            "human_permission_review": "context_pack/ARTIFACTS/human_permission_review_required.md",
+            "authz_negative_test_plan": "context_pack/ARTIFACTS/authz_negative_test_plan.md",
+            "authz_matrix_loaded": "context_pack/ARTIFACTS/authz_matrix_loaded.json",
+            "authz_matrix_inferred": "context_pack/ARTIFACTS/authz_matrix_inferred.yaml",
+            "authz_matrix_diff": "context_pack/ARTIFACTS/authz_matrix_diff.json",
+            "authz_matrix_report": "context_pack/ARTIFACTS/authz_matrix_report.md",
             "api_topology": "context_pack/MAP/api_topology.json",
             "api_surface": "api_surface.json",
             "learn_base": "learn/",
@@ -240,6 +431,7 @@ def build_context_pack(run_dir, top_n=10):
             "baseline_in": "baseline_in.json",
             "baseline_diff_json": "baseline_diff.json",
             "baseline_diff_md": "baseline_diff.md",
+            **_review_outputs(review_rows),
         },
         "stats": {
             "findings": run_sum.get("findings_count", len(rep.get("findings", []))),
@@ -510,6 +702,64 @@ def build_context_pack(run_dir, top_n=10):
             readme.append("")
             readme.append("## AI Summary")
             readme.append("- file: ARTIFACTS/ai_summary.md")
+    except Exception:
+        pass
+    try:
+        chs = _read_json(os.path.join(run_dir, "code_health_summary.json"), {})
+        if isinstance(chs, dict) and chs:
+            readme.append("")
+            readme.append("## Code Health Summary")
+            readme.append(f"- total findings: {int(chs.get('total_findings') or 0)}")
+            score = (chs.get("health_score") or {}).get("score")
+            readme.append(f"- experimental health score: {int(score or 0)}")
+            cbr = chs.get("counts_by_rule") or {}
+            if cbr:
+                readme.append("- counts by rule: " + ", ".join([f"{k}:{v}" for k, v in sorted(cbr.items(), key=lambda x: x[0])]))
+            readme.append("- file: ARTIFACTS/code_health_summary.json")
+    except Exception:
+        pass
+    try:
+        prs = _read_json(os.path.join(run_dir, "permission_risks.json"), {})
+        risks = prs.get("risks") if isinstance(prs.get("risks"), list) else []
+        if isinstance(prs, dict) and prs:
+            readme.append("")
+            readme.append("## Permission Review Summary")
+            readme.append(f"- total permission risks: {len(risks)}")
+            high = len([r for r in risks if str(r.get("severity") or "") == "high"])
+            medium = len([r for r in risks if str(r.get("severity") or "") == "medium"])
+            readme.append(f"- high / medium: {high} / {medium}")
+            readme.append("- file: ARTIFACTS/permission_risks.json")
+    except Exception:
+        pass
+    try:
+        azd = _read_json(os.path.join(run_dir, "authz_matrix_diff.json"), {})
+        if isinstance(azd, dict) and azd:
+            readme.append("")
+            readme.append("## AuthZ Matrix Summary")
+            readme.append(f"- mode: {azd.get('mode')}")
+            sm = azd.get("summary") or {}
+            readme.append(f"- missing auth: {int(sm.get('missing_auth') or 0)}")
+            readme.append(f"- missing permission: {int(sm.get('missing_permission') or 0)}")
+            readme.append("- file: ARTIFACTS/authz_matrix_diff.json")
+    except Exception:
+        pass
+    try:
+        rr = _read_json(os.path.join(run_dir, "repository_review_report.json"), {})
+        rm_obj = _read_json(os.path.join(run_dir, "review_risk_matrix.json"), {})
+        chs = _read_json(os.path.join(run_dir, "code_health_summary.json"), {})
+        prs = _read_json(os.path.join(run_dir, "permission_risks.json"), {})
+        azd = _read_json(os.path.join(run_dir, "authz_matrix_diff.json"), {})
+        readme.append("")
+        readme.append("## Repository Review Section")
+        readme.append("The REVIEW/ directory contains evidence-backed review outputs for the next AI-assisted maintenance or upgrade.")
+        readme.append(f"- review decision: {rm_obj.get('decision') or ((rr.get('review_summary') or {}).get('decision')) or 'not available'}")
+        readme.append(f"- human review required count: {int(((rr.get('review_summary') or {}).get('human_review_required_count')) or (rm_obj.get('human_review_required_count') or 0))}")
+        readme.append(f"- code health risk count: {int(chs.get('total_findings') or 0) if isinstance(chs, dict) else 0}")
+        perm_risks = prs.get("risks") if isinstance(prs.get("risks"), list) else []
+        readme.append(f"- permission risk count: {len(perm_risks)}")
+        readme.append(f"- AuthZ matrix mode: {azd.get('mode') or 'not available'}")
+        readme.append("- key limitations: not a correctness proof; suspected findings require human confirmation; review context does not replace human code review")
+        readme.append("- entry: REVIEW/README.md")
     except Exception:
         pass
     with open(os.path.join(pack_root, "README.md"), "w", encoding="utf-8") as f:

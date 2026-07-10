@@ -16,6 +16,10 @@ This index keeps the full documentation map while the README stays focused on th
 - [docs/FACTS_PATTERNS_INSIGHTS.md](FACTS_PATTERNS_INSIGHTS.md)
 - [docs/LEARN_OVERVIEW.md](LEARN_OVERVIEW.md)
 - [docs/OUTPUTS_MAP.md](OUTPUTS_MAP.md)
+- [docs/review/REPOSITORY_REVIEW_MODE.md](review/REPOSITORY_REVIEW_MODE.md)
+- [docs/review/CODE_HEALTH_RADAR.md](review/CODE_HEALTH_RADAR.md)
+- [docs/review/PERMISSION_AUDITOR.md](review/PERMISSION_AUDITOR.md)
+- [docs/review/AUTHZ_MATRIX.md](review/AUTHZ_MATRIX.md)
 - [docs/positioning/BACKEND_VERIFIER.md](positioning/BACKEND_VERIFIER.md)
 - [docs/positioning/OPEN_SOURCE_STRATEGY.md](positioning/OPEN_SOURCE_STRATEGY.md)
 - [docs/architecture/COMMERCIAL_BOUNDARY.md](architecture/COMMERCIAL_BOUNDARY.md)
@@ -25,6 +29,7 @@ This index keeps the full documentation map while the README stays focused on th
 ## Context Pack
 
 - [docs/context-pack/CONTEXT_PACK_SPEC.md](context-pack/CONTEXT_PACK_SPEC.md)
+- [docs/context-pack/REVIEW_SECTION.md](context-pack/REVIEW_SECTION.md)
 - [docs/context-pack/AI_ASSISTANT_USAGE.md](context-pack/AI_ASSISTANT_USAGE.md)
 - [docs/context-pack/EXAMPLES.md](context-pack/EXAMPLES.md)
 

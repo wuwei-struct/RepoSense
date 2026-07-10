@@ -97,6 +97,16 @@ Studio 当前支持两种本地流程：
 - 查看 run 状态；
 - 打开生成的 report、Learn、SARIF、Context Pack、run manifest 等产物。
 
+当相关产物已生成时，Studio 还可以展示 Repository Review 结果，包括人工复核清单、Code Health、Permission Review、AuthZ Matrix 和 Context Pack 的 REVIEW section。
+
+如果需要生成一套完整的 Review Demo，用于 Studio Review 面板和 release 截图：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools/review_demo.ps1
+```
+
+固定输出目录为 `.reposense_review_demo/current/`。
+
 边界说明：
 
 - Studio 是本地开发者 UI，不是云端 SaaS。
@@ -122,6 +132,7 @@ Studio 当前支持两种本地流程：
 - Quality Gate
 - Baseline & Diff
 - Run Manifest
+- Repository Review Mode、Code Health Radar MVP、Permission Auditor MVP 与可选 AuthZ Matrix
 - Learn 本地站点（`learn/index.html`）
 - 确定性模式产物：
   - `patterns.json` / `pattern_summary.json`
@@ -144,6 +155,8 @@ Studio 当前支持两种本地流程：
 Context Pack 不是普通导出包，而是下一轮 AI 辅助修改的交接层。
 
 它将 API surface、backend events、findings、evidence、quality gate、baseline diff、run manifest 打包为可复现上下文。
+
+Context Pack 现在包含 `REVIEW/` 区域，用于下一轮 AI 辅助维护和人类代码审查交接。
 
 ## RepoSense 不是什么
 
@@ -174,6 +187,10 @@ RepoSense 的 AI 输出遵循 grounded 契约：默认 facts-only，必要时才
 - [docs/DEMO_QUICKSTART.md](docs/DEMO_QUICKSTART.md)
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - [docs/reports/BACKEND_VERIFIER_REPORT.md](docs/reports/BACKEND_VERIFIER_REPORT.md)
+- [docs/review/REPOSITORY_REVIEW_MODE.md](docs/review/REPOSITORY_REVIEW_MODE.md)
+- [docs/review/CODE_HEALTH_RADAR.md](docs/review/CODE_HEALTH_RADAR.md)
+- [docs/review/PERMISSION_AUDITOR.md](docs/review/PERMISSION_AUDITOR.md)
+- [docs/review/AUTHZ_MATRIX.md](docs/review/AUTHZ_MATRIX.md)
 - [docs/context-pack/CONTEXT_PACK_SPEC.md](docs/context-pack/CONTEXT_PACK_SPEC.md)
 - [docs/AI_GROUNDED_PRINCIPLES.md](docs/AI_GROUNDED_PRINCIPLES.md)
 - 完整文档索引：[docs/INDEX.md](docs/INDEX.md)
@@ -194,6 +211,8 @@ RepoSense 的 AI 输出遵循 grounded 契约：默认 facts-only，必要时才
 - API Surface
 
 Learn、AI Risks、AI Explain 截图也来自同一个 canonical release demo run。
+
+更多 Repository Review 截图见 [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md)，包括人工复核清单、代码健康、权限审查、AuthZ Matrix 和 Context Pack REVIEW section。
 
 ## 截图预览
 

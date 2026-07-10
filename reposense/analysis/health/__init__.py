@@ -1,0 +1,2 @@
+"""Code Health Radar MVP."""
+
