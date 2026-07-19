@@ -1,6 +1,7 @@
 import os
 import json
 import sqlite3
+from .evidence.validation import validate_run_evidence_locations
 def run_verify(run_dir, as_json, strict=False):
     res = verify(run_dir, strict=strict)
     out = json.dumps(res) if as_json else format_text(res)
@@ -221,7 +222,6 @@ def verify(run_dir, strict=False):
                 errors.append("quality_gate generated_by missing")
     except Exception:
         pass
-    ok = len(errors) == 0
     # strict: run_manifest must exist and hashes match
     if strict:
         rm = os.path.join(run_dir, "run_manifest.json")
@@ -243,9 +243,20 @@ def verify(run_dir, strict=False):
                             errors.append(f"run_manifest sha mismatch: {rel}")
             except Exception:
                 errors.append("run_manifest verify failed")
+    location_issues = validate_run_evidence_locations(run_dir, repo_root)
+    target = errors if strict else warnings
+    for issue in location_issues:
+        target.append(
+            "{code} artifact={artifact} item={item}: {reason}".format(
+                code=issue.get("error_code") or "EVIDENCE_LOCATION_INVALID",
+                artifact=issue.get("artifact") or "unknown",
+                item=issue.get("item_id") or "unknown",
+                reason=issue.get("reason") or "invalid evidence location",
+            )
+        )
     try:
         if conn:
             conn.close()
     except:
         pass
-    return {"ok": ok, "errors": errors, "warnings": warnings}
+    return {"ok": len(errors) == 0, "errors": errors, "warnings": warnings}

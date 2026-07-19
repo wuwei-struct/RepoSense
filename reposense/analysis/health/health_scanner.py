@@ -4,6 +4,7 @@ import re
 
 from .health_rules import DEFAULT_THRESHOLDS, SKIP_DIRS, SOURCE_EXTENSIONS, is_core_path, is_generated_or_config, is_test_path
 from .health_schema import normalize_health_finding
+from ..context.file_context import apply_file_context, classify_file_contexts
 
 
 DEBT_RE = re.compile(r"\b(TODO|FIXME|HACK|XXX|workaround)\b|临时|先这样|不要删", re.IGNORECASE)
@@ -288,6 +289,7 @@ def scan_code_health(run_dir, repo_path, thresholds=None):
         findings.extend(_scan_type_escape(rel, lines))
         findings.extend(_scan_swallowed_errors(rel, lines))
     findings.extend(_event_files_without_tests(run_dir, root))
+    annotations = classify_file_contexts(root, extra_paths=[finding.get("file") for finding in findings])
+    findings = apply_file_context(findings, annotations)
     findings.sort(key=lambda f: (f.get("rule_id"), f.get("file"), int(f.get("line_start") or 0), f.get("health_id")))
     return findings
-

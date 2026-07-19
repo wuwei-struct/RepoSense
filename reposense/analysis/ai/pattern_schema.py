@@ -73,7 +73,9 @@ def validate_pattern(pat):
         errors.append("confidence out of range")
     if not isinstance(p.get("evidence_refs"), list):
         errors.append("evidence_refs invalid")
-    if len(p.get("evidence_refs") or []) == 0:
+    limitations = p.get("metadata", {}).get("limitations") if isinstance(p.get("metadata"), dict) else []
+    location_unavailable = "source_location_unavailable" in (limitations if isinstance(limitations, list) else [])
+    if len(p.get("evidence_refs") or []) == 0 and not (p.get("status") == "suspected" and location_unavailable):
         errors.append("evidence_refs empty")
     return errors
 

@@ -11,6 +11,7 @@ from .parsers.deps import parse_deps_manifest
 from .parsers.ast_treesitter import parse_ast, run_matcher, lang_from_ext, AST_AVAILABLE
 from .parsers.python_stdast import analyze_python_source, match_fastapi_routes, match_flask_routes, match_django_transaction_atomic, match_celery, match_cache
 from .parsers.typescript_minimal import detect_ts_express_routes, detect_ts_nest_routes, detect_ts_prisma_transactions, detect_ts_typeorm_transactions, detect_ts_queue_dispatch, detect_ts_queue_consume, detect_ts_cache_ops
+from .parsers.typescript_typeorm import detect_typeorm_operations
 from .parsers.java_minimal import detect_java_spring_routes, detect_java_transactions, detect_java_queue_events, detect_java_db_ops
 def run_detectors(ruleset, files, budget):
     results = []
@@ -148,11 +149,59 @@ def run_detectors(ruleset, files, budget):
                         "tx.kind": "ts_typeorm_transaction",
                         "transaction_style": h.get("transaction_style"),
                         "callee_expr": h.get("callee_expr"),
+                        "receiver_kind": h.get("receiver_kind") or "unknown",
+                        "receiver_name": h.get("receiver_name") or "",
+                        "transaction_context": h.get("transaction_context") or "unknown",
+                        "signals": h.get("signals") or [],
+                        "limitations": h.get("limitations") or [],
+                        "scope": h.get("scope") or {},
                         "evidence_strength": "typescript_l2",
                         "detector": "ts_typeorm_transaction",
                         "parse_level": "L2",
                         "encoding": encoding,
                         "truncated": truncated
+                    }
+                })
+            for h in detect_typeorm_operations(lines):
+                if h.get("kind") == "db.transaction":
+                    continue
+                s = int(h["line_start"])
+                e = int(h["line_end"])
+                sn = snippet_with_context(lines, s, e, 8)
+                sn = clamp_text_bytes(clamp_lines(sn, (budget or {}).get("max_snippet_lines")), (budget or {}).get("max_snippet_bytes"))
+                ts_hits.append({
+                    "concept": "DB",
+                    "confidence": float(h.get("confidence") or 0.88),
+                    "rule_id": "ts_typeorm_db_operation_l2",
+                    "rule_version": 1,
+                    "parse_level": "L2",
+                    "path": f["path"],
+                    "start_line": s,
+                    "end_line": e,
+                    "snippet": sn,
+                    "meta": {
+                        "language": "typescript",
+                        "framework": "typeorm",
+                        "ts.kind": "typeorm_db_operation",
+                        "db.kind": h.get("kind") or "db.query_unknown",
+                        "db.op": h.get("operation") or "",
+                        "db_style": "typeorm",
+                        "receiver_kind": h.get("receiver_kind") or "unknown",
+                        "receiver_name": h.get("receiver_name") or "",
+                        "entity_hint": h.get("entity") or "",
+                        "transaction_context": h.get("transaction_context") or "unknown",
+                        "signals": h.get("signals") or [],
+                        "limitations": h.get("limitations") or [],
+                        "scope": h.get("scope") or {},
+                        "callee_expr": (
+                            f"{h.get('receiver_name')}.{h.get('operation')}"
+                            if h.get("receiver_name") else h.get("operation") or ""
+                        ),
+                        "evidence_strength": "typescript_l2",
+                        "detector": "ts_typeorm_db_operation",
+                        "parse_level": "L2",
+                        "encoding": encoding,
+                        "truncated": truncated,
                     }
                 })
             for h in detect_ts_queue_dispatch(lines):
@@ -177,6 +226,8 @@ def run_detectors(ruleset, files, budget):
                         "ts.kind": "queue_dispatch",
                         "queue.kind": "ts_queue_dispatch",
                         "queue_name": h.get("queue_name") or "",
+                        "queue_name_expr": h.get("queue_name_expr") or "",
+                        "queue_name_resolved": bool(h.get("queue_name_resolved")),
                         "queue.task": h.get("job_name") or "",
                         "job_name": h.get("job_name") or "",
                         "callee_expr": h.get("callee_expr"),
@@ -209,6 +260,8 @@ def run_detectors(ruleset, files, budget):
                         "ts.kind": "queue_consume",
                         "queue.kind": "ts_queue_consume",
                         "queue_name": h.get("queue_name") or "",
+                        "queue_name_expr": h.get("queue_name_expr") or "",
+                        "queue_name_resolved": bool(h.get("queue_name_resolved")),
                         "queue.task": h.get("job_name") or "",
                         "job_name": h.get("job_name") or "",
                         "consumer_style": h.get("consumer_style") or "",
@@ -245,6 +298,8 @@ def run_detectors(ruleset, files, budget):
                         "cache.kind": h.get("event_kind") or "",
                         "key_literal": h.get("key_literal") or "",
                         "key_expr": h.get("key_expr") or "",
+                        "key_resolved": bool(h.get("key_resolved")),
+                        "receiver_source": h.get("receiver_source") or "",
                         "callee_expr": h.get("callee_expr"),
                         "evidence_strength": "typescript_l2",
                         "detector": "ts_cache_ops",
@@ -371,6 +426,8 @@ def run_detectors(ruleset, files, budget):
                             "queue.system": h.get("queue_system") or "",
                             "queue_name": h.get("queue_name") or "",
                             "topic_name": h.get("topic_name") or "",
+                            "queue_name_expr": h.get("queue_name_expr") or "",
+                            "queue_name_resolved": bool(h.get("queue_name_resolved")),
                             "listener_style": h.get("listener_style") or "",
                             "queue.task": h.get("topic_name") or h.get("queue_name") or "",
                             "class_name": h.get("class_name") or "",
@@ -403,8 +460,12 @@ def run_detectors(ruleset, files, budget):
                             "queue.system": h.get("queue_system") or "",
                             "queue_name": h.get("queue_name") or "",
                             "topic_name": h.get("topic_name") or "",
+                            "queue_name_expr": h.get("queue_name_expr") or "",
+                            "queue_name_resolved": bool(h.get("queue_name_resolved")),
                             "exchange": h.get("exchange") or "",
+                            "exchange_expr": h.get("exchange_expr") or "",
                             "routing_key": h.get("routing_key") or "",
+                            "routing_key_expr": h.get("routing_key_expr") or "",
                             "dispatch_style": h.get("dispatch_style") or "",
                             "callee_expr": h.get("callee_expr") or "",
                             "queue.task": h.get("topic_name") or h.get("queue_name") or "",

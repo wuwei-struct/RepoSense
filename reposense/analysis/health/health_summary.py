@@ -20,8 +20,25 @@ def summarize_code_health(findings):
     by_lang = Counter(language_for_path(f.get("file") or "") for f in findings)
     penalty = int(by_sev.get("high", 0)) * 12 + int(by_sev.get("medium", 0)) * 6 + int(by_sev.get("low", 0)) * 2
     score = max(0, min(100, 100 - penalty))
+    modifiers = Counter(
+        str((finding.get("metadata") or {}).get("review_modifier") or "normal")
+        for finding in findings
+    )
+    actionable = [
+        finding
+        for finding in findings
+        if str((finding.get("metadata") or {}).get("review_modifier") or "normal")
+        != "exclude_from_primary_review"
+        and str(finding.get("severity") or "").lower() in {"high", "medium"}
+    ]
     return {
         "total_findings": len(findings),
+        "raw_findings": len(findings),
+        "actionable_findings": len(actionable),
+        "findings_downweighted": int(modifiers.get("downweight", 0)),
+        "findings_excluded_from_primary_review": int(
+            modifiers.get("exclude_from_primary_review", 0)
+        ),
         "counts_by_rule": dict(sorted((k, int(v)) for k, v in by_rule.items() if k)),
         "counts_by_severity": dict(sorted((k, int(v)) for k, v in by_sev.items() if k)),
         "counts_by_status": dict(sorted((k, int(v)) for k, v in by_status.items() if k)),
@@ -39,6 +56,9 @@ def summarize_code_health(findings):
 def maintainability_risks_from_findings(findings):
     risks = []
     for f in findings:
+        modifier = str((f.get("metadata") or {}).get("review_modifier") or "normal")
+        if modifier == "exclude_from_primary_review":
+            continue
         if f.get("severity") not in ("high", "medium"):
             continue
         risks.append(
@@ -58,4 +78,3 @@ def maintainability_risks_from_findings(findings):
         )
     risks.sort(key=lambda r: ({"high": 0, "medium": 1, "low": 2}.get(r.get("severity"), 9), r.get("file"), r.get("rule_id")))
     return {"risks": risks, "limitations": LIMITATIONS[:]}
-

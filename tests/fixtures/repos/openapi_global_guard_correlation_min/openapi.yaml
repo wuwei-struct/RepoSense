@@ -1,0 +1,54 @@
+openapi: 3.0.3
+info:
+  title: Guard Correlation Fixture
+  version: 1.0.0
+security:
+  - bearerAuth: []
+paths:
+  /orders:
+    post:
+      responses:
+        '200':
+          description: ok
+  /account:
+    get:
+      responses:
+        '200':
+          description: ok
+  /users/{id}:
+    get:
+      responses:
+        '200':
+          description: ok
+    delete:
+      responses:
+        '200':
+          description: ok
+  /auth/login:
+    post:
+      security: []
+      responses:
+        '200':
+          description: ok
+  /admin/users:
+    post:
+      responses:
+        '200':
+          description: ok
+  /billing/export:
+    post:
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: ok
+  /ambiguous:
+    get:
+      responses:
+        '200':
+          description: ok
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

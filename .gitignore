@@ -7,8 +7,10 @@ _demo_out/
 .reposense_learn_cases/
 .reposense_release_demo/
 .reposense_review_demo/
+.reposense_real_repo_smoke/
 .tmp_test_runs/
 .tmp_test/
+.tmp_checkpoint/
 .local_archive/
 docs/archive/local-artifacts/*
 !docs/archive/local-artifacts/MOVED_FROM_ROOT.md

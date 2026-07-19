@@ -59,7 +59,7 @@ def is_generated_or_config(rel_path):
         return True
     if base in {"package-lock.json", "pnpm-lock.yaml", "yarn.lock", "poetry.lock"}:
         return True
-    if "/generated/" in p or "/dist/" in p or "/build/" in p:
+    if "/dist/" in p or "/build/" in p:
         return True
     return False
 
@@ -92,4 +92,3 @@ def language_for_path(rel_path):
         ".tsx": "typescript",
         ".java": "java",
     }.get(ext, "unknown")
-

@@ -287,6 +287,91 @@ def _collect_java_template_aliases(lines):
     return kafka_alias, rabbit_alias, repo_alias, mapper_alias, em_alias, sqls_alias
 
 
+def _java_string_constants(lines):
+    constants = {}
+    pattern = re.compile(
+        r"\b(?:public|private|protected)?\s*"
+        r"(?:static\s+)?(?:final\s+)?String\s+"
+        r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([\"'])(.*?)\2"
+    )
+    for line in lines:
+        match = pattern.search(line)
+        if match:
+            constants[match.group(1)] = match.group(3)
+    return constants
+
+
+def _split_java_arguments(text):
+    value = str(text or "").strip()
+    if value.startswith("("):
+        value = value[1:]
+    if value.endswith(")"):
+        value = value[:-1]
+    out = []
+    current = []
+    quote = ""
+    escaped = False
+    depth = 0
+    for char in value:
+        if quote:
+            current.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = ""
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            current.append(char)
+        elif char in "({[":
+            depth += 1
+            current.append(char)
+        elif char == ")" and depth == 0:
+            break
+        elif char in ")}]":
+            depth = max(0, depth - 1)
+            current.append(char)
+        elif char == "," and depth == 0:
+            out.append("".join(current).strip())
+            current = []
+        else:
+            current.append(char)
+    if current:
+        out.append("".join(current).strip())
+    return out
+
+
+def _resolve_java_destination(expression, constants):
+    expr = str(expression or "").strip()
+    literal = re.fullmatch(r"([\"'])(.*?)\1", expr, re.S)
+    if literal:
+        return literal.group(2), expr, True
+    symbol = expr.split(".")[-1]
+    if symbol in constants:
+        return constants[symbol], expr, True
+    return "", expr[:300], False
+
+
+def _annotation_destination(args, keys, constants):
+    value = str(args or "").strip()
+    expression = ""
+    for key in keys:
+        match = re.search(
+            rf"\b{re.escape(key)}\s*=\s*(\{{[^}}]*\}}|[^,]+)",
+            value,
+        )
+        if match:
+            expression = match.group(1).strip()
+            break
+    if not expression:
+        expression = (_split_java_arguments(value) or [""])[0]
+    if expression.startswith("{") and expression.endswith("}"):
+        expression = (_split_java_arguments(expression[1:-1]) or [""])[0]
+    return _resolve_java_destination(expression, constants)
+
+
 def detect_java_queue_events(lines):
     out = []
     unsupported = []
@@ -295,6 +380,7 @@ def detect_java_queue_events(lines):
     i = 0
     brace = 0
     kafka_alias, rabbit_alias, _, _, _, _ = _collect_java_template_aliases(lines)
+    constants = _java_string_constants(lines)
     while i < len(lines):
         t = lines[i].strip()
         if t.startswith("@"):
@@ -312,12 +398,18 @@ def detect_java_queue_events(lines):
                 for a in pending:
                     n, args = _parse_annotation(a["text"])
                     if n == "KafkaListener":
-                        tp = _extract_path_literal(args)
-                        if tp:
+                        tp, tp_expr, tp_resolved = _annotation_destination(
+                            args,
+                            ("topics", "topicPattern"),
+                            constants,
+                        )
+                        if tp or tp_expr:
                             out.append({
                                 "event_kind": "queue.consume",
                                 "queue_system": "kafka",
                                 "topic_name": tp,
+                                "queue_name_expr": tp_expr,
+                                "queue_name_resolved": tp_resolved,
                                 "framework": "spring_kafka",
                                 "listener_style": "@KafkaListener",
                                 "class_name": cur.get("name") or "",
@@ -327,12 +419,18 @@ def detect_java_queue_events(lines):
                                 "confidence": 0.84,
                             })
                     if n == "RabbitListener":
-                        qn = _extract_path_literal(args)
-                        if qn:
+                        qn, qn_expr, qn_resolved = _annotation_destination(
+                            args,
+                            ("queues", "queuesToDeclare"),
+                            constants,
+                        )
+                        if qn or qn_expr:
                             out.append({
                                 "event_kind": "queue.consume",
                                 "queue_system": "rabbitmq",
                                 "queue_name": qn,
+                                "queue_name_expr": qn_expr,
+                                "queue_name_resolved": qn_resolved,
                                 "framework": "spring_rabbit",
                                 "listener_style": "@RabbitListener",
                                 "class_name": cur.get("name") or "",
@@ -343,12 +441,21 @@ def detect_java_queue_events(lines):
                             })
             pending = []
         for ka in sorted(kafka_alias):
-            mk = re.search(rf"\b{re.escape(ka)}\.send\s*\(\s*([\"'][^\"']+[\"'])", t)
+            mk = re.search(rf"\b{re.escape(ka)}\.send\s*\(", t)
             if mk:
+                arguments = _split_java_arguments(t[mk.end() - 1 :])
+                topic, topic_expr, topic_resolved = _resolve_java_destination(
+                    arguments[0] if arguments else "",
+                    constants,
+                )
+                if not topic and not topic_expr:
+                    continue
                 out.append({
                     "event_kind": "queue.dispatch",
                     "queue_system": "kafka",
-                    "topic_name": _extract_first_quoted(mk.group(1)),
+                    "topic_name": topic,
+                    "queue_name_expr": topic_expr,
+                    "queue_name_resolved": topic_resolved,
                     "framework": "spring_kafka",
                     "dispatch_style": "KafkaTemplate.send",
                     "callee_expr": f"{ka}.send",
@@ -359,10 +466,9 @@ def detect_java_queue_events(lines):
                     "confidence": 0.82,
                 })
         for ra in sorted(rabbit_alias):
-            mr = re.search(rf"\b{re.escape(ra)}\.convertAndSend\s*\((.+)\)\s*;?", t)
+            mr = re.search(rf"\b{re.escape(ra)}\.convertAndSend\s*\(", t)
             if mr:
-                args = mr.group(1)
-                lits = re.findall(r"['\"]([^'\"]+)['\"]", args)
+                arguments = _split_java_arguments(t[mr.end() - 1 :])
                 item = {
                     "event_kind": "queue.dispatch",
                     "queue_system": "rabbitmq",
@@ -375,11 +481,30 @@ def detect_java_queue_events(lines):
                     "end_line": i + 1,
                     "confidence": 0.82,
                 }
-                if len(lits) >= 2:
-                    item["exchange"] = lits[0]
-                    item["routing_key"] = lits[1]
-                elif len(lits) == 1:
-                    item["queue_name"] = lits[0]
+                if len(arguments) >= 3:
+                    exchange, exchange_expr, exchange_resolved = (
+                        _resolve_java_destination(arguments[0], constants)
+                    )
+                    routing, routing_expr, routing_resolved = (
+                        _resolve_java_destination(arguments[1], constants)
+                    )
+                    item["exchange"] = exchange
+                    item["exchange_expr"] = exchange_expr
+                    item["routing_key"] = routing
+                    item["routing_key_expr"] = routing_expr
+                    item["queue_name"] = ""
+                    item["queue_name_expr"] = routing_expr
+                    item["queue_name_resolved"] = False
+                    item["destination_resolved"] = bool(
+                        exchange_resolved and routing_resolved
+                    )
+                elif len(arguments) >= 2:
+                    queue, queue_expr, queue_resolved = (
+                        _resolve_java_destination(arguments[0], constants)
+                    )
+                    item["queue_name"] = queue
+                    item["queue_name_expr"] = queue_expr
+                    item["queue_name_resolved"] = queue_resolved
                 else:
                     continue
                 out.append(item)

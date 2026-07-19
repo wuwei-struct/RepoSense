@@ -2,6 +2,7 @@ import json
 import os
 from collections import defaultdict
 
+from ...evidence.location import filter_valid_evidence_refs
 from .explain_export import export_ai_explain
 from .explain_engine import generate_explain_result
 from .risks_ranker import rank_risk_items
@@ -43,6 +44,7 @@ def _mk_risk_from_pattern(p, explain=None, snippet_pack_ref=None):
                     )
             except Exception:
                 pass
+    evidence_refs, invalid_ref_count = filter_valid_evidence_refs(p.get("evidence_refs"))
     return {
         "risk_id": "risk-" + str(p.get("pattern_id") or ""),
         "title": str(p.get("title") or p.get("pattern_type") or "risk"),
@@ -51,7 +53,7 @@ def _mk_risk_from_pattern(p, explain=None, snippet_pack_ref=None):
         "pattern_type": str(p.get("pattern_type") or ""),
         "description": str(p.get("summary") or ""),
         "why_it_matters": "This pattern may impact correctness, consistency, or service reliability.",
-        "evidence_refs": p.get("evidence_refs") if isinstance(p.get("evidence_refs"), list) else [],
+        "evidence_refs": evidence_refs,
         "snippet_refs": snippets,
         "related_patterns": [str(p.get("pattern_id") or "")],
         "related_findings": [str(x) for x in (p.get("supporting_findings") or [])],
@@ -62,6 +64,7 @@ def _mk_risk_from_pattern(p, explain=None, snippet_pack_ref=None):
         "suspected": inferred,
         "unknown": unknown,
         "confidence": float(p.get("confidence") or 0.0),
+        "invalid_evidence_refs_skipped": invalid_ref_count,
     }
 
 
@@ -111,6 +114,7 @@ def generate_risks_report(
         risk_items.append(_mk_risk_from_pattern(p, explain=explain, snippet_pack_ref=snippet_ref))
 
     ranked = rank_risk_items(risk_items, gate_obj=gate)
+    skipped_invalid_evidence = sum(int(item.get("invalid_evidence_refs_skipped") or 0) for item in risk_items)
     counts_by_status = defaultdict(int)
     counts_by_sev = defaultdict(int)
     for x in ranked:
@@ -172,7 +176,7 @@ def generate_risks_report(
                 "Risk report is facts-first and deterministic.",
                 "Targeted drilldown is limited to suspected medium/high risks under budget.",
                 "No unrestricted full-repository source reading is performed.",
-            ],
+            ] + ([f"Skipped {skipped_invalid_evidence} invalid evidence reference(s) during risk rendering."] if skipped_invalid_evidence else []),
             "metadata": {
                 "auto_drilldowns_used": auto_dd_used,
                 "max_auto_drilldowns": int(max_auto_drilldowns or 5),

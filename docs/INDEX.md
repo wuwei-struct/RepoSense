@@ -61,3 +61,16 @@ This index keeps the full documentation map while the README stays focused on th
 - [docs/OSS_PREP.md](OSS_PREP.md)
 - [docs/RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)
 - [docs/LANGUAGE_SUPPORT_MATRIX.md](LANGUAGE_SUPPORT_MATRIX.md)
+
+## Validation
+
+- [docs/validation/EVIDENCE_LOCATION_CONTRACT.md](validation/EVIDENCE_LOCATION_CONTRACT.md)
+- [docs/validation/SPRING_TRANSACTION_CORRELATION.md](validation/SPRING_TRANSACTION_CORRELATION.md)
+- [docs/validation/REVIEW_CONTEXT_CALIBRATION.md](validation/REVIEW_CONTEXT_CALIBRATION.md)
+- [docs/validation/OPENAPI_GLOBAL_GUARD_CORRELATION.md](validation/OPENAPI_GLOBAL_GUARD_CORRELATION.md)
+- [docs/validation/ROUTE_DECORATOR_CLASSIFICATION.md](validation/ROUTE_DECORATOR_CLASSIFICATION.md)
+- [docs/validation/QUEUE_CACHE_REAL_REPO_COVERAGE.md](validation/QUEUE_CACHE_REAL_REPO_COVERAGE.md)
+- [docs/validation/TYPEORM_DB_OPERATION_COVERAGE.md](validation/TYPEORM_DB_OPERATION_COVERAGE.md)
+- [docs/validation/TYPESCRIPT_TRANSACTION_CORRELATION.md](validation/TYPESCRIPT_TRANSACTION_CORRELATION.md)
+- [docs/validation/REAL_REPO_REVIEW_SMOKE.md](validation/REAL_REPO_REVIEW_SMOKE.md)
+- [docs/validation/REAL_REPO_REVIEW_RESULTS.md](validation/REAL_REPO_REVIEW_RESULTS.md)

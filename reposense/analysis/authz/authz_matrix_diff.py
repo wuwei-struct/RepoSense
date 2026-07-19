@@ -31,13 +31,31 @@ def _observed_for(route, tx_files):
     low = text.lower() + " " + str(route.get("path") or "").lower()
     file_path = str(route.get("file") or "")
     return {
-        "auth": bool(route.get("auth_signals")),
-        "permission": bool(route.get("role_permission_signals")),
+        "auth": bool(route.get("auth_signals"))
+        or str(route.get("effective_auth_status") or "")
+        in {"protected_method", "protected_controller", "protected_global"},
+        "permission": bool(route.get("role_permission_signals"))
+        or str(route.get("effective_role_status") or "")
+        in {"role_guard_observed", "permission_guard_observed"},
         "ownership_check": any(x in low for x in ["owner", "user", "createdby", "created_by"]),
         "tenant_boundary": any(x in low for x in ["tenant", "org", "organization", "workspace", "team"]),
         "transaction": file_path in tx_files,
         "audit_log": any(x in low for x in ["audit", "log", "history", "event"]),
         "source_file": file_path,
+        "effective_auth_status": str(
+            route.get("effective_auth_status") or "unknown"
+        ),
+        "guard_scope": str(route.get("guard_scope") or ""),
+        "effective_role_status": str(
+            route.get("effective_role_status") or "unknown"
+        ),
+        "public_bypass": bool(route.get("public_bypass")),
+        "openapi_security_expectation": str(
+            route.get("openapi_security_expectation") or "not_available"
+        ),
+        "guard_correlation_confidence": float(
+            route.get("guard_correlation_confidence") or 0.0
+        ),
     }
 
 
@@ -125,4 +143,3 @@ def inferred_only_diff(permission_surface):
             "limitations": LIMITATIONS[:] + ["No authority contract provided; inferred matrix requires human confirmation."],
         }
     )
-

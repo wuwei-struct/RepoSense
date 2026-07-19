@@ -55,8 +55,8 @@ def normalize_review_report(obj):
         "human_review_required": [normalize_human_review_item(v) for v in (x.get("human_review_required") or [])],
         "code_health_review": x.get("code_health_review") if isinstance(x.get("code_health_review"), dict) else {},
         "permission_review": x.get("permission_review") if isinstance(x.get("permission_review"), dict) else {},
+        "context_calibration": x.get("context_calibration") if isinstance(x.get("context_calibration"), dict) else {},
         "limitations": x.get("limitations") if isinstance(x.get("limitations"), list) else [],
         "risk_matrix": normalize_risk_matrix(x.get("risk_matrix") if isinstance(x.get("risk_matrix"), dict) else {}),
         "evidence_index": x.get("evidence_index") if isinstance(x.get("evidence_index"), list) else [],
     }
-

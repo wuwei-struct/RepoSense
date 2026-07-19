@@ -158,6 +158,8 @@ Context Pack 不是普通导出包，而是下一轮 AI 辅助修改的交接层
 
 Context Pack 现在包含 `REVIEW/` 区域，用于下一轮 AI 辅助维护和人类代码审查交接。
 
+RepoSense 还提供可复现的[真实仓库审查 smoke 协议](docs/validation/REAL_REPO_REVIEW_SMOKE.md)。实际执行后的结果记录在 [REAL_REPO_REVIEW_RESULTS.md](docs/validation/REAL_REPO_REVIEW_RESULTS.md)。
+
 ## RepoSense 不是什么
 
 - 不是通用 AI code chat。

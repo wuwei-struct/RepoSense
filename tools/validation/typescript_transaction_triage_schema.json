@@ -1,0 +1,25 @@
+{
+  "version": "typescript_transaction_triage_v1",
+  "allowed_statuses": [
+    "unreviewed",
+    "confirmed_by_source",
+    "plausible",
+    "likely_false_positive",
+    "needs_context",
+    "duplicate",
+    "unsupported"
+  ],
+  "required_item_fields": [
+    "item_id",
+    "source_artifact",
+    "correlation_id",
+    "db_operation_id",
+    "operation",
+    "file",
+    "line",
+    "coverage_status",
+    "transaction_mechanism",
+    "triage_status",
+    "reviewer_note"
+  ]
+}

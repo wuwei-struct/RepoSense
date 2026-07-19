@@ -32,6 +32,7 @@ DEFAULT_EXCLUDES = {
     ".reposense_ci",
     ".reposense_demo",
     ".reposense_release_demo",
+    ".reposense_real_repo_smoke",
     "node_modules",
     "__pycache__",
     ".pytest_cache",

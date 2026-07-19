@@ -323,4 +323,14 @@ def build_api_surface(run_dir):
         "generated_by": gb
     }
     write_json(os.path.join(run_dir, "api_surface.json"), api_surface)
+    if repo_root and os.path.isdir(repo_root):
+        from .analysis.routes.decorator_export import (
+            export_route_decorator_classifications,
+        )
+
+        export_route_decorator_classifications(
+            run_dir,
+            repo_root,
+            update_manifest=False,
+        )
     return api_surface

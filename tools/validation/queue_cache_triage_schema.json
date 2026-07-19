@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RepoSense Queue Cache Triage",
+  "type": "object",
+  "required": [
+    "version",
+    "allowed_statuses",
+    "items"
+  ],
+  "properties": {
+    "version": {
+      "const": "queue_cache_triage_v1"
+    },
+    "allowed_statuses": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "confirmed_by_source",
+          "plausible",
+          "likely_false_positive",
+          "needs_context",
+          "duplicate",
+          "unsupported",
+          "unreviewed"
+        ]
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "item_id",
+          "source_artifact",
+          "operation",
+          "file",
+          "line",
+          "triage_status",
+          "reviewer_note"
+        ]
+      }
+    }
+  }
+}

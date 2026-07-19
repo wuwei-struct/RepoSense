@@ -4,6 +4,8 @@ import os
 from .health_render import render_code_health_markdown
 from .health_scanner import scan_code_health
 from .health_summary import LIMITATIONS, maintainability_risks_from_findings, summarize_code_health
+from ..context.context_export import export_review_context
+from ..context.file_context import classify_file_contexts
 
 
 def _write_json(path, obj):
@@ -63,6 +65,16 @@ def export_code_health(run_dir, repo_path=None, write_markdown=False, thresholds
     _write_json(paths["code_health_path"], payload)
     _write_json(paths["summary_path"], summary)
     _write_json(paths["risks_path"], risks)
+    file_annotations = classify_file_contexts(
+        repo, extra_paths=[finding.get("file") for finding in findings]
+    )
+    context_result = export_review_context(
+        run_dir,
+        repo,
+        file_annotations=file_annotations,
+        findings=findings,
+        update_manifest=False,
+    )
     markdown = ""
     if write_markdown:
         markdown = render_code_health_markdown(findings, summary)
@@ -78,7 +90,7 @@ def export_code_health(run_dir, repo_path=None, write_markdown=False, thresholds
         "code_health": payload,
         "summary": summary,
         "maintainability_risks": risks,
+        "review_context": context_result,
         "markdown": markdown,
         **paths,
     }
-

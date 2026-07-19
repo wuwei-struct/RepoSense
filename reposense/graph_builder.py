@@ -118,6 +118,10 @@ def build_graph(run_dir):
                 meta["framework"] = m.get("framework")
             if m.get("queue_name"):
                 meta["queue_name"] = m.get("queue_name")
+            if m.get("queue_name_expr"):
+                meta["queue_name_expr"] = m.get("queue_name_expr")
+            if "queue_name_resolved" in m:
+                meta["queue_name_resolved"] = bool(m.get("queue_name_resolved"))
             if m.get("topic_name"):
                 meta["topic_name"] = m.get("topic_name")
             if m.get("queue.system"):
@@ -151,6 +155,16 @@ def build_graph(run_dir):
                 meta["statement_hint"] = m.get("statement_hint")
             if m.get("entity_hint"):
                 meta["entity_hint"] = m.get("entity_hint")
+            if m.get("receiver_kind"):
+                meta["receiver_kind"] = m.get("receiver_kind")
+            if m.get("receiver_name"):
+                meta["receiver_name"] = m.get("receiver_name")
+            if m.get("transaction_context"):
+                meta["transaction_context"] = m.get("transaction_context")
+            if isinstance(m.get("signals"), list):
+                meta["signals"] = m.get("signals")
+            if isinstance(m.get("limitations"), list):
+                meta["limitations"] = m.get("limitations")
             if m.get("callee_expr"):
                 meta["callee_expr"] = m.get("callee_expr")
             if m.get("language"):
@@ -175,6 +189,10 @@ def build_graph(run_dir):
                 meta["key_literal"] = m.get("key_literal")
             if m.get("key_expr"):
                 meta["key_expr"] = m.get("key_expr")
+            if "key_resolved" in m:
+                meta["key_resolved"] = bool(m.get("key_resolved"))
+            if m.get("receiver_source"):
+                meta["receiver_source"] = m.get("receiver_source")
             if m.get("callee_expr"):
                 meta["callee_expr"] = m.get("callee_expr")
             if m.get("language"):

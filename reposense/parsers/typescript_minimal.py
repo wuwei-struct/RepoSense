@@ -1,7 +1,16 @@
 import re
 
+from ..analysis.routes.typescript_decorator_classifier import (
+    classify_typescript_decorators,
+)
+from .typescript_queue_cache import (
+    detect_ts_cache_ops,
+    detect_ts_queue_consume,
+    detect_ts_queue_dispatch,
+)
+from .typescript_typeorm import detect_typeorm_transactions
 
-_VERBS = {"GET", "POST", "PUT", "DELETE", "PATCH"}
+_VERBS = {"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "ALL"}
 
 
 def _norm_path(p):
@@ -65,56 +74,20 @@ def detect_ts_express_routes(lines):
 
 
 def detect_ts_nest_routes(lines):
-    out = []
-    rx_ctrl = re.compile(r"@Controller\s*\(\s*(?:(['\"])([^'\"]*)\1)?\s*\)")
-    rx_verb = re.compile(r"@(Get|Post|Put|Delete|Patch)\s*\(\s*(?:(['\"])([^'\"]*)\2)?\s*\)")
-    rx_method = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*\(")
-    pending_prefix = None
-    current_prefix = None
-    class_depth = 0
-    for i, line in enumerate(lines, start=1):
-        mc = rx_ctrl.search(line)
-        if mc:
-            pending_prefix = mc.group(2) or ""
-        if pending_prefix is not None and "class " in line and "{" in line:
-            current_prefix = pending_prefix
-            pending_prefix = None
-            class_depth = line.count("{") - line.count("}")
-            if class_depth <= 0:
-                class_depth = 1
-            continue
-        if class_depth > 0:
-            class_depth += line.count("{") - line.count("}")
-            if class_depth <= 0:
-                current_prefix = None
-                class_depth = 0
-        mv = rx_verb.search(line)
-        if not mv or current_prefix is None:
-            continue
-        method = mv.group(1).upper()
-        mpath = mv.group(3) or ""
-        symbol = ""
-        for j in range(i, min(i + 6, len(lines))):
-            nx = lines[j].strip()
-            if not nx or nx.startswith("@"):
-                continue
-            mm = rx_method.search(nx)
-            if mm:
-                symbol = mm.group(1)
-            break
-        out.append(
-            {
-                "framework": "nestjs",
-                "method": method,
-                "path": _join_path(current_prefix, mpath),
-                "start_line": i,
-                "end_line": i,
-                "symbol": symbol,
-                "controller_prefix": _norm_path(current_prefix),
-                "parse_level": "L2",
-            }
-        )
-    return out
+    result = classify_typescript_decorators(lines)
+    return [
+        {
+            "framework": "nestjs",
+            "method": route["method"],
+            "path": route["path"],
+            "start_line": route["line_start"],
+            "end_line": route["line_end"],
+            "symbol": route.get("handler_name") or "",
+            "controller_prefix": route.get("controller_prefix") or "/",
+            "parse_level": "L2",
+        }
+        for route in result["routes"]
+    ]
 
 
 def detect_ts_prisma_transactions(lines):
@@ -159,7 +132,51 @@ def detect_ts_typeorm_transactions(lines):
                 "parse_level": "L2",
             }
         )
-    return out
+    seen = {
+        (item["start_line"], item["callee_expr"]): index
+        for index, item in enumerate(out)
+    }
+    for item in detect_typeorm_transactions(lines):
+        receiver_name = item.get("receiver_name") or ""
+        operation = item.get("operation") or "transaction"
+        callee = (
+            f"{receiver_name}.{operation}"
+            if receiver_name
+            else operation
+        )
+        key = (item["line_start"], callee)
+        if key in seen:
+            existing = out[seen[key]]
+            existing.update(
+                {
+                    "transaction_style": operation,
+                    "receiver_kind": item.get("receiver_kind") or "unknown",
+                    "receiver_name": receiver_name,
+                    "transaction_context": item.get("transaction_context") or "unknown",
+                    "signals": item.get("signals") or [],
+                    "limitations": item.get("limitations") or [],
+                    "scope": item.get("scope") or {},
+                }
+            )
+            continue
+        seen[key] = len(out)
+        out.append(
+            {
+                "framework": "typeorm",
+                "transaction_style": item.get("operation") or "typeorm.transaction",
+                "callee_expr": callee,
+                "receiver_kind": item.get("receiver_kind") or "unknown",
+                "receiver_name": item.get("receiver_name") or "",
+                "transaction_context": item.get("transaction_context") or "unknown",
+                "signals": item.get("signals") or [],
+                "limitations": item.get("limitations") or [],
+                "scope": item.get("scope") or {},
+                "start_line": item["line_start"],
+                "end_line": item["line_end"],
+                "parse_level": "L2",
+            }
+        )
+    return sorted(out, key=lambda item: (item["start_line"], item["callee_expr"]))
 
 
 def _extract_literal_arg(call_text):
@@ -167,112 +184,3 @@ def _extract_literal_arg(call_text):
     if not m:
         return ""
     return m.group(2)
-
-
-def detect_ts_queue_dispatch(lines):
-    out = []
-    rx_add = re.compile(r"([A-Za-z0-9_$.]+)\.add\s*\(")
-    for i, line in enumerate(lines, start=1):
-        m = rx_add.search(line)
-        if not m:
-            continue
-        callee_base = m.group(1)
-        lb = callee_base.lower()
-        if not any(x in lb for x in ["queue", "bull"]):
-            continue
-        queue_name = ""
-        job_name = _extract_literal_arg(line)
-        framework = "bullmq"
-        if "bullmq" not in lb and "bull" in lb:
-            framework = "bull"
-        out.append(
-            {
-                "framework": framework,
-                "queue_name": queue_name,
-                "job_name": job_name,
-                "callee_expr": callee_base + ".add",
-                "start_line": i,
-                "end_line": i,
-                "parse_level": "L2",
-            }
-        )
-    return out
-
-
-def detect_ts_queue_consume(lines):
-    out = []
-    rx_worker = re.compile(r"new\s+Worker\s*\(\s*(['\"])([^'\"]+)\1")
-    rx_process = re.compile(r"([A-Za-z0-9_$.]+)\.process\s*\(")
-    for i, line in enumerate(lines, start=1):
-        m = rx_worker.search(line)
-        if m:
-            out.append(
-                {
-                    "framework": "bullmq",
-                    "queue_name": m.group(2),
-                    "job_name": "",
-                    "consumer_style": "worker",
-                    "callee_expr": "new Worker",
-                    "start_line": i,
-                    "end_line": i,
-                    "parse_level": "L2",
-                }
-            )
-        m2 = rx_process.search(line)
-        if m2:
-            callee_base = m2.group(1)
-            lb = callee_base.lower()
-            if any(x in lb for x in ["queue", "bull"]):
-                out.append(
-                    {
-                        "framework": "bull",
-                        "queue_name": "",
-                        "job_name": "",
-                        "consumer_style": "process",
-                        "callee_expr": callee_base + ".process",
-                        "start_line": i,
-                        "end_line": i,
-                        "parse_level": "L2",
-                    }
-                )
-    return out
-
-
-def detect_ts_cache_ops(lines):
-    out = []
-    has_ioredis = "ioredis" in "\n".join(lines).lower()
-    rx = re.compile(r"([A-Za-z0-9_$.]+)\.(get|mget|hget|set|hset|expire|del|unlink|hdel)\s*\(")
-    for i, line in enumerate(lines, start=1):
-        m = rx.search(line)
-        if not m:
-            continue
-        callee_base = m.group(1)
-        op = m.group(2).lower()
-        lb = callee_base.lower()
-        if not any(x in lb for x in ["redis", "cache", "client"]):
-            continue
-        event_kind = ""
-        if op in ("get", "mget", "hget"):
-            event_kind = "cache.read"
-        elif op in ("set", "hset", "expire"):
-            event_kind = "cache.write"
-        elif op in ("del", "unlink", "hdel"):
-            event_kind = "cache.invalidate"
-        if not event_kind:
-            continue
-        key_literal = _extract_literal_arg(line)
-        framework = "ioredis" if ("ioredis" in lb or has_ioredis) else "redis"
-        out.append(
-            {
-                "framework": framework,
-                "cache_op": op,
-                "event_kind": event_kind,
-                "key_literal": key_literal,
-                "key_expr": key_literal or "",
-                "callee_expr": callee_base + "." + op,
-                "start_line": i,
-                "end_line": i,
-                "parse_level": "L2",
-            }
-        )
-    return out

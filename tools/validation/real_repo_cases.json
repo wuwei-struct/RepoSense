@@ -1,0 +1,79 @@
+{
+  "version": "real_repo_smoke_cases_v1",
+  "cases": [
+    {
+      "case_id": "nestjs-boilerplate",
+      "name": "Brocoders NestJS Boilerplate",
+      "language": "typescript",
+      "repository_url": "https://github.com/brocoders/nestjs-boilerplate.git",
+      "default_branch": "main",
+      "commit_sha": "549cc37a3925ab87a4e61b45efb3b86d2d8e234e",
+      "license": "MIT",
+      "expected_capabilities": [
+        "nestjs_routes",
+        "typeorm_database_operations",
+        "authentication_and_role_signals",
+        "test_files"
+      ],
+      "max_repository_size_mb": 50,
+      "enabled": true,
+      "notes": "Pinned, active TypeScript backend used to observe route, ORM, auth, and test signals. Counts are intentionally not prescribed."
+    },
+    {
+      "case_id": "spring-petclinic-rest",
+      "name": "Spring PetClinic REST",
+      "language": "java",
+      "repository_url": "https://github.com/spring-petclinic/spring-petclinic-rest.git",
+      "default_branch": "master",
+      "commit_sha": "c7b5f5e9e90af2e5b94a40dd77b2a53dc33f67bd",
+      "license": "Apache-2.0",
+      "expected_capabilities": [
+        "spring_mvc_routes",
+        "jpa_database_operations",
+        "transaction_signals",
+        "spring_security_signals",
+        "test_files"
+      ],
+      "max_repository_size_mb": 50,
+      "enabled": true,
+      "notes": "Pinned, active Java backend used to observe Spring MVC, JPA, security, transaction, and test signals. Counts are intentionally not prescribed."
+    },
+    {
+      "case_id": "typescript-bullmq-redis-ecommerce",
+      "name": "Ecommerce Store API",
+      "language": "typescript",
+      "repository_url": "https://github.com/raouf-b-dev/ecommerce-store-api.git",
+      "default_branch": "master",
+      "commit_sha": "147231b54ed8f8a7f3a0b5110db757a39650892c",
+      "license": "MIT",
+      "expected_capabilities": [
+        "bullmq_queue_dispatch",
+        "bullmq_queue_consume",
+        "redis_cache_read",
+        "redis_cache_write_or_invalidate",
+        "test_or_example_files"
+      ],
+      "max_repository_size_mb": 80,
+      "enabled": true,
+      "notes": "Pinned application-style NestJS backend documenting BullMQ jobs, Redis, and cache-aside behavior. Finding counts are not prescribed."
+    },
+    {
+      "case_id": "java-spring-kafka-reactive",
+      "name": "Apache Kafka with Spring Boot Reactive",
+      "language": "java",
+      "repository_url": "https://github.com/ali-bouali/apache-kafka-with-spring-boot-reactive.git",
+      "default_branch": "main",
+      "commit_sha": "46492f9147673513338505049eff09bc796dd166",
+      "license": "Apache-2.0",
+      "expected_capabilities": [
+        "spring_boot",
+        "kafka_template_send",
+        "kafka_listener_consume",
+        "test_or_example_files"
+      ],
+      "max_repository_size_mb": 50,
+      "enabled": true,
+      "notes": "Pinned Spring Boot Kafka producer/consumer sample. RepoSense does not run its build, tests, or services."
+    }
+  ]
+}

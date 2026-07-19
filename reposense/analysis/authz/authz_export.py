@@ -4,6 +4,7 @@ import os
 from .authz_render import render_human_permission_review, render_negative_test_plan, render_permission_risk_report
 from .authz_scanner import scan_permission_auditor
 from .authz_summary import summarize_permission
+from .guard_correlation_export import export_guard_correlation
 
 
 def _write_json(path, obj):
@@ -45,7 +46,13 @@ def export_permission_auditor(run_dir, repo_path=None):
         raise ValueError("repo_path is required when run artifacts do not record a readable repository path")
     if not os.path.isdir(repo):
         raise ValueError("repo_path must be an existing directory")
-    surface, risks_payload = scan_permission_auditor(run_dir, repo)
+    guard_result = export_guard_correlation(run_dir, repo, update_manifest=False)
+    surface, risks_payload = scan_permission_auditor(
+        run_dir,
+        repo,
+        guard_payload=guard_result["correlations"],
+        guard_summary=guard_result["summary"],
+    )
     summary = summarize_permission(surface, risks_payload.get("risks") or [])
     report_md = render_permission_risk_report(surface, risks_payload, summary)
     human_md = render_human_permission_review(risks_payload)
@@ -62,6 +69,15 @@ def export_permission_auditor(run_dir, repo_path=None):
     _write_text(paths["report_path"], report_md)
     _write_text(paths["human_review_path"], human_md)
     _write_text(paths["negative_test_plan_path"], test_plan_md)
+    from ..context.context_export import export_review_context
+
+    context_result = export_review_context(
+        run_dir,
+        repo,
+        routes=surface.get("routes") or [],
+        route_annotations=surface.get("route_intent_annotations") or [],
+        update_manifest=False,
+    )
     try:
         from ...run_manifest import build_run_manifest
 
@@ -75,6 +91,7 @@ def export_permission_auditor(run_dir, repo_path=None):
         "report_markdown": report_md,
         "human_review_markdown": human_md,
         "negative_test_plan_markdown": test_plan_md,
+        "review_context": context_result,
+        "guard_correlation": guard_result,
         **paths,
     }
-

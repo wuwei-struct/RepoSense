@@ -21,8 +21,24 @@ def infer_authz_matrix(permission_surface, permission_risks):
             "observed": {
                 "auth_signals": r.get("auth_signals") or [],
                 "role_permission_signals": r.get("role_permission_signals") or [],
+                "effective_auth_status": str(
+                    r.get("effective_auth_status") or "unknown"
+                ),
+                "guard_scope": str(r.get("guard_scope") or ""),
+                "effective_role_status": str(
+                    r.get("effective_role_status") or "unknown"
+                ),
+                "public_bypass": bool(r.get("public_bypass")),
+                "openapi_security_expectation": str(
+                    r.get("openapi_security_expectation") or "not_available"
+                ),
+                "guard_correlation_confidence": float(
+                    r.get("guard_correlation_confidence") or 0.0
+                ),
                 "write_like": bool(r.get("write_like")),
                 "sensitive": bool(r.get("sensitive")),
+                "route_intent": str(r.get("intent") or "unknown"),
+                "route_intent_confidence": float(r.get("intent_confidence") or 0.0),
             },
             "evidence_refs": r.get("source_refs") or [],
         }
@@ -36,4 +52,3 @@ def infer_authz_matrix(permission_surface, permission_risks):
 
 def render_inferred_yaml(obj):
     return yaml.safe_dump(obj, sort_keys=True, allow_unicode=True)
-

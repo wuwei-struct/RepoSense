@@ -231,6 +231,11 @@ def run_scan(input_path, out_dir, ruleset_dir, budget_path, base_run_dir=None, s
                         "framework": meta_obj.get("framework"),
                         "transaction_style": meta_obj.get("transaction_style"),
                         "callee_expr": meta_obj.get("callee_expr"),
+                        "receiver_kind": meta_obj.get("receiver_kind") or "unknown",
+                        "receiver_name": meta_obj.get("receiver_name") or "",
+                        "transaction_context": meta_obj.get("transaction_context") or "unknown",
+                        "signals": meta_obj.get("signals") or [],
+                        "limitations": meta_obj.get("limitations") or [],
                         "parse_level": r.get("parse_level"),
                         "source": meta_obj.get("detector") or src_kind,
                     }
@@ -277,13 +282,15 @@ def run_scan(input_path, out_dir, ruleset_dir, budget_path, base_run_dir=None, s
                 dstyle = str(meta_obj.get("db_style") or "")
                 k = f"{rel}:{scope_key}:{dstyle}:{op}:{r['start_line']}"
                 if (t, k) not in inserted_events:
+                    is_ts_db = str(meta_obj.get("language") or "").lower() == "typescript"
+                    source_kind = "typescript_l2" if is_ts_db else "java_l2"
                     ev_meta = {
                         "path": r["path"],
                         "start_line": r["start_line"],
                         "end_line": r["end_line"],
                         "evidence_refs": [f"E{eid}"],
-                        "evidence_strength": meta_obj.get("evidence_strength") or "java_l2",
-                        "source_kind": "java_l2",
+                        "evidence_strength": meta_obj.get("evidence_strength") or source_kind,
+                        "source_kind": source_kind,
                         "db.kind": meta_obj.get("db.kind") or "",
                         "db.op": op,
                         "db_style": dstyle,
@@ -292,11 +299,16 @@ def run_scan(input_path, out_dir, ruleset_dir, budget_path, base_run_dir=None, s
                         "mapper_symbol": meta_obj.get("mapper_symbol") or "",
                         "statement_hint": meta_obj.get("statement_hint") or "",
                         "callee_expr": meta_obj.get("callee_expr") or "",
+                        "receiver_kind": meta_obj.get("receiver_kind") or "",
+                        "receiver_name": meta_obj.get("receiver_name") or "",
+                        "transaction_context": meta_obj.get("transaction_context") or "unknown",
+                        "signals": meta_obj.get("signals") or [],
+                        "limitations": meta_obj.get("limitations") or [],
                         "scope": scope,
                         "language": meta_obj.get("language"),
                         "framework": meta_obj.get("framework"),
                         "parse_level": r.get("parse_level"),
-                        "source": meta_obj.get("detector") or "java_db_ops",
+                        "source": meta_obj.get("detector") or ("ts_typeorm_db_operation" if is_ts_db else "java_db_ops"),
                     }
                     ev_id = insert_event(detections_db, t, k, float(r["confidence"]), json.dumps(ev_meta))
                     inserted_events.add((t, k))
@@ -361,6 +373,11 @@ def run_scan(input_path, out_dir, ruleset_dir, budget_path, base_run_dir=None, s
     stats["generated_by"] = generated_by("0.1.0", os.path.basename(ruleset_dir), rs_fp, 1)
     write_coverage(run_dir, stats)
     build_graph(run_dir)
+    try:
+        from .analysis.db.typeorm_export import export_typeorm_db_operations
+        export_typeorm_db_operations(run_dir)
+    except Exception:
+        pass
     # build run_summary by reading artifacts
     run_summary = {}
     try:

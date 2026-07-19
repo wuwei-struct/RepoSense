@@ -147,6 +147,15 @@ def generate_backend_verifier_report(run_dir):
     coverage = _read_json(os.path.join(run_dir, "coverage.json"), {})
     gate = _read_json(os.path.join(run_dir, "quality_gate.json"), {})
     patterns_obj = _read_json(os.path.join(run_dir, "patterns.json"), {})
+    typeorm_summary = _read_json(
+        os.path.join(run_dir, "typeorm_db_summary.json"), {}
+    )
+    transaction_correlation_summary = _read_json(
+        os.path.join(run_dir, "transaction_correlation_summary.json"), {}
+    )
+    typescript_transaction_summary = (
+        transaction_correlation_summary.get("by_language_framework") or {}
+    ).get("typescript/typeorm") or {}
     patterns = patterns_obj.get("patterns") if isinstance(patterns_obj.get("patterns"), list) else []
 
     run_summary = report.get("run_summary") if isinstance(report.get("run_summary"), dict) else {}
@@ -246,6 +255,47 @@ def generate_backend_verifier_report(run_dir):
             "languages": dict(sorted(lang_counts.items())),
             "frameworks": dict(sorted(fw_counts.items())),
         },
+        "typeorm_db_coverage": {
+            "status": "enabled" if typeorm_summary else "not_available",
+            "repositories_detected": int(
+                (typeorm_summary.get("counts_by_receiver_kind") or {}).get(
+                    "repository", 0
+                )
+            ),
+            "entity_manager_operations": int(
+                (typeorm_summary.get("counts_by_receiver_kind") or {}).get(
+                    "entity_manager", 0
+                )
+            ),
+            "data_source_operations": int(
+                (typeorm_summary.get("counts_by_receiver_kind") or {}).get(
+                    "data_source", 0
+                )
+            ),
+            "query_runner_operations": int(
+                (typeorm_summary.get("counts_by_receiver_kind") or {}).get(
+                    "query_runner", 0
+                )
+            ),
+            "db_reads": int(typeorm_summary.get("db_reads") or 0),
+            "db_writes": int(typeorm_summary.get("db_writes") or 0),
+            "transactions": int(typeorm_summary.get("db_transactions") or 0),
+            "raw_sql_unknown": int(
+                typeorm_summary.get("raw_sql_unknown") or 0
+            ),
+            "duplicate_events_removed": int(
+                typeorm_summary.get("duplicate_events_removed") or 0
+            ),
+            "limitations": typeorm_summary.get("limitations") or [],
+        },
+        "typescript_transaction_correlation": {
+            "status": (
+                "enabled"
+                if typescript_transaction_summary
+                else "not_available"
+            ),
+            **typescript_transaction_summary,
+        },
         "side_effect_map": {
             "mode": "conservative_side_effect_map",
             "paths": side_effect_map,
@@ -278,6 +328,8 @@ def render_backend_verifier_markdown(report):
     tx = report.get("transaction_signals") or {}
     qq = report.get("queue_dispatch_signals") or {}
     cc = report.get("cache_operation_signals") or {}
+    orm = report.get("typeorm_db_coverage") or {}
+    ts_tx = report.get("typescript_transaction_correlation") or {}
     sm = report.get("side_effect_map") or {}
     hr = (report.get("high_risk_findings") or {}).get("items") or []
     ei = report.get("evidence_index") or []
@@ -311,6 +363,24 @@ def render_backend_verifier_markdown(report):
         f"- cache.read: {int(cc.get('cache_read_count') or 0)}",
         f"- cache.write: {int(cc.get('cache_write_count') or 0)}",
         f"- cache.invalidate: {int(cc.get('cache_invalidate_count') or 0)}",
+        "",
+        "## TypeORM DB Coverage",
+        f"- Status: {orm.get('status') or 'not_available'}",
+        f"- DB reads/writes/transactions: {int(orm.get('db_reads') or 0)}/{int(orm.get('db_writes') or 0)}/{int(orm.get('transactions') or 0)}",
+        f"- Repository/EntityManager/DataSource/QueryRunner operations: {int(orm.get('repositories_detected') or 0)}/{int(orm.get('entity_manager_operations') or 0)}/{int(orm.get('data_source_operations') or 0)}/{int(orm.get('query_runner_operations') or 0)}",
+        f"- Raw SQL unknown: {int(orm.get('raw_sql_unknown') or 0)}",
+        "",
+        "## TypeScript Transaction Correlation",
+        f"- Status: {ts_tx.get('status') or 'not_available'}",
+        (
+            "- Covered / uncovered / partial / unknown / read-only: "
+            f"{int((ts_tx.get('counts_by_coverage_status') or {}).get('covered_explicit') or 0)}/"
+            f"{int((ts_tx.get('counts_by_coverage_status') or {}).get('uncovered') or 0)}/"
+            f"{int((ts_tx.get('counts_by_coverage_status') or {}).get('partially_covered') or 0)}/"
+            f"{int((ts_tx.get('counts_by_coverage_status') or {}).get('unknown') or 0)}/"
+            f"{int((ts_tx.get('counts_by_coverage_status') or {}).get('read_only_transaction') or 0)}"
+        ),
+        f"- Migration unresolved writes: {int(ts_tx.get('migration_unresolved_write_count') or 0)}",
         "",
         "## 6. Side-effect Map",
         f"- mode: {sm.get('mode') or 'conservative_side_effect_map'}",
@@ -362,4 +432,3 @@ def export_backend_verifier_report(run_dir, write_json=True, write_markdown=True
         "json_path": json_path,
         "markdown_path": md_path,
     }
-

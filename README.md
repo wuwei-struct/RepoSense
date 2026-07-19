@@ -172,6 +172,8 @@ It packages API surface, backend events, findings, evidence, quality gate, basel
 
 Context Pack now includes a `REVIEW/` section for AI-assisted maintenance and human review handoff.
 
+RepoSense also has a reproducible [real-repository review smoke protocol](docs/validation/REAL_REPO_REVIEW_SMOKE.md). Recorded smoke results, when executed, are tracked in [REAL_REPO_REVIEW_RESULTS.md](docs/validation/REAL_REPO_REVIEW_RESULTS.md).
+
 ## What RepoSense Is Not
 
 - Not a general AI code chat.

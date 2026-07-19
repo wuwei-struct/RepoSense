@@ -3,6 +3,8 @@ def render_code_health_markdown(findings, summary):
         "# Code Health Radar",
         "",
         f"- Total findings: {int(summary.get('total_findings') or 0)}",
+        f"- Actionable findings: {int(summary.get('actionable_findings') or 0)}",
+        f"- Excluded from primary review: {int(summary.get('findings_excluded_from_primary_review') or 0)}",
         f"- Health score: {int((summary.get('health_score') or {}).get('score') or 0)} (experimental)",
         "",
         "## Findings",
@@ -14,4 +16,3 @@ def render_code_health_markdown(findings, summary):
         lines.append(f"- {item}")
     lines.append("")
     return "\n".join(lines)
-

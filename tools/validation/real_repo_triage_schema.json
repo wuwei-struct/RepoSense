@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RepoSense real repository smoke triage template",
+  "type": "object",
+  "required": ["version", "case_id", "generated_at", "items"],
+  "properties": {
+    "version": {"const": "real_repo_triage_v1"},
+    "case_id": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "minLength": 1},
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "item_id",
+          "category",
+          "source_artifact",
+          "rule_id",
+          "file",
+          "line",
+          "reason",
+          "evidence",
+          "triage_status",
+          "reviewer_note"
+        ],
+        "properties": {
+          "item_id": {"type": "string", "minLength": 1},
+          "category": {"type": "string", "minLength": 1},
+          "source_artifact": {"type": "string", "minLength": 1},
+          "rule_id": {"type": "string"},
+          "file": {"type": "string"},
+          "line": {"type": "integer", "minimum": 0},
+          "reason": {"type": "string"},
+          "evidence": {},
+          "triage_status": {
+            "enum": [
+              "unreviewed",
+              "plausible",
+              "confirmed_by_source",
+              "needs_business_context",
+              "likely_false_positive",
+              "duplicate",
+              "unsupported"
+            ]
+          },
+          "reviewer_note": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

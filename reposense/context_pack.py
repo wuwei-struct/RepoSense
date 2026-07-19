@@ -209,7 +209,7 @@ def build_context_pack(run_dir, top_n=10):
     graph = _read_json(os.path.join(run_dir, "event_graph.json"), {"nodes": [], "edges": []})
     run_sum = rep.get("run_summary") or {}
     # copy artifacts
-    for nm in ["report.json", "event_graph.json", "language_capabilities.json", "api_callers.json", "cross_language_summary.json", "patterns.json", "pattern_summary.json", "ai_summary.json", "ai_summary.md", "code_health.json", "code_health_summary.json", "maintainability_risks.json", "permission_surface.json", "permission_risks.json", "permission_risk_report.md", "human_permission_review_required.md", "authz_negative_test_plan.md", "authz_matrix_loaded.json", "authz_matrix_inferred.yaml", "authz_matrix_diff.json", "authz_matrix_report.md"]:
+    for nm in ["report.json", "event_graph.json", "language_capabilities.json", "api_callers.json", "cross_language_summary.json", "patterns.json", "pattern_summary.json", "transaction_correlations.json", "transaction_correlation_summary.json", "typescript_transaction_validation.json", "typescript_transaction_validation.md", "route_intent_annotations.json", "file_context_annotations.json", "review_context_summary.json", "queue_cache_validation.json", "queue_cache_validation.md", "typeorm_db_operations.json", "typeorm_db_summary.json", "typeorm_db_validation.json", "typeorm_db_validation.md", "ai_summary.json", "ai_summary.md", "code_health.json", "code_health_summary.json", "maintainability_risks.json", "permission_surface.json", "permission_risks.json", "permission_risk_report.md", "human_permission_review_required.md", "authz_negative_test_plan.md", "authz_matrix_loaded.json", "authz_matrix_inferred.yaml", "authz_matrix_diff.json", "authz_matrix_report.md"]:
         src = os.path.join(run_dir, nm)
         dst = os.path.join(pack_root, "ARTIFACTS", nm)
         if os.path.isfile(src):
@@ -224,6 +224,20 @@ def build_context_pack(run_dir, top_n=10):
                         f2.write(f.read())
             except Exception:
                 pass
+    for nm in [
+        "route_guard_correlations.json",
+        "route_guard_summary.json",
+        "openapi_security_surface.json",
+        "route_decorator_classifications.json",
+        "route_decorator_summary.json",
+    ]:
+        src = os.path.join(run_dir, nm)
+        dst = os.path.join(pack_root, "ARTIFACTS", nm)
+        if os.path.isfile(src):
+            with open(src, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            with open(dst, "w", encoding="utf-8") as f2:
+                json.dump(data, f2, ensure_ascii=False)
     for nm in ["cross_language_links.json", "api_topology.json"]:
         src = os.path.join(run_dir, nm)
         dst = os.path.join(pack_root, "MAP", nm)
@@ -409,6 +423,30 @@ def build_context_pack(run_dir, top_n=10):
             "cross_language_summary": "context_pack/ARTIFACTS/cross_language_summary.json",
             "patterns": "patterns.json",
             "pattern_summary": "pattern_summary.json",
+            "transaction_correlations": "context_pack/ARTIFACTS/transaction_correlations.json",
+            "transaction_correlation_summary": "context_pack/ARTIFACTS/transaction_correlation_summary.json",
+            "route_intent_annotations": "context_pack/ARTIFACTS/route_intent_annotations.json",
+            "file_context_annotations": "context_pack/ARTIFACTS/file_context_annotations.json",
+            "review_context_summary": "context_pack/ARTIFACTS/review_context_summary.json",
+            **{
+                key: f"context_pack/ARTIFACTS/{name}"
+                for key, name in {
+                    "route_guard_correlations": "route_guard_correlations.json",
+                    "route_guard_summary": "route_guard_summary.json",
+                    "openapi_security_surface": "openapi_security_surface.json",
+                    "route_decorator_classifications": "route_decorator_classifications.json",
+                    "route_decorator_summary": "route_decorator_summary.json",
+                    "queue_cache_validation": "queue_cache_validation.json",
+                    "queue_cache_validation_report": "queue_cache_validation.md",
+                    "typeorm_db_operations": "typeorm_db_operations.json",
+                    "typeorm_db_summary": "typeorm_db_summary.json",
+                    "typeorm_db_validation": "typeorm_db_validation.json",
+                    "typeorm_db_validation_report": "typeorm_db_validation.md",
+                    "typescript_transaction_validation": "typescript_transaction_validation.json",
+                    "typescript_transaction_validation_report": "typescript_transaction_validation.md",
+                }.items()
+                if os.path.isfile(os.path.join(pack_root, "ARTIFACTS", name))
+            },
             "ai_summary_json": "ai_summary.json",
             "ai_summary_md": "ai_summary.md",
             "code_health": "context_pack/ARTIFACTS/code_health.json",
@@ -695,6 +733,142 @@ def build_context_pack(run_dir, top_n=10):
                 readme.append("- top pattern types: " + ", ".join([f"{k}:{v}" for k, v in sorted(cbt.items(), key=lambda x: x[0])]))
             if cbs:
                 readme.append("- counts by severity: " + ", ".join([f"{k}:{v}" for k, v in sorted(cbs.items(), key=lambda x: x[0])]))
+    except Exception:
+        pass
+    try:
+        tcs = _read_json(os.path.join(run_dir, "transaction_correlation_summary.json"), {})
+        if isinstance(tcs, dict) and tcs:
+            counts = tcs.get("counts_by_coverage_status") or {}
+            readme.append("")
+            readme.append("## Transaction Correlation")
+            readme.append(f"- total correlations: {int(tcs.get('total_correlations') or 0)}")
+            readme.append(f"- covered / uncovered: {int(counts.get('covered_explicit') or 0)} / {int(counts.get('uncovered') or 0)}")
+            readme.append(f"- partial / unknown / read-only: {int(counts.get('partially_covered') or 0)} / {int(counts.get('unknown') or 0)} / {int(counts.get('read_only_transaction') or 0)}")
+            readme.append("- files: ARTIFACTS/transaction_correlations.json, ARTIFACTS/transaction_correlation_summary.json")
+            by_runtime = tcs.get("by_language_framework") or {}
+            typescript = by_runtime.get("typescript/typeorm") or {}
+            if typescript:
+                mechanisms = typescript.get("counts_by_transaction_mechanism") or {}
+                readme.append(
+                    "- TypeScript callback / QueryRunner / decorator / wrapper: "
+                    f"{int(mechanisms.get('typeorm_callback') or 0) + int(mechanisms.get('entity_manager_callback') or 0)} / "
+                    f"{int(mechanisms.get('query_runner') or 0)} / "
+                    f"{int(mechanisms.get('trusted_decorator_method') or 0) + int(mechanisms.get('trusted_decorator_class') or 0)} / "
+                    f"{int(mechanisms.get('direct_wrapper_caller') or 0)}"
+                )
+    except Exception:
+        pass
+    try:
+        rcs = _read_json(os.path.join(run_dir, "review_context_summary.json"), {})
+        if isinstance(rcs, dict) and rcs:
+            readme.append("")
+            readme.append("## Review Context Calibration")
+            readme.append(f"- public auth entrypoints: {int(rcs.get('public_auth_route_count') or 0)}")
+            readme.append(f"- findings downweighted / excluded: {int(rcs.get('findings_downweighted_count') or 0)} / {int(rcs.get('findings_excluded_from_primary_review_count') or 0)}")
+            readme.append("- files: ARTIFACTS/route_intent_annotations.json, ARTIFACTS/file_context_annotations.json, ARTIFACTS/review_context_summary.json")
+    except Exception:
+        pass
+    try:
+        rgs = _read_json(os.path.join(run_dir, "route_guard_summary.json"), {})
+        if isinstance(rgs, dict) and rgs:
+            readme.append("")
+            readme.append("## Route Guard Correlation")
+            readme.append(
+                "- protected method / controller / global routes: "
+                f"{int(rgs.get('protected_method') or 0)} / "
+                f"{int(rgs.get('protected_controller') or 0)} / "
+                f"{int(rgs.get('protected_global') or 0)}"
+            )
+            readme.append(
+                "- intentional public bypasses: "
+                f"{int(rgs.get('intentional_public_bypasses') or 0)}"
+            )
+            readme.append(
+                "- OpenAPI protected without code guard: "
+                f"{int(rgs.get('openapi_protected_without_code_guard') or 0)}"
+            )
+            readme.append(
+                "- OpenAPI security is contract evidence, not implementation guard proof."
+            )
+            readme.append(
+                "- files: ARTIFACTS/route_guard_correlations.json, "
+                "ARTIFACTS/route_guard_summary.json, "
+                "ARTIFACTS/openapi_security_surface.json"
+            )
+    except Exception:
+        pass
+    try:
+        rds = _read_json(os.path.join(run_dir, "route_decorator_summary.json"), {})
+        if isinstance(rds, dict) and rds:
+            readme.append("")
+            readme.append("## Route Decorator Classification")
+            readme.append(
+                "- accepted routes / rejected non-routes / unknown: "
+                f"{int(rds.get('accepted_route_count') or 0)} / "
+                f"{int(rds.get('rejected_non_route_count') or 0)} / "
+                f"{int(rds.get('unknown_count') or 0)}"
+            )
+            readme.append(
+                "- files: ARTIFACTS/route_decorator_classifications.json, "
+                "ARTIFACTS/route_decorator_summary.json"
+            )
+    except Exception:
+        pass
+    try:
+        qcv = _read_json(
+            os.path.join(run_dir, "queue_cache_validation.json"),
+            {},
+        )
+        qcs = qcv.get("summary") if isinstance(qcv.get("summary"), dict) else {}
+        if qcs:
+            readme.append("")
+            readme.append("## Queue / Cache Validation")
+            readme.append(
+                "- dispatch / consume / matched pairs: "
+                f"{int(qcs.get('queue_dispatch_count') or 0)} / "
+                f"{int(qcs.get('queue_consume_count') or 0)} / "
+                f"{int(qcs.get('matched_producer_consumer_pairs') or 0)}"
+            )
+            readme.append(
+                "- unmatched dispatch / unresolved names: "
+                f"{int(qcs.get('unmatched_dispatches') or 0)} / "
+                f"{int(qcs.get('unknown_name_events') or 0)}"
+            )
+            readme.append(
+                "- cache read / write / invalidate: "
+                f"{int(qcs.get('cache_read_count') or 0)} / "
+                f"{int(qcs.get('cache_write_count') or 0)} / "
+                f"{int(qcs.get('cache_invalidate_count') or 0)}"
+            )
+            readme.append(
+                "- files: ARTIFACTS/queue_cache_validation.json, "
+                "ARTIFACTS/queue_cache_validation.md"
+            )
+    except Exception:
+        pass
+    try:
+        typeorm = _read_json(
+            os.path.join(run_dir, "typeorm_db_summary.json"),
+            {},
+        )
+        if typeorm:
+            readme.append("")
+            readme.append("## TypeORM DB Coverage")
+            readme.append(
+                "- reads / writes / transactions: "
+                f"{int(typeorm.get('db_reads') or 0)} / "
+                f"{int(typeorm.get('db_writes') or 0)} / "
+                f"{int(typeorm.get('db_transactions') or 0)}"
+            )
+            readme.append(
+                "- explicit / unresolved write transaction context: "
+                f"{int(typeorm.get('writes_with_explicit_transaction_context') or 0)} / "
+                f"{int(typeorm.get('writes_with_unresolved_transaction_coverage') or 0)}"
+            )
+            readme.append(
+                "- files: ARTIFACTS/typeorm_db_operations.json, "
+                "ARTIFACTS/typeorm_db_summary.json"
+            )
     except Exception:
         pass
     try:

@@ -27,11 +27,19 @@ def _upsert_context_pack(run_dir, patterns_path, summary_path):
     os.makedirs(art, exist_ok=True)
     shutil.copyfile(patterns_path, os.path.join(art, "patterns.json"))
     shutil.copyfile(summary_path, os.path.join(art, "pattern_summary.json"))
+    for name in ["transaction_correlations.json", "transaction_correlation_summary.json"]:
+        source = os.path.join(run_dir, name)
+        if os.path.isfile(source):
+            shutil.copyfile(source, os.path.join(art, name))
     idx_path = os.path.join(cp, "MAP", "index.json")
     idx = _read_json(idx_path, {})
     outs = idx.get("outputs") if isinstance(idx.get("outputs"), dict) else {}
     outs["patterns"] = "patterns.json"
     outs["pattern_summary"] = "pattern_summary.json"
+    if os.path.isfile(os.path.join(run_dir, "transaction_correlations.json")):
+        outs["transaction_correlations"] = "context_pack/ARTIFACTS/transaction_correlations.json"
+    if os.path.isfile(os.path.join(run_dir, "transaction_correlation_summary.json")):
+        outs["transaction_correlation_summary"] = "context_pack/ARTIFACTS/transaction_correlation_summary.json"
     idx["outputs"] = outs
     _write_json(idx_path, idx)
     rd_path = os.path.join(cp, "README.md")

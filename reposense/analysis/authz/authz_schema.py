@@ -32,6 +32,7 @@ def normalize_route(item):
         "line_end": int(x.get("line_end") or line),
         "language": str(x.get("language") or "unknown"),
         "framework": str(x.get("framework") or "unknown"),
+        "source_kind": str(x.get("source_kind") or "code"),
         "write_like": bool(x.get("write_like")),
         "sensitive": bool(x.get("sensitive")),
         "auth_signals": x.get("auth_signals") if isinstance(x.get("auth_signals"), list) else [],
@@ -39,6 +40,23 @@ def normalize_route(item):
         "ownership_signals": x.get("ownership_signals") if isinstance(x.get("ownership_signals"), list) else [],
         "tenant_boundary_signals": x.get("tenant_boundary_signals") if isinstance(x.get("tenant_boundary_signals"), list) else [],
         "source_refs": x.get("source_refs") if isinstance(x.get("source_refs"), list) else [],
+        "intent": str(x.get("intent") or "unknown"),
+        "intent_confidence": float(x.get("intent_confidence") or 0.0),
+        "intent_signals": x.get("intent_signals") if isinstance(x.get("intent_signals"), list) else [],
+        "intent_limitations": x.get("intent_limitations") if isinstance(x.get("intent_limitations"), list) else [],
+        "auth_guard_expected": bool(x.get("auth_guard_expected", True)),
+        "intent_annotation_id": str(x.get("intent_annotation_id") or ""),
+        "effective_auth_status": str(x.get("effective_auth_status") or "unknown"),
+        "effective_role_status": str(x.get("effective_role_status") or "unknown"),
+        "guard_scope": str(x.get("guard_scope") or ""),
+        "public_bypass": bool(x.get("public_bypass")),
+        "guard_correlation_id": str(x.get("guard_correlation_id") or ""),
+        "guard_correlation_confidence": float(x.get("guard_correlation_confidence") or 0.0),
+        "guard_correlation_limitations": x.get("guard_correlation_limitations") if isinstance(x.get("guard_correlation_limitations"), list) else [],
+        "guard_correlation_match_status": str(x.get("guard_correlation_match_status") or ""),
+        "openapi_security_expectation": str(x.get("openapi_security_expectation") or "not_available"),
+        "guard_sources": x.get("guard_sources") if isinstance(x.get("guard_sources"), list) else [],
+        "public_bypass_sources": x.get("public_bypass_sources") if isinstance(x.get("public_bypass_sources"), list) else [],
     }
 
 
@@ -105,4 +123,3 @@ def normalize_risk(item):
         "limitations": x.get("limitations") if isinstance(x.get("limitations"), list) else [],
         "suggested_human_review": bool(x.get("suggested_human_review", True)),
     }
-

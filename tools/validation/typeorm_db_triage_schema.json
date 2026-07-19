@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RepoSense TypeORM DB triage",
+  "type": "object",
+  "required": ["version", "allowed_statuses", "items"],
+  "properties": {
+    "version": {
+      "const": "typeorm_db_triage_v1"
+    },
+    "allowed_statuses": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "unreviewed",
+          "confirmed_by_source",
+          "plausible",
+          "likely_false_positive",
+          "needs_context",
+          "duplicate",
+          "unsupported"
+        ]
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "item_id",
+          "source_artifact",
+          "operation_id",
+          "kind",
+          "file",
+          "line",
+          "triage_status",
+          "reviewer_note"
+        ]
+      }
+    }
+  }
+}
