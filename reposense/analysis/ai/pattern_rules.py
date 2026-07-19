@@ -322,6 +322,52 @@ def rule_queue_without_consumer(ctx):
     return out
 
 
+def rule_queue_reliability(ctx):
+    payload = ctx.get("queue_reliability_risks")
+    risks = payload.get("risks") if isinstance(payload, dict) else []
+    out = []
+    for risk in risks if isinstance(risks, list) else []:
+        pattern_type = str(risk.get("pattern_type") or "")
+        if pattern_type not in {
+            "queue_retry_without_idempotency_guard",
+            "queue_consumer_side_effect_without_idempotency_evidence",
+        }:
+            continue
+        pattern = _mk_pattern(
+            pattern_type,
+            str(risk.get("title") or pattern_type),
+            "medium",
+            min(float(risk.get("confidence") or 0.0), 0.82),
+            str(risk.get("reason") or ""),
+            [],
+            [],
+            "suspected",
+            (
+                "Review duplicate-delivery behavior and confirm a persistent "
+                "or atomic consumer idempotency guard."
+            ),
+            {
+                "correlation_id": str(risk.get("correlation_id") or ""),
+                "queue_or_topic": str(risk.get("queue_or_topic") or ""),
+                "framework": str(risk.get("framework") or "unknown"),
+                "limitations": list(risk.get("limitations") or []),
+            },
+            extra_evidence_refs=risk.get("evidence_refs"),
+        )
+        pattern["frameworks"] = [
+            str(risk.get("framework") or "unknown")
+        ]
+        pattern["languages"] = [
+            (
+                "java"
+                if str(risk.get("framework") or "").startswith("spring_")
+                else "typescript"
+            )
+        ]
+        out.append(normalize_pattern(pattern))
+    return out
+
+
 def _has_guard_signal(findings_for_path):
     keys = ["idempot", "dedup", "setnx", "exists", "unique", "guard", "cache key", "request key"]
     for f in findings_for_path:
@@ -469,6 +515,7 @@ def run_all_rules(ctx):
         rule_transaction_missing,
         rule_db_write_outside_tx,
         rule_queue_without_consumer,
+        rule_queue_reliability,
         rule_api_write_without_idempotency_guard,
         rule_cross_language_api_unmatched,
         rule_hot_write_path,

@@ -111,3 +111,19 @@ The unmatched TypeScript item is a confirmed `@Processor("checkout")` consumer w
 - Cache observations do not prove cache consistency, eviction correctness, or freshness.
 - Missing static evidence is not proof of missing runtime behavior.
 - Results are calibration evidence, not a message reliability or correctness guarantee.
+
+## Retry and idempotency follow-up
+
+Queue/cache facts are also consumed by the conservative
+[Queue Retry / Idempotency Correlation](QUEUE_RETRY_IDEMPOTENCY_CORRELATION.md).
+That analysis keeps producer identity separate from consumer business
+idempotency and only emits suspected risks when a matched consumer has
+evidence-backed side effects.
+
+## Retry and idempotency follow-up
+
+Queue/cache facts are also consumed by the conservative
+[Queue Retry / Idempotency Correlation](QUEUE_RETRY_IDEMPOTENCY_CORRELATION.md).
+That analysis keeps producer identity separate from consumer business
+idempotency and only emits suspected risks when a matched consumer has
+evidence-backed side effects.

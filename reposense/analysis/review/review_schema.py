@@ -49,6 +49,7 @@ def normalize_review_report(obj):
         "side_effect_review": x.get("side_effect_review") if isinstance(x.get("side_effect_review"), dict) else {},
         "transaction_review": x.get("transaction_review") if isinstance(x.get("transaction_review"), dict) else {},
         "queue_cache_review": x.get("queue_cache_review") if isinstance(x.get("queue_cache_review"), dict) else {},
+        "messaging_reliability_review": x.get("messaging_reliability_review") if isinstance(x.get("messaging_reliability_review"), dict) else {},
         "api_surface_review": x.get("api_surface_review") if isinstance(x.get("api_surface_review"), dict) else {},
         "pattern_risk_review": x.get("pattern_risk_review") if isinstance(x.get("pattern_risk_review"), dict) else {},
         "quality_gate_review": x.get("quality_gate_review") if isinstance(x.get("quality_gate_review"), dict) else {},

@@ -209,7 +209,7 @@ def build_context_pack(run_dir, top_n=10):
     graph = _read_json(os.path.join(run_dir, "event_graph.json"), {"nodes": [], "edges": []})
     run_sum = rep.get("run_summary") or {}
     # copy artifacts
-    for nm in ["report.json", "event_graph.json", "language_capabilities.json", "api_callers.json", "cross_language_summary.json", "patterns.json", "pattern_summary.json", "transaction_correlations.json", "transaction_correlation_summary.json", "typescript_transaction_validation.json", "typescript_transaction_validation.md", "route_intent_annotations.json", "file_context_annotations.json", "review_context_summary.json", "queue_cache_validation.json", "queue_cache_validation.md", "typeorm_db_operations.json", "typeorm_db_summary.json", "typeorm_db_validation.json", "typeorm_db_validation.md", "ai_summary.json", "ai_summary.md", "code_health.json", "code_health_summary.json", "maintainability_risks.json", "permission_surface.json", "permission_risks.json", "permission_risk_report.md", "human_permission_review_required.md", "authz_negative_test_plan.md", "authz_matrix_loaded.json", "authz_matrix_inferred.yaml", "authz_matrix_diff.json", "authz_matrix_report.md"]:
+    for nm in ["report.json", "event_graph.json", "language_capabilities.json", "api_callers.json", "cross_language_summary.json", "patterns.json", "pattern_summary.json", "transaction_correlations.json", "transaction_correlation_summary.json", "typescript_transaction_validation.json", "typescript_transaction_validation.md", "route_intent_annotations.json", "file_context_annotations.json", "review_context_summary.json", "queue_cache_validation.json", "queue_cache_validation.md", "queue_reliability_correlations.json", "queue_reliability_summary.json", "queue_reliability_risks.json", "queue_retry_idempotency_validation.json", "queue_retry_idempotency_validation.md", "typeorm_db_operations.json", "typeorm_db_summary.json", "typeorm_db_validation.json", "typeorm_db_validation.md", "ai_summary.json", "ai_summary.md", "code_health.json", "code_health_summary.json", "maintainability_risks.json", "permission_surface.json", "permission_risks.json", "permission_risk_report.md", "human_permission_review_required.md", "authz_negative_test_plan.md", "authz_matrix_loaded.json", "authz_matrix_inferred.yaml", "authz_matrix_diff.json", "authz_matrix_report.md"]:
         src = os.path.join(run_dir, nm)
         dst = os.path.join(pack_root, "ARTIFACTS", nm)
         if os.path.isfile(src):
@@ -438,6 +438,11 @@ def build_context_pack(run_dir, top_n=10):
                     "route_decorator_summary": "route_decorator_summary.json",
                     "queue_cache_validation": "queue_cache_validation.json",
                     "queue_cache_validation_report": "queue_cache_validation.md",
+                    "queue_reliability_correlations": "queue_reliability_correlations.json",
+                    "queue_reliability_summary": "queue_reliability_summary.json",
+                    "queue_reliability_risks": "queue_reliability_risks.json",
+                    "queue_retry_idempotency_validation": "queue_retry_idempotency_validation.json",
+                    "queue_retry_idempotency_validation_report": "queue_retry_idempotency_validation.md",
                     "typeorm_db_operations": "typeorm_db_operations.json",
                     "typeorm_db_summary": "typeorm_db_summary.json",
                     "typeorm_db_validation": "typeorm_db_validation.json",
@@ -843,6 +848,35 @@ def build_context_pack(run_dir, top_n=10):
             readme.append(
                 "- files: ARTIFACTS/queue_cache_validation.json, "
                 "ARTIFACTS/queue_cache_validation.md"
+            )
+    except Exception:
+        pass
+    try:
+        reliability = _read_json(
+            os.path.join(run_dir, "queue_reliability_summary.json"),
+            {},
+        )
+        if reliability:
+            readme.append("")
+            readme.append("## Queue Reliability")
+            readme.append(
+                "- matched channels / explicit retries: "
+                f"{int(reliability.get('matched_channels') or 0)} / "
+                f"{int(reliability.get('explicit_retries') or 0)}"
+            )
+            readme.append(
+                "- retry with guard / producer dedupe only / without guard: "
+                f"{int(reliability.get('retry_with_consumer_guard') or 0)} / "
+                f"{int(reliability.get('retry_with_producer_dedupe_only') or 0)} / "
+                f"{int(reliability.get('retry_without_consumer_guard') or 0)}"
+            )
+            readme.append(
+                "- Producer identity does not prove consumer business idempotency."
+            )
+            readme.append(
+                "- files: ARTIFACTS/queue_reliability_correlations.json, "
+                "ARTIFACTS/queue_reliability_summary.json, "
+                "ARTIFACTS/queue_reliability_risks.json"
             )
     except Exception:
         pass

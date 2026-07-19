@@ -70,6 +70,7 @@ This index keeps the full documentation map while the README stays focused on th
 - [docs/validation/OPENAPI_GLOBAL_GUARD_CORRELATION.md](validation/OPENAPI_GLOBAL_GUARD_CORRELATION.md)
 - [docs/validation/ROUTE_DECORATOR_CLASSIFICATION.md](validation/ROUTE_DECORATOR_CLASSIFICATION.md)
 - [docs/validation/QUEUE_CACHE_REAL_REPO_COVERAGE.md](validation/QUEUE_CACHE_REAL_REPO_COVERAGE.md)
+- [docs/validation/QUEUE_RETRY_IDEMPOTENCY_CORRELATION.md](validation/QUEUE_RETRY_IDEMPOTENCY_CORRELATION.md)
 - [docs/validation/TYPEORM_DB_OPERATION_COVERAGE.md](validation/TYPEORM_DB_OPERATION_COVERAGE.md)
 - [docs/validation/TYPESCRIPT_TRANSACTION_CORRELATION.md](validation/TYPESCRIPT_TRANSACTION_CORRELATION.md)
 - [docs/validation/REAL_REPO_REVIEW_SMOKE.md](validation/REAL_REPO_REVIEW_SMOKE.md)

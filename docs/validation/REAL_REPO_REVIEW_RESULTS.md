@@ -585,3 +585,50 @@ No real pinned case exercised a TypeScript QueryRunner write between
 a mixed wrapper caller. Those paths remain synthetic-fixture backed. The
 correlation result is static evidence, not proof of transaction activation,
 propagation, rollback behavior, or runtime correctness.
+
+## Queue Retry / Idempotency Correlation Calibration
+
+The 2026-07-19 offline rerun reused all four pinned workspaces. RepoSense did
+not install, build, test, or execute third-party code.
+
+| Metric | TypeScript BullMQ/Redis | Java Spring Kafka | NestJS | Spring PetClinic |
+|---|---:|---:|---:|---:|
+| Reliability correlations | 3 | 3 | 0 | 0 |
+| Matched channels | 2 | 2 | 0 | 0 |
+| Explicit retries | 0 | 0 | 0 | 0 |
+| Producer identity / transport idempotence | 0 | 0 | 0 | 0 |
+| Side-effecting consumers | 0 | 0 | 0 | 0 |
+| Consumer guards | 0 | 0 | 0 | 0 |
+| New suspected risks | 0 | 0 | 0 | 0 |
+| Reliability evidence valid/errors | 12 / 0 | 10 / 0 | 0 / 0 | 0 / 0 |
+| Strict verify | pass | pass | pass | pass |
+| Review Decision | REVIEW | WARN | REVIEW | WARN |
+
+The TypeScript case retained the previous three dispatches, three consumers,
+two matched channels, and 45 cache observations. Source sampling covered every
+correlation. `checkout` is consumer-only; `notifications` and
+`payment-events` are matched. Their `WorkerHost.process` methods delegate to
+injected step/process objects, so the permitted same-handler or uniquely
+resolved one-hop analysis does not claim downstream database/cache effects.
+No explicit `attempts`, default retry option, `jobId`, or BullMQ deduplication
+signal was observed in the correlated producers.
+
+The Java case retained three dispatches, two consumers, two matched topics, and
+one dynamic producer topic. Source sampling confirmed that the two matched
+Kafka listeners only log messages and that no `@RetryableTopic`,
+`DefaultErrorHandler`, producer idempotence, or consumer business guard was
+observed. Dynamic topic evidence remained unresolved and did not produce a
+strong risk.
+
+NestJS Boilerplate and Spring PetClinic produced no queue reliability facts,
+as expected. Their TypeORM and Spring transaction baselines remained intact:
+NestJS retained 41 TypeORM writes and seven suspected outside-transaction
+patterns; Spring retained 68 Java DB operations and 46
+`covered_explicit` transaction correlations. Evidence integrity passed for all
+four cases (73/73 Java Kafka, 1295/1295 NestJS, 904/904 Spring PetClinic, and
+3539/3539 TypeScript BullMQ/Redis records).
+
+No pinned real case contains explicit retry configuration in the statically
+matched channels. Positive retry, producer-identity, consumer-guard,
+check-then-write, and suspected-risk behavior therefore remains
+synthetic-fixture backed. No coverage or risk was invented to improve counts.
