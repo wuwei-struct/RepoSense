@@ -80,6 +80,29 @@ def render_repository_review_markdown(report):
             f"{int(queue_validation.get('cache_write_count') or 0)} write / "
             f"{int(queue_validation.get('cache_invalidate_count') or 0)} invalidate"
         )
+    reliability = report.get("messaging_reliability_review") or {}
+    lines += ["", "## Messaging Reliability Review"]
+    lines.append(
+        f"- Status: {reliability.get('status') or 'not_available'}"
+    )
+    if reliability.get("status") == "enabled":
+        lines.append(
+            f"- Matched channels: {int(reliability.get('matched_channels') or 0)}"
+        )
+        lines.append(
+            f"- Explicit retries: {int(reliability.get('explicit_retries') or 0)}"
+        )
+        lines.append(
+            "- Retry with consumer guard / producer dedupe only / without guard: "
+            f"{int(reliability.get('retry_with_consumer_guard') or 0)} / "
+            f"{int(reliability.get('retry_with_producer_dedupe_only') or 0)} / "
+            f"{int(reliability.get('retry_without_consumer_guard') or 0)}"
+        )
+        lines.append(
+            "- Side-effecting consumers / actionable suspected risks: "
+            f"{int(reliability.get('side_effecting_consumers') or 0)} / "
+            f"{int(reliability.get('actionable_suspected_risks') or 0)}"
+        )
     lines += ["", "## 6. API Surface Review"]
     api = report.get("api_surface_review") or {}
     lines.append(f"- API total: {int(api.get('api_total') or 0)}")

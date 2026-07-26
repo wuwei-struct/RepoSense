@@ -80,6 +80,9 @@ def _load_ctx(run_dir):
         "cross_language_links": _read_json(os.path.join(run_dir, "cross_language_links.json"), {}),
         "transaction_correlations": _read_json(os.path.join(run_dir, "transaction_correlations.json"), {}),
         "transaction_correlation_summary": _read_json(os.path.join(run_dir, "transaction_correlation_summary.json"), {}),
+        "queue_reliability_correlations": _read_json(os.path.join(run_dir, "queue_reliability_correlations.json"), {}),
+        "queue_reliability_summary": _read_json(os.path.join(run_dir, "queue_reliability_summary.json"), {}),
+        "queue_reliability_risks": _read_json(os.path.join(run_dir, "queue_reliability_risks.json"), {}),
     }
 
 
@@ -95,6 +98,18 @@ def generate_patterns(run_dir):
             ctx["transaction_correlation_summary"] = result["summary"]
         except (OSError, ValueError):
             # Correlation is optional; Pattern generation preserves legacy behavior when unavailable.
+            pass
+        try:
+            from ..messaging.reliability_export import export_queue_reliability
+
+            result = export_queue_reliability(
+                run_dir, repo_root, update_manifest=False
+            )
+            ctx["queue_reliability_correlations"] = result["correlations"]
+            ctx["queue_reliability_summary"] = result["summary"]
+            ctx["queue_reliability_risks"] = result["risks"]
+        except (OSError, ValueError):
+            # Reliability correlation is optional when source is unavailable.
             pass
     pats = run_all_rules(ctx)
     pats = _dedupe_patterns(pats)

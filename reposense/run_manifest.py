@@ -35,6 +35,8 @@ def _artifact_kind(rel):
     if rel == "route_decorator_summary.json": return "route_decorator_classification"
     if rel == "queue_cache_validation.json": return "queue_cache_validation"
     if rel == "queue_cache_validation.md": return "queue_cache_validation"
+    if rel.startswith("queue_reliability_"): return "queue_reliability"
+    if rel.startswith("queue_retry_idempotency_validation"): return "queue_reliability"
     if rel == "typeorm_db_operations.json": return "typeorm_db_operation"
     if rel == "typeorm_db_summary.json": return "typeorm_db_operation"
     if rel == "typeorm_db_validation.json": return "typeorm_db_validation"
@@ -88,8 +90,18 @@ def build_run_manifest(run_dir, write=True):
         "context_pack/ARTIFACTS/route_decorator_summary.json",
         "queue_cache_validation.json",
         "queue_cache_validation.md",
+        "queue_reliability_correlations.json",
+        "queue_reliability_summary.json",
+        "queue_reliability_risks.json",
+        "queue_retry_idempotency_validation.json",
+        "queue_retry_idempotency_validation.md",
         "context_pack/ARTIFACTS/queue_cache_validation.json",
         "context_pack/ARTIFACTS/queue_cache_validation.md",
+        "context_pack/ARTIFACTS/queue_reliability_correlations.json",
+        "context_pack/ARTIFACTS/queue_reliability_summary.json",
+        "context_pack/ARTIFACTS/queue_reliability_risks.json",
+        "context_pack/ARTIFACTS/queue_retry_idempotency_validation.json",
+        "context_pack/ARTIFACTS/queue_retry_idempotency_validation.md",
         "typeorm_db_operations.json",
         "typeorm_db_summary.json",
         "typeorm_db_validation.json",

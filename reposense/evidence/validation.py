@@ -208,6 +208,13 @@ def validate_run_evidence_locations(run_dir, repo_root):
         ),
         ("queue_cache_validation.json", "queue_observations", False, False),
         ("queue_cache_validation.json", "cache_observations", False, False),
+        ("queue_reliability_risks.json", "risks", False, False),
+        (
+            "queue_retry_idempotency_validation.json",
+            "triage_items",
+            False,
+            False,
+        ),
         ("typeorm_db_operations.json", "operations", True, False),
         ("typeorm_db_validation.json", "operations", True, False),
         (
@@ -242,6 +249,47 @@ def validate_run_evidence_locations(run_dir, repo_root):
                     ref, repo_root, artifact="transaction_correlations.json",
                     item_id=f"{item_id}:{field}:{ref_index}",
                 ))
+    queue_correlations = _read_json(
+        os.path.join(run_dir, "queue_reliability_correlations.json"), {}
+    )
+    for index, item in enumerate(
+        _items(queue_correlations, "correlations")
+    ):
+        if not isinstance(item, dict):
+            continue
+        item_id = str(item.get("correlation_id") or index)
+        for field in ("producer_refs", "consumer_refs", "evidence_refs"):
+            refs = item.get(field) if isinstance(item.get(field), list) else []
+            for ref_index, ref in enumerate(refs):
+                issues.extend(
+                    validate_evidence_location(
+                        ref,
+                        repo_root,
+                        artifact="queue_reliability_correlations.json",
+                        item_id=f"{item_id}:{field}:{ref_index}",
+                    )
+                )
+        for effect_index, effect in enumerate(
+            item.get("consumer_side_effects") or []
+        ):
+            refs = (
+                effect.get("evidence_refs")
+                if isinstance(effect, dict)
+                and isinstance(effect.get("evidence_refs"), list)
+                else []
+            )
+            for ref_index, ref in enumerate(refs):
+                issues.extend(
+                    validate_evidence_location(
+                        ref,
+                        repo_root,
+                        artifact="queue_reliability_correlations.json",
+                        item_id=(
+                            f"{item_id}:consumer_side_effects:"
+                            f"{effect_index}:{ref_index}"
+                        ),
+                    )
+                )
     guard_correlations = _read_json(
         os.path.join(run_dir, "route_guard_correlations.json"), {}
     )

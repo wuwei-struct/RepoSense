@@ -18,6 +18,7 @@ $repoRoot = (Get-Location).Path
 $configPath = Join-Path $repoRoot "tools\validation\real_repo_cases.json"
 $validatorPath = Join-Path $repoRoot "tools\validation\real_repo_smoke.py"
 $queueCacheValidatorPath = Join-Path $repoRoot "tools\validation\queue_cache_validation.py"
+$queueReliabilityValidatorPath = Join-Path $repoRoot "tools\validation\queue_retry_idempotency_validation.py"
 $typeormValidatorPath = Join-Path $repoRoot "tools\validation\typeorm_db_validation.py"
 $typescriptTransactionValidatorPath = Join-Path $repoRoot "tools\validation\typescript_transaction_validation.py"
 $smokeRoot = Join-Path $repoRoot ".reposense_real_repo_smoke"
@@ -53,6 +54,7 @@ if (-not $python) { Fail "ENV" "Python interpreter not found." }
 if (-not (Test-Path $configPath)) { Fail "CONFIG" "Missing case config: $configPath" }
 if (-not (Test-Path $validatorPath)) { Fail "CONFIG" "Missing validator: $validatorPath" }
 if (-not (Test-Path $queueCacheValidatorPath)) { Fail "CONFIG" "Missing queue/cache validator: $queueCacheValidatorPath" }
+if (-not (Test-Path $queueReliabilityValidatorPath)) { Fail "CONFIG" "Missing queue reliability validator: $queueReliabilityValidatorPath" }
 if (-not (Test-Path $typeormValidatorPath)) { Fail "CONFIG" "Missing TypeORM validator: $typeormValidatorPath" }
 if (-not (Test-Path $typescriptTransactionValidatorPath)) { Fail "CONFIG" "Missing TypeScript transaction validator: $typescriptTransactionValidatorPath" }
 Write-Info "Python interpreter: $($python.Display)"
@@ -135,7 +137,7 @@ function Archive-PreviousCurrent {
     foreach ($caseDir in Get-ChildItem $casesDir -Directory) {
       $caseArchive = Join-Path $metadataArchive ("cases\" + $caseDir.Name)
       New-Item -ItemType Directory -Force -Path $caseArchive | Out-Null
-      foreach ($name in @("source-meta.json", "pipeline-meta.json", "validation.json", "validation.md", "triage-template.json", "queue_cache_validation.json", "queue_cache_validation.md", "queue_cache_triage_template.json", "typeorm_db_validation.json", "typeorm_db_validation.md", "typeorm_db_triage_template.json", "typescript_transaction_validation.json", "typescript_transaction_validation.md", "typescript_transaction_triage_template.json")) {
+      foreach ($name in @("source-meta.json", "pipeline-meta.json", "validation.json", "validation.md", "triage-template.json", "queue_cache_validation.json", "queue_cache_validation.md", "queue_cache_triage_template.json", "queue_retry_idempotency_validation.json", "queue_retry_idempotency_validation.md", "queue_retry_idempotency_triage_template.json", "typeorm_db_validation.json", "typeorm_db_validation.md", "typeorm_db_triage_template.json", "typescript_transaction_validation.json", "typescript_transaction_validation.md", "typescript_transaction_triage_template.json")) {
         $source = Join-Path $caseDir.FullName $name
         if (Test-Path $source) { Copy-Item -LiteralPath $source -Destination $caseArchive }
       }
@@ -295,6 +297,14 @@ foreach ($case in $selectedCases) {
     }
     Invoke-Python "queue_cache_validation" @(
       $queueCacheValidatorPath,
+      "--run-dir", $runDir,
+      "--repo-path", $source.Path,
+      "--case-id", $caseIdValue,
+      "--commit", [string]$source.Commit,
+      "--case-dir", $caseDir
+    ) $stageRecords | Out-Null
+    Invoke-Python "queue_retry_idempotency_validation" @(
+      $queueReliabilityValidatorPath,
       "--run-dir", $runDir,
       "--repo-path", $source.Path,
       "--case-id", $caseIdValue,

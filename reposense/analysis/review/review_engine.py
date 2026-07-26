@@ -13,6 +13,7 @@ SECTIONS = [
     "Side-effect Review",
     "Transaction Review",
     "Queue / Cache Review",
+    "Messaging Reliability Review",
     "API Surface Review",
     "Pattern Risk Review",
     "Quality Gate Review",
@@ -126,6 +127,18 @@ def _reason_for_pattern(pattern_type):
         return ["DB write found", "transaction evidence missing"]
     if pt == "queue_without_consumer":
         return ["queue dispatch found", "consumer evidence missing"]
+    if pt == "queue_retry_without_idempotency_guard":
+        return [
+            "explicit queue retry found",
+            "consumer side effect found",
+            "consumer idempotency evidence not observed",
+        ]
+    if pt == "queue_consumer_side_effect_without_idempotency_evidence":
+        return [
+            "matched consumer side effect found",
+            "retry policy unresolved",
+            "consumer idempotency evidence not observed",
+        ]
     if pt == "api_write_without_idempotency_guard":
         return ["write path found", "idempotency guard not found"]
     if pt in ("hot_write_path", "complex_write_path"):
@@ -139,6 +152,15 @@ def _decision_questions(pattern_type):
         return ["Should this operation be transactional?", "Should this path require further tests?"]
     if pt == "queue_without_consumer":
         return ["Should this queue have a consumer?", "Should this path require further tests?"]
+    if pt in {
+        "queue_retry_without_idempotency_guard",
+        "queue_consumer_side_effect_without_idempotency_evidence",
+    }:
+        return [
+            "Can this consumer process the same delivery more than once?",
+            "Where is the persistent or atomic idempotency guard?",
+            "Which duplicate-delivery tests are required?",
+        ]
     if pt == "api_write_without_idempotency_guard":
         return ["Should duplicate submission be rejected?", "Should this path require further tests?"]
     return ["Should this path require further tests?"]
@@ -438,6 +460,12 @@ def generate_repository_review(run_dir):
     typeorm_db_summary = _read_json(
         os.path.join(run_dir, "typeorm_db_summary.json"), {}
     )
+    queue_reliability_summary = _read_json(
+        os.path.join(run_dir, "queue_reliability_summary.json"), {}
+    )
+    queue_reliability_risks = _read_json(
+        os.path.join(run_dir, "queue_reliability_risks.json"), {}
+    )
 
     human_items, backend_skipped = _make_human_items(risks)
     health_items, health_skipped = _make_health_human_items(maintainability_risks)
@@ -497,6 +525,17 @@ def generate_repository_review(run_dir):
                     else {}
                 ),
             },
+            "messaging_reliability_review": {
+                "status": (
+                    "enabled"
+                    if queue_reliability_summary
+                    else "not_available"
+                ),
+                **queue_reliability_summary,
+                "actionable_suspected_risks": len(
+                    queue_reliability_risks.get("risks") or []
+                ),
+            },
             "api_surface_review": {
                 "api_total": int(((api_surface.get("stats") or {}).get("unique_endpoints")) or len(api_surface.get("endpoints") or [])),
                 "openapi_present": bool((((api_surface.get("stats") or {}).get("by_source_kind") or {}).get("openapi") or 0) > 0),
@@ -549,6 +588,7 @@ def generate_repository_review(run_dir):
                 "Uses existing run artifacts only; no new scanning or unrestricted source browsing is performed.",
                 "Code Health Review is enabled only when code_health artifacts exist.",
                 "Permission Review is enabled only when permission artifacts exist.",
+                "Queue reliability correlation does not prove runtime retry or consumer idempotency.",
             ] + ([f"Skipped {skipped_invalid_evidence} invalid evidence reference(s) during review aggregation."] if skipped_invalid_evidence else []),
             "risk_matrix": risk_matrix,
             "evidence_index": (backend.get("evidence_index") if isinstance(backend.get("evidence_index"), list) else [])[:50],

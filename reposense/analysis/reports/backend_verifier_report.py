@@ -153,6 +153,9 @@ def generate_backend_verifier_report(run_dir):
     transaction_correlation_summary = _read_json(
         os.path.join(run_dir, "transaction_correlation_summary.json"), {}
     )
+    queue_reliability_summary = _read_json(
+        os.path.join(run_dir, "queue_reliability_summary.json"), {}
+    )
     typescript_transaction_summary = (
         transaction_correlation_summary.get("by_language_framework") or {}
     ).get("typescript/typeorm") or {}
@@ -248,6 +251,12 @@ def generate_backend_verifier_report(run_dir):
             } for p in queue_unmatched],
             "note": "Dispatch without observed consume is a conservative signal, not a proof of missing consumer.",
         },
+        "queue_reliability_summary": {
+            "status": (
+                "enabled" if queue_reliability_summary else "not_available"
+            ),
+            **queue_reliability_summary,
+        },
         "cache_operation_signals": {
             "cache_read_count": int(kind_counts.get("cache.read", 0)),
             "cache_write_count": int(kind_counts.get("cache.write", 0)),
@@ -327,6 +336,7 @@ def render_backend_verifier_markdown(report):
     ev = report.get("backend_events_summary") or {}
     tx = report.get("transaction_signals") or {}
     qq = report.get("queue_dispatch_signals") or {}
+    reliability = report.get("queue_reliability_summary") or {}
     cc = report.get("cache_operation_signals") or {}
     orm = report.get("typeorm_db_coverage") or {}
     ts_tx = report.get("typescript_transaction_correlation") or {}
@@ -358,6 +368,19 @@ def render_backend_verifier_markdown(report):
         f"- queue.dispatch: {int(qq.get('queue_dispatch_count') or 0)}",
         f"- queue.consume: {int(qq.get('queue_consume_count') or 0)}",
         f"- queue_without_consumer patterns: {len(qq.get('queue_without_consumer_patterns') or [])}",
+        "",
+        "## Queue Reliability Summary",
+        f"- Status: {reliability.get('status') or 'not_available'}",
+        f"- Matched channels: {int(reliability.get('matched_channels') or 0)}",
+        f"- Explicit retries: {int(reliability.get('explicit_retries') or 0)}",
+        (
+            "- Retry with consumer guard / producer dedupe only / without guard: "
+            f"{int(reliability.get('retry_with_consumer_guard') or 0)}/"
+            f"{int(reliability.get('retry_with_producer_dedupe_only') or 0)}/"
+            f"{int(reliability.get('retry_without_consumer_guard') or 0)}"
+        ),
+        f"- Side-effecting consumers: {int(reliability.get('side_effecting_consumers') or 0)}",
+        f"- Unresolved retry policies: {int(reliability.get('unresolved_retry_policies') or 0)}",
         "",
         "## 5. Cache Operation Signals",
         f"- cache.read: {int(cc.get('cache_read_count') or 0)}",
