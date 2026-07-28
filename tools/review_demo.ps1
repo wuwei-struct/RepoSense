@@ -17,48 +17,23 @@ $contractPath = Join-Path $fixtureRepo "reposense.authz.yaml"
 $canonicalRoot = Join-Path $repoRoot ".reposense_review_demo"
 $buildOut = Join-Path $canonicalRoot "_build"
 $currentDir = Join-Path $canonicalRoot "current"
-$archiveRoot = Join-Path $repoRoot "docs\archive\local-artifacts\root-moved"
-$movedLog = Join-Path $repoRoot "docs\archive\local-artifacts\MOVED_FROM_ROOT.md"
+$historyRoot = Join-Path $canonicalRoot "history"
 
 New-Item -ItemType Directory -Force -Path $canonicalRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $buildOut | Out-Null
-New-Item -ItemType Directory -Force -Path $archiveRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $historyRoot | Out-Null
 
-if (-not (Test-Path $movedLog)) {
-@"
-# Moved From Root
-
-## Moved files/directories
-
-| original_path | new_path | reason |
-|---|---|---|
-
-## Already missing before migration
-
-| original_path | observed_status | note |
-|---|---|---|
-
-## Not moved
-
-| path | reason |
-|---|---|
-
-Notes:
-- This flow performs non-destructive moves only (no delete).
-- Missing historical files are not reconstructed.
-"@ | Set-Content -Encoding UTF8 $movedLog
-}
-
-function Append-MoveLog([string]$src, [string]$dst, [string]$reason) {
-  Add-Content -Encoding UTF8 -Path $movedLog -Value "| $src | $dst | $reason |"
-}
-
-function Move-Safe([string]$srcPath, [string]$reason) {
+function Move-To-History([string]$srcPath) {
   if (-not (Test-Path $srcPath)) { return }
   $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
-  $dstPath = Join-Path $archiveRoot "review-demo-current-$stamp"
+  $baseName = "current-$stamp"
+  $dstPath = Join-Path $historyRoot $baseName
+  $suffix = 1
+  while (Test-Path $dstPath) {
+    $dstPath = Join-Path $historyRoot "$baseName-$suffix"
+    $suffix++
+  }
   Move-Item -LiteralPath $srcPath -Destination $dstPath
-  Append-MoveLog $srcPath $dstPath $reason
   Write-Info "Moved previous current demo: $srcPath -> $dstPath"
 }
 
@@ -148,7 +123,7 @@ if (-not $py) { Fail "ENV" "python interpreter not found" }
 Write-Info "Python interpreter: $($py.Display)"
 
 if (Test-Path $currentDir) {
-  Move-Safe $currentDir "archive previous canonical review demo"
+  Move-To-History $currentDir
 }
 
 Write-Info "Running ci run for review demo fixture..."
