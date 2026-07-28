@@ -75,6 +75,18 @@ Boundary notes:
 - Missing review artifacts are shown as an empty state, not as a pass result.
 - Suspected findings require human confirmation.
 
+## Run Artifact Cards
+
+Run details organize generated outputs into read-only artifact cards.
+
+- The status header shows the Repository Review decision, Evidence Integrity, Strict Verify, Quality Gate, validation state, and Human Review Required count when those artifacts are available.
+- `Recommended First` shows up to four generated entry points in a stable order: Repository Review Report, Human Review Required, the main HTML report, and Context Pack REVIEW.
+- Remaining artifacts are grouped by review area, including backend effects, transactions and database coverage, messaging reliability, Code Health, permission and AuthZ, validation, and Context Pack handoff.
+- Advanced and raw artifacts are collapsed by default. Each card explains its format, audience, intended use, and run-relative path.
+- A missing artifact is shown as `not generated`; Studio does not turn it into a zero finding count or create a link for it.
+
+Studio only reads run artifacts. It does not generate, modify, or validate artifacts from the browser, and a passed status does not prove repository safety, authorization correctness, or transaction correctness.
+
 ## What Studio does not do yet
 
 - It does not currently expose a browser folder picker for local directories.

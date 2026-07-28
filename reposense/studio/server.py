@@ -8,72 +8,14 @@ import urllib.parse
 from pathlib import Path
 from .workspace import WorkspaceManager
 from .jobs import JobManager
+from .artifact_catalog import build_artifact_presentation, review_artifact_specs
+from .run_summary import build_run_summary
 
 PORT = 8010
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "webui")
 
 workspace = WorkspaceManager()
 jobs = JobManager(workspace)
-
-
-REVIEW_ARTIFACTS = {
-    "repository_review_report": {
-        "label": "Repository Review Report",
-        "path": "repository_review_report.md",
-    },
-    "repository_review_report_json": {
-        "label": "Repository Review Report JSON",
-        "path": "repository_review_report.json",
-    },
-    "review_risk_matrix": {
-        "label": "Review Risk Matrix",
-        "path": "review_risk_matrix.json",
-    },
-    "human_review_required": {
-        "label": "Human Review Required",
-        "path": "human_review_required.md",
-    },
-    "backend_verifier_report": {
-        "label": "Backend Verifier Report",
-        "path": "backend_verifier_report.md",
-    },
-    "code_health_summary": {
-        "label": "Code Health Summary",
-        "path": "code_health_summary.json",
-    },
-    "maintainability_risks": {
-        "label": "Maintainability Risks",
-        "path": "maintainability_risks.json",
-    },
-    "permission_risk_report": {
-        "label": "Permission Risk Report",
-        "path": "permission_risk_report.md",
-    },
-    "human_permission_review_required": {
-        "label": "Human Permission Review Required",
-        "path": "human_permission_review_required.md",
-    },
-    "authz_matrix_report": {
-        "label": "AuthZ Matrix Report",
-        "path": "authz_matrix_report.md",
-    },
-    "authz_matrix_diff": {
-        "label": "AuthZ Matrix Diff",
-        "path": "authz_matrix_diff.json",
-    },
-    "authz_negative_test_plan": {
-        "label": "AuthZ Negative Test Plan",
-        "path": "authz_negative_test_plan.md",
-    },
-    "review_context": {
-        "label": "Context Pack REVIEW",
-        "path": "context_pack/REVIEW/README.md",
-    },
-    "ai_maintenance_constraints": {
-        "label": "AI Maintenance Constraints",
-        "path": "context_pack/REVIEW/ai_maintenance_constraints.md",
-    },
-}
 
 
 def _read_json_file(path):
@@ -92,11 +34,11 @@ def _artifact_url(run_id, rel_path):
 
 def build_review_metadata(run_id, run_dir):
     artifacts = {}
-    for key, spec in REVIEW_ARTIFACTS.items():
-        rel = spec["path"]
+    for spec in review_artifact_specs():
+        rel = spec["relative_path"]
         if os.path.isfile(os.path.join(run_dir, rel)):
-            artifacts[key] = {
-                "label": spec["label"],
+            artifacts[spec["review_legacy_key"]] = {
+                "label": spec["display_name"],
                 "path": rel,
                 "url": _artifact_url(run_id, rel),
             }
@@ -143,6 +85,15 @@ def build_review_metadata(run_id, run_dir):
         }
 
     return review
+
+
+def build_run_artifact_metadata(run_id, run_dir):
+    """Build additive Studio card metadata without changing run artifacts."""
+    presentation = build_artifact_presentation(run_id, run_dir, _artifact_url)
+    return {
+        "summary": build_run_summary(run_dir),
+        **presentation,
+    }
 
 
 def resolve_local_repo_path(repo_path):
@@ -331,6 +282,11 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                         pr["summary"]["baseline_used"] = bool(gate.get("baseline_used"))
                         pr["summary"]["regressions"] = {"total": reg.get("total",0), "added_error": reg.get("added_error",0), "severity_upgrades": reg.get("severity_upgrades",0), "added_warning": reg.get("added_warning",0)}
                         pr["summary"]["baseline_compatible"] = bool(gate.get("baseline_compatible", True))
+                    card_metadata = build_run_artifact_metadata(rid, run_dir)
+                    pr["summary"].update(card_metadata["summary"])
+                    pr["artifact_groups"] = card_metadata["artifact_groups"]
+                    pr["recommended_artifacts"] = card_metadata["recommended_artifacts"]
+                    pr["missing_capabilities"] = card_metadata["missing_capabilities"]
                     pr["review"] = build_review_metadata(rid, run_dir)
                 except Exception:
                     pass
@@ -355,7 +311,9 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                 status.setdefault("phase", "")
                 status.setdefault("status", "")
                 try:
-                    status["review"] = build_review_metadata(run_id, workspace.get_run_dir(run_id))
+                    run_dir = workspace.get_run_dir(run_id)
+                    status.update(build_run_artifact_metadata(run_id, run_dir))
+                    status["review"] = build_review_metadata(run_id, run_dir)
                 except Exception:
                     pass
                 self.send_json(status)
@@ -373,7 +331,9 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                     "log_path": st.get("log_path", ""),
                 }
                 try:
-                    out["review"] = build_review_metadata(run_id, workspace.get_run_dir(run_id))
+                    run_dir = workspace.get_run_dir(run_id)
+                    out.update(build_run_artifact_metadata(run_id, run_dir))
+                    out["review"] = build_review_metadata(run_id, run_dir)
                 except Exception:
                     pass
                 self.send_json(out)
