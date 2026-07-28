@@ -85,7 +85,7 @@ Each case contains:
 
 The root contains `summary.json`, `summary.md`, and `CURRENT_RUN.md`.
 
-Before a new run, the previous full result is moved into the ignored local history. Only summaries and necessary metadata are copied into `docs/archive/local-artifacts/root-moved/`; third-party workspaces are not copied into documentation archives.
+Before a new run, the previous full result is moved into `.reposense_real_repo_smoke/history/`. Runtime archives remain under the ignored local smoke root; scripts do not write run timestamps or result metadata into tracked documentation paths.
 
 ## Validation metrics
 

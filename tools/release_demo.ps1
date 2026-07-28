@@ -13,52 +13,25 @@ $env:TMP = $tmpRoot
 $env:TEMP = $tmpRoot
 $env:TMPDIR = $tmpRoot
 
-$archiveRoot = Join-Path $repoRoot "docs\archive\local-artifacts\root-moved"
-New-Item -ItemType Directory -Force -Path $archiveRoot | Out-Null
-$movedLog = Join-Path $repoRoot "docs\archive\local-artifacts\MOVED_FROM_ROOT.md"
-if (-not (Test-Path $movedLog)) {
-@"
-# Moved From Root
+$canonicalRoot = Join-Path $repoRoot ".reposense_release_demo"
+$currentDir = Join-Path $canonicalRoot "current"
+$buildOut = Join-Path $canonicalRoot "_build"
+$historyRoot = Join-Path $canonicalRoot "history"
+New-Item -ItemType Directory -Force -Path $canonicalRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $historyRoot | Out-Null
 
-## Moved files/directories
-
-| original_path | new_path | reason |
-|---|---|---|
-
-## Already missing before migration
-
-| original_path | observed_status | note |
-|---|---|---|
-
-## Not moved
-
-| path | reason |
-|---|---|
-
-Notes:
-- This flow performs non-destructive moves only (no delete).
-- Missing historical files are not reconstructed.
-"@ | Set-Content -Encoding UTF8 $movedLog
-}
-
-function Append-MoveLog([string]$src, [string]$dst, [string]$reason) {
-  Add-Content -Encoding UTF8 -Path $movedLog -Value "| $src | $dst | $reason |"
-}
-
-function Append-MissingLog([string]$src, [string]$note) {
-  Add-Content -Encoding UTF8 -Path $movedLog -Value "| $src | missing | $note |"
-}
-
-function Move-Safe([string]$srcPath, [string]$reason) {
-  if (-not (Test-Path $srcPath)) {
-    Append-MissingLog $srcPath "path not found at release demo migration time"
-    return $null
-  }
+function Move-To-History([string]$srcPath) {
+  if (-not (Test-Path $srcPath)) { return $null }
   $name = Split-Path -Leaf $srcPath
   $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
-  $dstPath = Join-Path $archiveRoot "$name-$stamp"
+  $baseName = "$name-$stamp"
+  $dstPath = Join-Path $historyRoot $baseName
+  $suffix = 1
+  while (Test-Path $dstPath) {
+    $dstPath = Join-Path $historyRoot "$baseName-$suffix"
+    $suffix++
+  }
   Move-Item -LiteralPath $srcPath -Destination $dstPath
-  Append-MoveLog $srcPath $dstPath $reason
   Write-Info "Moved: $srcPath -> $dstPath"
   return $dstPath
 }
@@ -151,14 +124,10 @@ function Ensure-Learn-NonEmpty([string]$pythonCmd, [string]$runDir) {
   Write-Info "Learn index rebuilt and non-empty (length=$len2)"
 }
 
-$canonicalRoot = Join-Path $repoRoot ".reposense_release_demo"
-$currentDir = Join-Path $canonicalRoot "current"
-$buildOut = Join-Path $canonicalRoot "_build"
-New-Item -ItemType Directory -Force -Path $canonicalRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $buildOut | Out-Null
 
 if (Test-Path $currentDir) {
-  Move-Safe $currentDir "archive previous canonical release demo"
+  Move-To-History $currentDir
 }
 
 $legacyCandidates = @(
@@ -171,9 +140,7 @@ $legacyCandidates = @(
 foreach ($d in $legacyCandidates) {
   $p = Join-Path $repoRoot $d
   if (Test-Path $p) {
-    Move-Safe $p "archive legacy demo output directory"
-  } else {
-    Append-MissingLog $p "legacy demo directory not present"
+    Move-To-History $p
   }
 }
 

@@ -27,10 +27,9 @@ $workspaceRoot = Join-Path $smokeRoot "workspaces"
 $workspaceHistory = Join-Path $smokeRoot "workspace-history"
 $buildRoot = Join-Path $smokeRoot "_build"
 $historyRoot = Join-Path $smokeRoot "history"
-$archiveRoot = Join-Path $repoRoot "docs\archive\local-artifacts\root-moved"
 $tempRoot = Join-Path $repoRoot ".tmp_test_runs\temp"
 
-foreach ($path in @($smokeRoot, $workspaceRoot, $workspaceHistory, $buildRoot, $historyRoot, $archiveRoot, $tempRoot)) {
+foreach ($path in @($smokeRoot, $workspaceRoot, $workspaceHistory, $buildRoot, $historyRoot, $tempRoot)) {
   New-Item -ItemType Directory -Force -Path $path | Out-Null
 }
 $env:TMP = $tempRoot
@@ -126,26 +125,14 @@ function Invoke-RepoSense {
 function Archive-PreviousCurrent {
   if (-not (Test-Path $currentRoot)) { return }
   $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
-  $metadataArchive = Join-Path $archiveRoot "real-repo-smoke-$stamp"
-  New-Item -ItemType Directory -Force -Path $metadataArchive | Out-Null
-  foreach ($name in @("summary.json", "summary.md", "CURRENT_RUN.md")) {
-    $source = Join-Path $currentRoot $name
-    if (Test-Path $source) { Copy-Item -LiteralPath $source -Destination $metadataArchive }
+  $baseName = "current-$stamp"
+  $localHistory = Join-Path $historyRoot $baseName
+  $suffix = 1
+  while (Test-Path $localHistory) {
+    $localHistory = Join-Path $historyRoot "$baseName-$suffix"
+    $suffix++
   }
-  $casesDir = Join-Path $currentRoot "cases"
-  if (Test-Path $casesDir) {
-    foreach ($caseDir in Get-ChildItem $casesDir -Directory) {
-      $caseArchive = Join-Path $metadataArchive ("cases\" + $caseDir.Name)
-      New-Item -ItemType Directory -Force -Path $caseArchive | Out-Null
-      foreach ($name in @("source-meta.json", "pipeline-meta.json", "validation.json", "validation.md", "triage-template.json", "queue_cache_validation.json", "queue_cache_validation.md", "queue_cache_triage_template.json", "queue_retry_idempotency_validation.json", "queue_retry_idempotency_validation.md", "queue_retry_idempotency_triage_template.json", "typeorm_db_validation.json", "typeorm_db_validation.md", "typeorm_db_triage_template.json", "typescript_transaction_validation.json", "typescript_transaction_validation.md", "typescript_transaction_triage_template.json")) {
-        $source = Join-Path $caseDir.FullName $name
-        if (Test-Path $source) { Copy-Item -LiteralPath $source -Destination $caseArchive }
-      }
-    }
-  }
-  $localHistory = Join-Path $historyRoot "current-$stamp"
   Move-Item -LiteralPath $currentRoot -Destination $localHistory
-  Write-Info "Archived summary metadata to $metadataArchive"
   Write-Info "Moved previous full local result to $localHistory"
 }
 
