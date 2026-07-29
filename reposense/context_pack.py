@@ -209,7 +209,7 @@ def build_context_pack(run_dir, top_n=10):
     graph = _read_json(os.path.join(run_dir, "event_graph.json"), {"nodes": [], "edges": []})
     run_sum = rep.get("run_summary") or {}
     # copy artifacts
-    for nm in ["report.json", "event_graph.json", "language_capabilities.json", "api_callers.json", "cross_language_summary.json", "patterns.json", "pattern_summary.json", "transaction_correlations.json", "transaction_correlation_summary.json", "typescript_transaction_validation.json", "typescript_transaction_validation.md", "route_intent_annotations.json", "file_context_annotations.json", "review_context_summary.json", "queue_cache_validation.json", "queue_cache_validation.md", "queue_reliability_correlations.json", "queue_reliability_summary.json", "queue_reliability_risks.json", "queue_retry_idempotency_validation.json", "queue_retry_idempotency_validation.md", "typeorm_db_operations.json", "typeorm_db_summary.json", "typeorm_db_validation.json", "typeorm_db_validation.md", "ai_summary.json", "ai_summary.md", "code_health.json", "code_health_summary.json", "maintainability_risks.json", "permission_surface.json", "permission_risks.json", "permission_risk_report.md", "human_permission_review_required.md", "authz_negative_test_plan.md", "authz_matrix_loaded.json", "authz_matrix_inferred.yaml", "authz_matrix_diff.json", "authz_matrix_report.md"]:
+    for nm in ["report.json", "event_graph.json", "language_capabilities.json", "api_callers.json", "cross_language_summary.json", "patterns.json", "pattern_summary.json", "transaction_correlations.json", "transaction_correlation_summary.json", "typescript_transaction_validation.json", "typescript_transaction_validation.md", "typescript_import_graph.json", "typescript_symbol_index.json", "typeorm_alias_resolutions.json", "typeorm_alias_resolution_summary.json", "typeorm_alias_validation.json", "typeorm_alias_validation.md", "route_intent_annotations.json", "file_context_annotations.json", "review_context_summary.json", "queue_cache_validation.json", "queue_cache_validation.md", "queue_reliability_correlations.json", "queue_reliability_summary.json", "queue_reliability_risks.json", "queue_retry_idempotency_validation.json", "queue_retry_idempotency_validation.md", "typeorm_db_operations.json", "typeorm_db_summary.json", "typeorm_db_validation.json", "typeorm_db_validation.md", "ai_summary.json", "ai_summary.md", "code_health.json", "code_health_summary.json", "maintainability_risks.json", "permission_surface.json", "permission_risks.json", "permission_risk_report.md", "human_permission_review_required.md", "authz_negative_test_plan.md", "authz_matrix_loaded.json", "authz_matrix_inferred.yaml", "authz_matrix_diff.json", "authz_matrix_report.md"]:
         src = os.path.join(run_dir, nm)
         dst = os.path.join(pack_root, "ARTIFACTS", nm)
         if os.path.isfile(src):
@@ -449,6 +449,12 @@ def build_context_pack(run_dir, top_n=10):
                     "typeorm_db_validation_report": "typeorm_db_validation.md",
                     "typescript_transaction_validation": "typescript_transaction_validation.json",
                     "typescript_transaction_validation_report": "typescript_transaction_validation.md",
+                    "typescript_import_graph": "typescript_import_graph.json",
+                    "typescript_symbol_index": "typescript_symbol_index.json",
+                    "typeorm_alias_resolutions": "typeorm_alias_resolutions.json",
+                    "typeorm_alias_resolution_summary": "typeorm_alias_resolution_summary.json",
+                    "typeorm_alias_validation": "typeorm_alias_validation.json",
+                    "typeorm_alias_validation_report": "typeorm_alias_validation.md",
                 }.items()
                 if os.path.isfile(os.path.join(pack_root, "ARTIFACTS", name))
             },
@@ -903,6 +909,21 @@ def build_context_pack(run_dir, top_n=10):
                 "- files: ARTIFACTS/typeorm_db_operations.json, "
                 "ARTIFACTS/typeorm_db_summary.json"
             )
+            aliases = _read_json(
+                os.path.join(run_dir, "typeorm_alias_resolution_summary.json"),
+                {},
+            )
+            if aliases:
+                readme.append(
+                    "- resolved wrapper calls / ambiguous / unresolved: "
+                    f"{int(aliases.get('resolved_wrapper_calls') or 0)} / "
+                    f"{int(aliases.get('ambiguous') or 0)} / "
+                    f"{int(aliases.get('unresolved') or 0)}"
+                )
+                readme.append(
+                    "- alias files: ARTIFACTS/typeorm_alias_resolutions.json, "
+                    "ARTIFACTS/typeorm_alias_resolution_summary.json"
+                )
     except Exception:
         pass
     try:

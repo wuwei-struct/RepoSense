@@ -218,6 +218,18 @@ def validate_run_evidence_locations(run_dir, repo_root):
         ("typeorm_db_operations.json", "operations", True, False),
         ("typeorm_db_validation.json", "operations", True, False),
         (
+            "typeorm_alias_resolutions.json",
+            "resolutions",
+            False,
+            False,
+        ),
+        (
+            "typeorm_alias_validation.json",
+            "triage_items",
+            False,
+            False,
+        ),
+        (
             "typescript_transaction_validation.json",
             "correlations",
             False,
@@ -227,6 +239,30 @@ def validate_run_evidence_locations(run_dir, repo_root):
     for rel, key, direct, snippet in specs:
         obj = _read_json(os.path.join(run_dir, rel), {})
         _validate_items(issues, rel.replace("\\", "/"), _items(obj, key), repo_root, direct, snippet)
+
+    alias_resolutions = _read_json(
+        os.path.join(run_dir, "typeorm_alias_resolutions.json"), {}
+    )
+    for index, item in enumerate(_items(alias_resolutions, "resolutions")):
+        if not isinstance(item, dict):
+            continue
+        item_id = str(item.get("resolution_id") or index)
+        for field in (
+            "import_evidence_refs",
+            "dependency_evidence_refs",
+            "callsite_evidence_refs",
+            "target_evidence_refs",
+        ):
+            refs = item.get(field) if isinstance(item.get(field), list) else []
+            for ref_index, ref in enumerate(refs):
+                issues.extend(
+                    validate_evidence_location(
+                        ref,
+                        repo_root,
+                        artifact="typeorm_alias_resolutions.json",
+                        item_id=f"{item_id}:{field}:{ref_index}",
+                    )
+                )
 
     review = _read_json(os.path.join(run_dir, "repository_review_report.json"), {})
     _validate_items(

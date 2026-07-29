@@ -50,6 +50,12 @@ REQUIRED_ARTIFACTS = [
     "typeorm_db_validation.md",
     "typescript_transaction_validation.json",
     "typescript_transaction_validation.md",
+    "typescript_import_graph.json",
+    "typescript_symbol_index.json",
+    "typeorm_alias_resolutions.json",
+    "typeorm_alias_resolution_summary.json",
+    "typeorm_alias_validation.json",
+    "typeorm_alias_validation.md",
     "context_pack/REVIEW/README.md",
     "run_manifest.json",
 ]
@@ -265,6 +271,16 @@ def _evidence_records(run_dir: Path) -> tuple[list[dict[str, Any]], list[tuple[s
         "typescript_transaction_validation.correlations",
         _list(typescript_transaction_validation.get("correlations")),
         ("correlation_id",),
+        False,
+        include_direct=False,
+    )
+    alias_validation = _read_json(
+        run_dir / "typeorm_alias_validation.json", {}
+    )
+    records += _records_from_items(
+        "typeorm_alias_validation.triage_items",
+        _list(alias_validation.get("triage_items")),
+        ("item_id", "resolution_id"),
         False,
         include_direct=False,
     )
@@ -552,6 +568,12 @@ def _review_statistics(run_dir: Path) -> dict[str, Any]:
     typescript_transaction_summary = _dict(
         typescript_transaction_validation.get("summary")
     )
+    typeorm_alias_validation = _read_json(
+        run_dir / "typeorm_alias_validation.json", {}
+    )
+    typeorm_alias_summary = _dict(
+        typeorm_alias_validation.get("summary")
+    )
     counts = _event_counts(graph)
     endpoints = _list(api.get("endpoints"))
     pattern_items = _list(patterns.get("patterns"))
@@ -571,6 +593,7 @@ def _review_statistics(run_dir: Path) -> dict[str, Any]:
         "queue_cache_validation": queue_cache_summary,
         "typeorm_db_validation": typeorm_summary,
         "typescript_transaction_validation": typescript_transaction_summary,
+        "typeorm_alias_validation": typeorm_alias_summary,
         "patterns": len(pattern_items),
         "code_health_findings": len(health_items),
         "permission_risks": len(permission_items),

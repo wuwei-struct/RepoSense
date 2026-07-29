@@ -150,6 +150,9 @@ def generate_backend_verifier_report(run_dir):
     typeorm_summary = _read_json(
         os.path.join(run_dir, "typeorm_db_summary.json"), {}
     )
+    typeorm_alias_summary = _read_json(
+        os.path.join(run_dir, "typeorm_alias_resolution_summary.json"), {}
+    )
     transaction_correlation_summary = _read_json(
         os.path.join(run_dir, "transaction_correlation_summary.json"), {}
     )
@@ -305,6 +308,12 @@ def generate_backend_verifier_report(run_dir):
             ),
             **typescript_transaction_summary,
         },
+        "typeorm_alias_resolution": {
+            "status": (
+                "enabled" if typeorm_alias_summary else "not_available"
+            ),
+            **typeorm_alias_summary,
+        },
         "side_effect_map": {
             "mode": "conservative_side_effect_map",
             "paths": side_effect_map,
@@ -340,6 +349,7 @@ def render_backend_verifier_markdown(report):
     cc = report.get("cache_operation_signals") or {}
     orm = report.get("typeorm_db_coverage") or {}
     ts_tx = report.get("typescript_transaction_correlation") or {}
+    aliases = report.get("typeorm_alias_resolution") or {}
     sm = report.get("side_effect_map") or {}
     hr = (report.get("high_risk_findings") or {}).get("items") or []
     ei = report.get("evidence_index") or []
@@ -404,6 +414,22 @@ def render_backend_verifier_markdown(report):
             f"{int((ts_tx.get('counts_by_coverage_status') or {}).get('read_only_transaction') or 0)}"
         ),
         f"- Migration unresolved writes: {int(ts_tx.get('migration_unresolved_write_count') or 0)}",
+        "",
+        "## TypeORM Alias Resolution",
+        f"- Status: {aliases.get('status') or 'not_available'}",
+        (
+            "- Resolved direct / alias / re-export / barrel / local assignment: "
+            f"{int(aliases.get('resolved_direct') or 0)}/"
+            f"{int(aliases.get('resolved_alias') or 0)}/"
+            f"{int(aliases.get('resolved_reexport') or 0)}/"
+            f"{int(aliases.get('resolved_barrel') or 0)}/"
+            f"{int(aliases.get('resolved_local_assignment') or 0)}"
+        ),
+        (
+            "- Ambiguous / unresolved: "
+            f"{int(aliases.get('ambiguous') or 0)}/"
+            f"{int(aliases.get('unresolved') or 0)}"
+        ),
         "",
         "## 6. Side-effect Map",
         f"- mode: {sm.get('mode') or 'conservative_side_effect_map'}",

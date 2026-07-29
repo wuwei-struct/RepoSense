@@ -180,6 +180,21 @@ def rule_db_write_outside_tx(ctx):
         dbw = [x for x in rows if x["event_kind"] == "db.write"]
         tx = [x for x in rows if x["event_kind"] == "db.transaction"]
         if dbw and not tx:
+            if correlation_enabled:
+                dbw = [
+                    event
+                    for event in dbw
+                    if str(
+                        (
+                            correlation_by_event.get(event["event_id"])
+                            or {}
+                        ).get("coverage_status")
+                        or "unknown"
+                    )
+                    != "covered_explicit"
+                ]
+                if not dbw:
+                    continue
             correlations = [correlation_by_event.get(event["event_id"]) for event in dbw]
             correlations = [row for row in correlations if isinstance(row, dict)]
             statuses = [str(row.get("coverage_status") or "unknown") for row in correlations]

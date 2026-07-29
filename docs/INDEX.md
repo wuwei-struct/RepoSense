@@ -73,5 +73,6 @@ This index keeps the full documentation map while the README stays focused on th
 - [docs/validation/QUEUE_RETRY_IDEMPOTENCY_CORRELATION.md](validation/QUEUE_RETRY_IDEMPOTENCY_CORRELATION.md)
 - [docs/validation/TYPEORM_DB_OPERATION_COVERAGE.md](validation/TYPEORM_DB_OPERATION_COVERAGE.md)
 - [docs/validation/TYPESCRIPT_TRANSACTION_CORRELATION.md](validation/TYPESCRIPT_TRANSACTION_CORRELATION.md)
+- [docs/validation/TYPEORM_CROSS_FILE_ALIAS_RESOLUTION.md](validation/TYPEORM_CROSS_FILE_ALIAS_RESOLUTION.md)
 - [docs/validation/REAL_REPO_REVIEW_SMOKE.md](validation/REAL_REPO_REVIEW_SMOKE.md)
 - [docs/validation/REAL_REPO_REVIEW_RESULTS.md](validation/REAL_REPO_REVIEW_RESULTS.md)

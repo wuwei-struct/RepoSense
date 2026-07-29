@@ -43,6 +43,8 @@ def _artifact_kind(rel):
     if rel == "typeorm_db_validation.md": return "typeorm_db_validation"
     if rel == "typescript_transaction_validation.json": return "typescript_transaction_validation"
     if rel == "typescript_transaction_validation.md": return "typescript_transaction_validation"
+    if rel in {"typescript_import_graph.json", "typescript_symbol_index.json"}: return "typescript_symbol_resolution"
+    if rel.startswith("typeorm_alias_"): return "typeorm_alias_resolution"
     if rel == "ai_summary.json": return "ai_summary"
     if rel == "ai_summary.md": return "ai_summary"
     if rel.endswith("/snippet_pack.json") and rel.startswith("ai_drilldown/"): return "ai_drilldown"
@@ -114,6 +116,18 @@ def build_run_manifest(run_dir, write=True):
         "typescript_transaction_validation.md",
         "context_pack/ARTIFACTS/typescript_transaction_validation.json",
         "context_pack/ARTIFACTS/typescript_transaction_validation.md",
+        "typescript_import_graph.json",
+        "typescript_symbol_index.json",
+        "typeorm_alias_resolutions.json",
+        "typeorm_alias_resolution_summary.json",
+        "typeorm_alias_validation.json",
+        "typeorm_alias_validation.md",
+        "context_pack/ARTIFACTS/typescript_import_graph.json",
+        "context_pack/ARTIFACTS/typescript_symbol_index.json",
+        "context_pack/ARTIFACTS/typeorm_alias_resolutions.json",
+        "context_pack/ARTIFACTS/typeorm_alias_resolution_summary.json",
+        "context_pack/ARTIFACTS/typeorm_alias_validation.json",
+        "context_pack/ARTIFACTS/typeorm_alias_validation.md",
     ])
     for p in sorted(glob.glob(os.path.join(run_dir, "ai_drilldown", "*", "snippet_pack.json"))):
         rels.append(os.path.relpath(p, run_dir).replace("\\", "/"))

@@ -99,3 +99,11 @@ Detailed source sampling is recorded in
 - Mongo-specific persistence semantics are not expanded.
 - A DB fact proves only that a static signal was observed, not that the code is
   correct, transactional, reachable, or safe at runtime.
+
+## Cross-file provenance
+
+TypeORM operations remain canonical and deduplicated by their existing
+operation identity. `typeorm_alias_resolutions.json` adds project-local import,
+constructor dependency, wrapper target, and caller evidence without creating a
+second DB operation. See
+[TYPEORM_CROSS_FILE_ALIAS_RESOLUTION.md](TYPEORM_CROSS_FILE_ALIAS_RESOLUTION.md).

@@ -69,3 +69,16 @@ model. It does not execute decorators or repository code. A
 `covered_explicit` result proves only that explicit static evidence was
 observed for the correlated write; it does not prove rollback behavior,
 isolation, reachability, or transaction correctness.
+
+## Cross-file wrapper enhancement
+
+Transaction correlation now prefers `typeorm_alias_resolutions.json` when it
+is available. Calls are joined to canonical writes by exact `db_operation_id`,
+with import, constructor dependency, callsite, target method, and DB-write
+evidence. Direct, aliased, default, re-exported, barrel, and simple local
+assignment receivers are supported conservatively.
+
+Resolved non-transactional callers become `uncovered`, mixed callers become
+`partially_covered`, and only trusted explicit transaction callers may become
+`covered_explicit`. Ambiguous providers and dynamic DI remain `unknown`. See
+[TYPEORM_CROSS_FILE_ALIAS_RESOLUTION.md](TYPEORM_CROSS_FILE_ALIAS_RESOLUTION.md).
