@@ -460,6 +460,9 @@ def generate_repository_review(run_dir):
     typeorm_db_summary = _read_json(
         os.path.join(run_dir, "typeorm_db_summary.json"), {}
     )
+    typeorm_alias_summary = _read_json(
+        os.path.join(run_dir, "typeorm_alias_resolution_summary.json"), {}
+    )
     queue_reliability_summary = _read_json(
         os.path.join(run_dir, "queue_reliability_summary.json"), {}
     )
@@ -514,6 +517,14 @@ def generate_repository_review(run_dir):
                 "typeorm_db_coverage": {
                     "status": "enabled" if typeorm_db_summary else "not_available",
                     **typeorm_db_summary,
+                },
+                "typeorm_alias_resolution": {
+                    "status": (
+                        "enabled"
+                        if typeorm_alias_summary
+                        else "not_available"
+                    ),
+                    **typeorm_alias_summary,
                 },
             },
             "queue_cache_review": {

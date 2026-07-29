@@ -21,6 +21,7 @@ $queueCacheValidatorPath = Join-Path $repoRoot "tools\validation\queue_cache_val
 $queueReliabilityValidatorPath = Join-Path $repoRoot "tools\validation\queue_retry_idempotency_validation.py"
 $typeormValidatorPath = Join-Path $repoRoot "tools\validation\typeorm_db_validation.py"
 $typescriptTransactionValidatorPath = Join-Path $repoRoot "tools\validation\typescript_transaction_validation.py"
+$typeormAliasValidatorPath = Join-Path $repoRoot "tools\validation\typeorm_alias_validation.py"
 $smokeRoot = Join-Path $repoRoot ".reposense_real_repo_smoke"
 $currentRoot = Join-Path $smokeRoot "current"
 $workspaceRoot = Join-Path $smokeRoot "workspaces"
@@ -308,6 +309,14 @@ foreach ($case in $selectedCases) {
     ) $stageRecords | Out-Null
     Invoke-Python "typescript_transaction_validation" @(
       $typescriptTransactionValidatorPath,
+      "--run-dir", $runDir,
+      "--repo", $source.Path,
+      "--case-id", $caseIdValue,
+      "--commit-sha", [string]$source.Commit,
+      "--case-dir", $caseDir
+    ) $stageRecords | Out-Null
+    Invoke-Python "typeorm_alias_validation" @(
+      $typeormAliasValidatorPath,
       "--run-dir", $runDir,
       "--repo", $source.Path,
       "--case-id", $caseIdValue,

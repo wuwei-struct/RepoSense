@@ -632,3 +632,51 @@ No pinned real case contains explicit retry configuration in the statically
 matched channels. Positive retry, producer-identity, consumer-guard,
 check-then-write, and suspected-risk behavior therefore remains
 synthetic-fixture backed. No coverage or risk was invented to improve counts.
+
+## TypeORM Cross-file Alias Resolution Calibration
+
+The 2026-07-29 offline rerun reused the pinned NestJS Boilerplate,
+ecommerce-store-api, and Spring PetClinic workspaces. Third-party code was not
+executed.
+
+| Metric | NestJS before / after | ecommerce before / after |
+|---|---:|---:|
+| TypeORM writes | 41 / 41 | 46 / 46 |
+| `covered_explicit` | 0 / 0 | 13 / 13 |
+| `uncovered` | 3 / 10 | 0 / 12 |
+| `unknown` | 38 / 31 | 33 / 21 |
+| `db_write_outside_tx` | 7 / 7 | 8 / 8 |
+| Resolved wrapper calls | 0 / 11 | 0 / 14 |
+| Ambiguous / unresolved candidates | n/a / 11 / 0 | n/a / 0 / 121 |
+| Evidence integrity | 1395 / 1395 | 3865 / 3865 |
+| Strict verify | pass | pass |
+
+The immediate pre-change NestJS rerun on this baseline reported 3 uncovered
+and 38 unknown writes, which differs from the older historical 5/36 snapshot
+above. The pinned source and TypeORM write count were unchanged; this section
+records the directly comparable rerun rather than rewriting history.
+
+Source sampling confirmed:
+
+- `FilesLocalService.create` line 30 resolves through its constructor
+  `FileRepository` to `FileRelationalRepository.create` line 18.
+- `SessionService.create` line 19 resolves to
+  `SessionRelationalRepository.create` line 30.
+- `UsersService.remove` line 286 resolves to
+  `UserRelationalRepository.remove` line 123.
+- Files, Session, and Users read methods with document/relational provider
+  alternatives remain ambiguous rather than selecting an implementation.
+- ecommerce permission/role initialization and session-token use cases resolve
+  to their imported PostgreSQL wrapper methods and canonical writes.
+- No newly resolved caller in either repository had trustworthy explicit
+  transaction evidence, so no new `covered_explicit` result was created.
+
+NestJS retained seven suspected outside-transaction Pattern groups and 19
+Human Review items. ecommerce retained eight suspected outside-transaction
+groups, 45 cache observations, and 32 Human Review items. Their Review
+Decisions remained REVIEW.
+
+Spring PetClinic retained 68 Java DB operations and 46 Java
+`covered_explicit` correlations. TypeScript alias artifacts were empty, all
+904 evidence records were valid, and strict verify passed. The alias resolver
+does not change Java/Spring transaction semantics.

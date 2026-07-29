@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from ...evidence.location import canonicalize_evidence_ref
+from ..typescript.resolution_export import export_typeorm_alias_resolution
 from .correlation_schema import make_correlation_id, stable_sort_correlations
 
 
@@ -464,6 +465,79 @@ def _transaction_refs(calls, parsed_files):
     return refs
 
 
+def _alias_calls(alias_artifact, operation_id, parsed_files):
+    calls = []
+    resolution_ids = []
+    for row in alias_artifact.get("resolutions") or []:
+        if operation_id not in (row.get("db_operation_ids") or []):
+            continue
+        if not str(row.get("resolution_status") or "").startswith("resolved_"):
+            continue
+        parsed = parsed_files.get(str(row.get("source_file") or ""))
+        method = next(
+            (
+                item
+                for item in (parsed or {}).get("methods") or []
+                if item["class_name"] == row.get("source_class")
+                and item["name"] == row.get("source_method")
+                and item["start"] <= int(row.get("callsite_line") or 0) <= item["end"]
+            ),
+            None,
+        )
+        if parsed is None or method is None:
+            continue
+        calls.append(
+            {
+                "file": row["source_file"],
+                "line": row["callsite_line"],
+                "snippet": parsed["lines"][row["callsite_line"] - 1].strip(),
+                "caller_class": row["source_class"],
+                "caller_method": row["source_method"],
+                "receiver": row["receiver_name"],
+                "target_class": row["resolved_class"],
+                "target_method": row["resolved_method"],
+                "transaction": _method_transaction(parsed, method),
+                "alias_evidence_refs": (
+                    list(row.get("import_evidence_refs") or [])
+                    + list(row.get("dependency_evidence_refs") or [])
+                    + list(row.get("callsite_evidence_refs") or [])
+                    + list(row.get("target_evidence_refs") or [])
+                ),
+            }
+        )
+        resolution_ids.append(str(row.get("resolution_id") or ""))
+    return calls, sorted(value for value in set(resolution_ids) if value)
+
+
+def _alias_call_refs(calls):
+    refs = []
+    seen = set()
+    for call in calls:
+        for raw in call.get("alias_evidence_refs") or []:
+            ref = canonicalize_evidence_ref(raw)
+            if ref is None:
+                continue
+            key = (
+                ref["file"],
+                ref["start_line"],
+                ref["end_line"],
+                str(ref.get("source_type") or ""),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            refs.append(ref)
+    return sorted(
+        refs,
+        key=lambda item: (
+            item["file"],
+            item["start_line"],
+            item["end_line"],
+            str(item.get("source_type") or ""),
+        ),
+    )
+
+
 def _wrapper_coverage(calls):
     if not calls:
         return None
@@ -506,6 +580,9 @@ def correlate_typescript_transactions(run_dir, repo_path):
         for item in artifact.get("operations") or []
         if isinstance(item, dict) and item.get("kind") == "db.write"
     ]
+    alias_result = export_typeorm_alias_resolution(run_root, repo_root)
+    alias_artifact = alias_result["resolutions"]
+    alias_summary = alias_result["summary"]
     parsed_files = _parse_files(repo_root)
     direct_calls = _direct_calls(parsed_files)
     method_definitions = Counter(
@@ -542,6 +619,7 @@ def correlate_typescript_transactions(run_dir, repo_path):
         transaction_refs = []
         calls = []
         caller = {}
+        alias_resolution_ids = []
         tx_context = str(operation.get("transaction_context") or "unknown")
 
         if tx_context == "explicit_callback":
@@ -590,18 +668,29 @@ def correlate_typescript_transactions(run_dir, repo_path):
                     transaction_refs = [tx_ref]
             else:
                 target_key = (target_class, target_method)
-                wrapper_calls = (
-                    direct_calls.get(target_key, [])
-                    if method_definitions.get(target_key, 0) == 1
-                    else []
+                wrapper_calls, alias_resolution_ids = _alias_calls(
+                    alias_artifact,
+                    str(operation.get("operation_id") or ""),
+                    parsed_files,
                 )
+                alias_calls_used = bool(wrapper_calls)
+                if not wrapper_calls:
+                    wrapper_calls = (
+                        direct_calls.get(target_key, [])
+                        if method_definitions.get(target_key, 0) == 1
+                        else []
+                    )
                 wrapper_result = _wrapper_coverage(wrapper_calls)
                 if wrapper_result:
                     coverage_status, confidence, limitations = wrapper_result
                     mechanism = "direct_wrapper_caller"
                     calls = wrapper_calls
                     caller = wrapper_calls[0]
-                    callsite_refs = _call_refs(wrapper_calls)
+                    callsite_refs = (
+                        _alias_call_refs(wrapper_calls)
+                        if alias_calls_used
+                        else _call_refs(wrapper_calls)
+                    )
                     transaction_refs = _transaction_refs(
                         wrapper_calls, parsed_files
                     )
@@ -674,6 +763,7 @@ def correlate_typescript_transactions(run_dir, repo_path):
             "db_write_file": file_name,
             "db_write_line": line,
             "callsites": callsite_rows,
+            "alias_resolution_ids": alias_resolution_ids,
             "limitations": sorted(set(limitations)),
         }
         correlation["correlation_id"] = make_correlation_id(
@@ -714,6 +804,22 @@ def correlate_typescript_transactions(run_dir, repo_path):
         "migration_unresolved_write_count": sum(
             "migration_transaction_policy_requires_confirmation"
             in (item.get("limitations") or [])
+            for item in correlations
+        ),
+        "alias_resolution": alias_summary,
+        "resolved_cross_file_wrapper_count": int(
+            alias_summary.get("resolved_wrapper_calls") or 0
+        ),
+        "writes_covered_through_resolved_wrappers": sum(
+            item["transaction_mechanism"] == "direct_wrapper_caller"
+            and item["coverage_status"] == "covered_explicit"
+            and bool(item.get("alias_resolution_ids"))
+            for item in correlations
+        ),
+        "non_transactional_resolved_wrapper_writes": sum(
+            item["transaction_mechanism"] == "direct_wrapper_caller"
+            and item["coverage_status"] == "uncovered"
+            and bool(item.get("alias_resolution_ids"))
             for item in correlations
         ),
         "limitations": [
