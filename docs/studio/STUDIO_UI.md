@@ -91,6 +91,20 @@ Studio only reads run artifacts. It does not generate, modify, or validate artif
 
 The screenshot above comes from the canonical Review Demo. The 2026-07-30 manual browser checklist and environment record are documented in [STUDIO_VISUAL_QA_V02.md](../validation/STUDIO_VISUAL_QA_V02.md).
 
+## Studio API Privacy Boundary
+
+Studio uses local filesystem paths internally to read repositories, persist run
+state, and write logs. Public HTTP run payloads do not return those absolute
+paths. `GET /api/runs` and `GET /api/runs/<run_id>` expose an explicit
+allowlisted run model; internal fields such as log, workspace, repository,
+source, output, and run directory paths remain private.
+
+Generated artifacts are opened through run-relative URLs such as
+`/runs/<run_id>/report.html`. A local repository path submitted for analysis is
+not returned through historical run APIs. This boundary reduces accidental
+disclosure through logs, screenshots, browser extensions, or copied API
+responses without changing internal log storage or deleting local artifacts.
+
 ## What Studio does not do yet
 
 - It does not currently expose a browser folder picker for local directories.
