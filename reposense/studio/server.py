@@ -9,6 +9,10 @@ from pathlib import Path
 from .workspace import WorkspaceManager
 from .jobs import JobManager
 from .artifact_catalog import build_artifact_presentation, review_artifact_specs
+from .public_run_payload import (
+    build_public_run_list_item,
+    build_public_run_payload,
+)
 from .run_summary import build_run_summary
 from ..runtime_resources import (
     get_presets_dir,
@@ -296,16 +300,16 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                     pr["review"] = build_review_metadata(rid, run_dir)
                 except Exception:
                     pass
-                out.append(pr)
+                out.append(build_public_run_list_item(pr))
             # include any purely in-memory not yet persisted
             for rid, m in mem.items():
                 if not any(x["run_id"] == rid for x in out):
-                    out.append({
+                    out.append(build_public_run_list_item({
                         "run_id": rid,
                         "status": m.get("status", ""),
                         "phase": m.get("phase", ""),
                         "start_time": m.get("start_time", 0),
-                    })
+                    }))
             out.sort(key=lambda x: x.get("start_time", 0), reverse=True)
             self.send_json(out)
         elif self.path.startswith("/api/runs/"):
@@ -322,7 +326,7 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                     status["review"] = build_review_metadata(run_id, run_dir)
                 except Exception:
                     pass
-                self.send_json(status)
+                self.send_json(build_public_run_payload(status))
                 return
             # fallback to persisted state
             st = workspace.read_run_state(run_id)
@@ -334,7 +338,6 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                     "logs_tail": [],
                     "error_message": st.get("error_message", ""),
                     "updated_at": st.get("updated_at", 0),
-                    "log_path": st.get("log_path", ""),
                 }
                 try:
                     run_dir = workspace.get_run_dir(run_id)
@@ -342,7 +345,7 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                     out["review"] = build_review_metadata(run_id, run_dir)
                 except Exception:
                     pass
-                self.send_json(out)
+                self.send_json(build_public_run_payload(out))
             else:
                 self.send_json_error(404, {"error": "run_not_found", "message": "Run not found"})
         else:
