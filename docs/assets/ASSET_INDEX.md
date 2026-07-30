@@ -39,13 +39,13 @@ Review demo screenshots are captured from the canonical review demo:
 
 | asset | target_path | source_page | status | purpose | privacy_note |
 |---|---|---|---|---|---|
-| repository-review-report (P0) | `docs/assets/screenshots/repository-review-report.png` | `.reposense_review_demo/current/repository_review_report.md` | pending_manual_capture | Show repository-level review summary and decision | Crop out absolute local paths and browser chrome |
-| human-review-required (P0) | `docs/assets/screenshots/human-review-required.png` | `.reposense_review_demo/current/human_review_required.md` | pending_manual_capture | Show human review queue for risky areas | Crop out absolute local paths and browser chrome |
-| studio-review-panel (P0) | `docs/assets/screenshots/studio-review-panel.png` | Studio run detail for `.reposense_review_demo/current/` artifacts | pending_manual_capture | Show Repository Review panel in Studio | Crop out absolute local paths and browser chrome |
-| code-health-summary (P1) | `docs/assets/screenshots/code-health-summary.png` | `.reposense_review_demo/current/code_health_summary.json` | pending_manual_capture | Show Code Health Radar summary artifact | Crop out absolute local paths and browser chrome |
-| permission-risk-report (P1) | `docs/assets/screenshots/permission-risk-report.png` | `.reposense_review_demo/current/permission_risk_report.md` | pending_manual_capture | Show Permission Auditor report | Crop out absolute local paths and browser chrome |
-| authz-matrix-report (P1) | `docs/assets/screenshots/authz-matrix-report.png` | `.reposense_review_demo/current/authz_matrix_report.md` | pending_manual_capture | Show AuthZ Matrix expected-vs-observed diff report | Crop out absolute local paths and browser chrome |
-| context-pack-review-section (P1) | `docs/assets/screenshots/context-pack-review-section.png` | `.reposense_review_demo/current/context_pack/REVIEW/README.md` | pending_manual_capture | Show Context Pack REVIEW handoff section | Crop out absolute local paths and browser chrome |
+| repository-review-report (P0) | `docs/assets/screenshots/repository-review-report.png` | `.reposense_review_demo/current/repository_review_report.md` | captured | Show repository-level review summary and decision | Reviewed: no absolute local paths or browser chrome |
+| human-review-required (P0) | `docs/assets/screenshots/human-review-required.png` | `.reposense_review_demo/current/human_review_required.md` | captured | Show human review queue for risky areas | Reviewed: no absolute local paths or browser chrome |
+| studio-review-panel (P0) | `docs/assets/screenshots/studio-review-panel.png` | Studio run detail for `.reposense_review_demo/current/` artifacts | captured | Show Repository Review panel in Studio | Reviewed: no absolute local paths or browser chrome |
+| code-health-summary (P1) | `docs/assets/screenshots/code-health-summary.png` | `.reposense_review_demo/current/code_health_summary.json` | captured | Show Code Health Radar summary artifact | Reviewed: no absolute local paths or browser chrome |
+| permission-risk-report (P1) | `docs/assets/screenshots/permission-risk-report.png` | `.reposense_review_demo/current/permission_risk_report.md` | captured | Show Permission Auditor report | Reviewed: no absolute local paths or browser chrome |
+| authz-matrix-report (P1) | `docs/assets/screenshots/authz-matrix-report.png` | `.reposense_review_demo/current/authz_matrix_report.md` | captured | Show AuthZ Matrix expected-vs-observed diff report | Reviewed: no absolute local paths or browser chrome |
+| context-pack-review-section (P1) | `docs/assets/screenshots/context-pack-review-section.png` | `.reposense_review_demo/current/context_pack/REVIEW/README.md` | captured | Show Context Pack REVIEW handoff section | Reviewed: no absolute local paths or browser chrome |
 
 ## Non-image assets
 

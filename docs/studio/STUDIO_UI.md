@@ -87,6 +87,10 @@ Run details organize generated outputs into read-only artifact cards.
 
 Studio only reads run artifacts. It does not generate, modify, or validate artifacts from the browser, and a passed status does not prove repository safety, authorization correctness, or transaction correctness.
 
+![Studio Run Artifact Cards](../assets/screenshots/studio-review-panel.png)
+
+The screenshot above comes from the canonical Review Demo. The 2026-07-30 manual browser checklist and environment record are documented in [STUDIO_VISUAL_QA_V02.md](../validation/STUDIO_VISUAL_QA_V02.md).
+
 ## What Studio does not do yet
 
 - It does not currently expose a browser folder picker for local directories.

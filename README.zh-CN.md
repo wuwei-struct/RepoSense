@@ -99,6 +99,12 @@ Studio 当前支持两种本地流程：
 
 当相关产物已生成时，Studio 还可以展示 Repository Review 结果，包括人工复核清单、Code Health、Permission Review、AuthZ Matrix 和 Context Pack 的 REVIEW section。
 
+### Review Artifact Cards
+
+![Studio Review Artifact Cards](docs/assets/screenshots/studio-review-panel.png)
+
+Artifact Cards 会优先展示已生成的 Review 与 Validation 产物，不会把缺失产物解释为零风险。完整截图清单见 [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md)。
+
 如果需要生成一套完整的 Review Demo，用于 Studio Review 面板和 release 截图：
 
 ```powershell
