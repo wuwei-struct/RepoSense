@@ -69,12 +69,30 @@ python tools/release/package_runtime_smoke.py --mode asset-and-target
 
 ## 7. Packaging Gate B
 
-- [ ] A controlled offline wheelhouse contains PyYAML, requests, and all transitive dependency wheels.
-- [ ] A fresh venv installs RepoSense and dependencies only from that wheelhouse.
-- [ ] The installed `reposense` console script passes CLI, Studio, Learn, and scan smoke checks.
-- [ ] No source checkout or `PYTHONPATH` fallback is used.
+- [ ] The platform-specific wheelhouse lock is present and contains only the approved dependency closure.
+- [ ] All wheel hashes verified; filename and metadata identities match.
+- [ ] The wheelhouse contains no source distributions, installers, or extra packages.
+- [ ] A fresh venv is created without system site packages.
+- [ ] RepoSense and all dependencies install with `--no-index` and the controlled `--find-links` wheelhouse.
+- [ ] `pip check` passes.
+- [ ] The installed `reposense` console script and required CLI help commands pass.
+- [ ] Installed Studio HTTP endpoints pass.
+- [ ] Installed Learn concepts load from packaged resources.
+- [ ] Installed default rules, presets, specs, and SQLite schema support the fixture scan.
+- [ ] Installed review, Context Pack, manifest, SARIF, strict verify, and quality gate pass.
+- [ ] Package identity checks prove that neither the source checkout nor the development venv was imported.
 
 Gate B is a release blocker. Passing Gate A alone is not sufficient to publish.
+
+Run:
+
+```bash
+python tools/release/offline_wheelhouse.py --verify
+python tools/release/fresh_venv_runtime_smoke.py
+```
+
+See
+[Offline Wheelhouse and Fresh-Venv Validation](release/OFFLINE_WHEELHOUSE_FRESH_VENV.md).
 
 ## 8. Final Sign-off
 
