@@ -128,3 +128,12 @@ Do not use older run folders for review screenshots.
 - Keep text readable.
 - Avoid browser address bar, username labels, and system path areas.
 - If local paths are visible, re-crop or mask before commit.
+
+## Review capture record
+
+- Capture date: 2026-07-30
+- Source: canonical `.reposense_review_demo/current/`
+- Browser viewport: 1440 x 900
+- Human visual confirmation: passed
+- Review screenshots 9-15: captured and privacy-reviewed
+- Detailed QA record: `docs/validation/STUDIO_VISUAL_QA_V02.md`

@@ -73,4 +73,4 @@ P1:
 7. `docs/assets/screenshots/context-pack-review-section.png`
    - Open: `.reposense_review_demo/current/context_pack/REVIEW/README.md`
 
-Do not embed these screenshots in README until the PNG files are captured and reviewed.
+All seven Repository Review screenshots were captured from the canonical review demo and reviewed on 2026-07-30. README embeds only the Studio review panel; the complete set remains indexed in `docs/assets/ASSET_INDEX.md`.

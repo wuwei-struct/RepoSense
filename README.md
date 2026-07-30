@@ -111,6 +111,12 @@ Current Studio flow:
 
 Studio can also surface Repository Review artifacts, including human review required items, Code Health, Permission Review, AuthZ Matrix, and the Context Pack REVIEW section when those artifacts are generated.
 
+### Review Artifact Cards
+
+![Studio Review Artifact Cards](docs/assets/screenshots/studio-review-panel.png)
+
+The cards prioritize generated review and validation outputs without treating missing artifacts as zero findings. The complete screenshot set is listed in [docs/assets/ASSET_INDEX.md](docs/assets/ASSET_INDEX.md).
+
 For a complete review demo run that feeds the Studio Review panel and release screenshots:
 
 ```powershell
