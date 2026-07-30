@@ -2,10 +2,11 @@
 
 ## Status
 
-This document describes Packaging Gate A for the local v0.2.0 development
-baseline. RepoSense remains version `0.1.0`; v0.2.0 has not been released.
-The release readiness verdict remains blocked until Packaging Gate B completes
-the controlled-wheelhouse fresh-venv test.
+This document describes Packaging Gates A and B for the local v0.2.0
+development baseline. RepoSense remains version `0.1.0`; v0.2.0 has not been
+released. Gate B has been validated locally for CPython 3.11 on Windows AMD64,
+but the full release readiness audit must still be repeated before RC
+preparation.
 
 ## Original Blocker
 
@@ -98,7 +99,7 @@ The generated ignored summaries are:
 - `package_runtime_smoke.json`
 - `package_runtime_smoke.md`
 
-The expected status wording is:
+Gate A intentionally reports:
 
 ```text
 dependency-neutral target smoke passed; fresh-venv offline dependency smoke pending
@@ -110,8 +111,7 @@ Gate A verifies wheel layout, resource resolution, and installed module wiring.
 It intentionally uses the current interpreter's already installed runtime
 dependencies. It is not a fresh-venv dependency test.
 
-Packaging Gate B remains pending and requires a controlled offline wheelhouse
-for:
+Packaging Gate B uses a controlled offline wheelhouse for:
 
 - PyYAML
 - requests
@@ -120,10 +120,26 @@ for:
 - idna
 - urllib3
 
-Gate B must create a fresh venv, install only from the wheelhouse, exercise the
-console script, and repeat CLI/Studio/Learn/scan smoke checks without a source
-fallback. RepoSense must not enter release-candidate preparation until Gate B
-passes.
+Gate B creates a fresh venv without system packages, installs only with
+`--no-index`, runs `pip check`, and repeats CLI, Studio, Learn, scan, review,
+strict verification, and quality-gate checks without a source fallback.
+
+Run the locked, offline validation with:
+
+```powershell
+.\.venv\Scripts\python.exe tools/release/offline_wheelhouse.py --verify
+.\.venv\Scripts\python.exe tools/release/fresh_venv_runtime_smoke.py
+```
+
+The committed lock is specific to CPython 3.11 on Windows AMD64. Downloaded
+wheels, the fresh venv, and reports remain under ignored `.tmp_test_runs/`
+paths. See
+[Offline Wheelhouse and Fresh-Venv Validation](OFFLINE_WHEELHOUSE_FRESH_VENV.md)
+for preparation, verification, and lock-refresh procedures.
+
+Local Gate B completion removes the packaging-specific blocker. It does not
+replace the full release readiness audit, remote CI execution, version update,
+tagging, or public release approval.
 
 ## Boundaries
 
