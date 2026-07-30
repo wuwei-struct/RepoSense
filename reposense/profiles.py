@@ -1,33 +1,39 @@
 import os
+from .runtime_resources import get_presets_dir, get_rulesets_dir
+
 class RepoSenseConfigError(Exception):
     pass
+
+_RULESETS_DIR = get_rulesets_dir()
+_PRESETS_DIR = get_presets_dir()
+
 PROFILES = {
     "demo": {
         "id": "demo",
         "label": "Demo",
         "description": "Open-source demo profile",
         "edition": "oss",
-        "ruleset_dir": os.path.join(os.path.dirname(os.path.dirname(__file__)), "rulesets", "demo_v1"),
-        "budget_path": os.path.join(os.path.dirname(os.path.dirname(__file__)), "presets", "demo.json"),
-        "gate_path": os.path.join(os.path.dirname(os.path.dirname(__file__)), "presets", "gates", "demo.json"),
+        "ruleset_dir": str(_RULESETS_DIR / "demo_v1"),
+        "budget_path": str(_PRESETS_DIR / "demo.json"),
+        "gate_path": str(_PRESETS_DIR / "gates" / "demo.json"),
     },
     "prod_lite": {
         "id": "prod_lite",
         "label": "Prod Lite",
         "description": "Open-source lite profile mapped to demo ruleset",
         "edition": "oss",
-        "ruleset_dir": os.path.join(os.path.dirname(os.path.dirname(__file__)), "rulesets", "demo_v1"),
-        "budget_path": os.path.join(os.path.dirname(os.path.dirname(__file__)), "presets", "prod_lite.json"),
-        "gate_path": os.path.join(os.path.dirname(os.path.dirname(__file__)), "presets", "gates", "prod_lite.json"),
+        "ruleset_dir": str(_RULESETS_DIR / "demo_v1"),
+        "budget_path": str(_PRESETS_DIR / "prod_lite.json"),
+        "gate_path": str(_PRESETS_DIR / "gates" / "prod_lite.json"),
     },
     "prod_deep": {
         "id": "prod_deep",
         "label": "Prod Deep",
         "description": "Enterprise profile (requires enterprise ruleset)",
         "edition": "enterprise",
-        "ruleset_dir": os.path.join(os.path.dirname(os.path.dirname(__file__)), "rulesets", "specs_v2"),
-        "budget_path": os.path.join(os.path.dirname(os.path.dirname(__file__)), "presets", "prod_deep.json"),
-        "gate_path": os.path.join(os.path.dirname(os.path.dirname(__file__)), "presets", "gates", "prod_deep.json"),
+        "ruleset_dir": str(_RULESETS_DIR / "specs_v2"),
+        "budget_path": str(_PRESETS_DIR / "prod_deep.json"),
+        "gate_path": str(_PRESETS_DIR / "gates" / "prod_deep.json"),
     },
 }
 def resolve_profile(name, edition="oss"):

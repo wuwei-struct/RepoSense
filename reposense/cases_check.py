@@ -1,6 +1,7 @@
 import os
 import json
 from pathlib import Path
+from .runtime_resources import get_specs_dir
 def _validate_with_schema(doc, schema_path, strict=False):
     try:
         import jsonschema
@@ -20,7 +21,7 @@ def cases_check(path, as_json=False, strict_schema=False):
     p = Path(path)
     errors = []
     warnings = []
-    schema = Path(__file__).resolve().parents[1]/"specs"/"schemas"/"case.schema.json"
+    schema = get_specs_dir() / "schemas" / "case.schema.json"
     schema_validation = "performed"
     if not schema.exists():
         schema_validation = "skipped_missing_schema"

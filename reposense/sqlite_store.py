@@ -1,5 +1,7 @@
 import os
 import sqlite3
+from .runtime_resources import get_sqlite_schema_file
+
 def _apply_schema(conn, schema_path):
     with open(schema_path, "r", encoding="utf-8") as f:
         sql = f.read()
@@ -8,12 +10,12 @@ def _apply_schema(conn, schema_path):
 def init_indices_db(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     conn = sqlite3.connect(path)
-    _apply_schema(conn, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sql", "schema_v1.sql")))
+    _apply_schema(conn, get_sqlite_schema_file())
     return conn
 def init_detections_db(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     conn = sqlite3.connect(path)
-    _apply_schema(conn, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "sql", "schema_v1.sql")))
+    _apply_schema(conn, get_sqlite_schema_file())
     return conn
 def ensure_schema(conn):
     req = ["files","symbols","calls","text_hits","evidence","findings","finding_evidence","events","event_links"]

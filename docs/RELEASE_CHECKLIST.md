@@ -51,8 +51,34 @@ See also: [OSS_PREP.md](OSS_PREP.md)
   - [ ] risks sample
   - [ ] manifest sample
 
-## 6. Final Sign-off
+## 6. Packaging Gate A
+
+- [ ] The wheel contains Studio/Report/Learn web assets.
+- [ ] The wheel contains all default rulesets, presets, runtime specs, concepts, and the SQLite initialization schema.
+- [ ] Dependency-neutral target installation imports RepoSense from the installed target, not the source checkout.
+- [ ] Installed Studio returns HTTP 200 for `/`, `/artifact-cards.js`, `/artifact-cards.css`, and `/api/runs`.
+- [ ] Installed Learn loads the packaged concept graph.
+- [ ] Installed default ruleset, preset, and specs complete a fixture CI scan.
+- [ ] The wheel excludes tests, local workspaces, smoke outputs, temporary files, and secrets.
+
+Run:
+
+```bash
+python tools/release/package_runtime_smoke.py --mode asset-and-target
+```
+
+## 7. Packaging Gate B
+
+- [ ] A controlled offline wheelhouse contains PyYAML, requests, and all transitive dependency wheels.
+- [ ] A fresh venv installs RepoSense and dependencies only from that wheelhouse.
+- [ ] The installed `reposense` console script passes CLI, Studio, Learn, and scan smoke checks.
+- [ ] No source checkout or `PYTHONPATH` fallback is used.
+
+Gate B is a release blocker. Passing Gate A alone is not sufficient to publish.
+
+## 8. Final Sign-off
 
 - [ ] No schema changes (`schema_version` unchanged) unless explicitly planned.
 - [ ] No grounded-boundary violations.
 - [ ] Release notes include known limits and deferred items.
+- [ ] Packaging Gate A and Packaging Gate B both pass.

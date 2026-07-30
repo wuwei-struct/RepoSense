@@ -416,12 +416,12 @@ def main():
                 sys.exit(0 if ok else 2)
             else:
                 from .quality_gate import load_gate_config, collect_metrics, evaluate, write_quality_gate
-                base = os.path.dirname(os.path.dirname(__file__))
+                from .runtime_resources import get_presets_dir
                 try:
                     mcfg = json.load(open(os.path.join(args.run_dir, "meta", "config.json"), "r", encoding="utf-8"))
-                    default_gate = mcfg.get("gate_path") or os.path.join(base, "presets", "gates", "prod_lite.json")
+                    default_gate = mcfg.get("gate_path") or str(get_presets_dir() / "gates" / "prod_lite.json")
                 except Exception:
-                    default_gate = os.path.join(base, "presets", "gates", "prod_lite.json")
+                    default_gate = str(get_presets_dir() / "gates" / "prod_lite.json")
                 cfg = load_gate_config(default_gate)
                 obj = evaluate(collect_metrics(args.run_dir), cfg)
                 write_quality_gate(args.run_dir, obj)

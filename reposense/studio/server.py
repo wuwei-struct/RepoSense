@@ -10,9 +10,15 @@ from .workspace import WorkspaceManager
 from .jobs import JobManager
 from .artifact_catalog import build_artifact_presentation, review_artifact_specs
 from .run_summary import build_run_summary
+from ..runtime_resources import (
+    get_presets_dir,
+    get_rulesets_dir,
+    get_specs_dir,
+    get_studio_webui_dir,
+)
 
 PORT = 8010
-STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "webui")
+STATIC_DIR = str(get_studio_webui_dir().parent)
 
 workspace = WorkspaceManager()
 jobs = JobManager(workspace)
@@ -403,9 +409,9 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
             data = json.loads(body)
             
             project_id = data.get("project_id")
-            ruleset = data.get("ruleset", "rulesets/specs_v2")
-            budget = data.get("budget", "presets/default.json")
-            specs = data.get("specs", "specs")
+            ruleset = data.get("ruleset") or str(get_rulesets_dir() / "specs_v2")
+            budget = data.get("budget") or str(get_presets_dir() / "default.json")
+            specs = data.get("specs") or str(get_specs_dir())
             
             try:
                 run_id = jobs.start_run(project_id, ruleset, budget, specs)

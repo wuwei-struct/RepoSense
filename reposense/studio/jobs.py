@@ -5,6 +5,7 @@ import sys
 import time
 import json
 import zipfile
+from ..runtime_resources import get_presets_dir
 from .workspace import WorkspaceManager
 
 class JobManager:
@@ -201,7 +202,7 @@ class JobManager:
             gate_status = "N/A"
             try:
                 from ..quality_gate import load_gate_config, collect_metrics, evaluate, write_quality_gate
-                cfg = load_gate_config(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "presets", "gates", "prod_lite.json"))
+                cfg = load_gate_config(str(get_presets_dir() / "gates" / "prod_lite.json"))
                 obj = evaluate(collect_metrics(run_dir), cfg)
                 qpath = write_quality_gate(run_dir, obj)
                 gate_status = obj.get("status", "N/A")

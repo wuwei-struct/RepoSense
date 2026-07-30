@@ -34,6 +34,12 @@ jobs:
             tests.analysis.test_ai_risks_integration \
             tests.learn.test_learn_ui_routes
 
+      # Gate A validates packaged assets and a dependency-neutral target install.
+      # The release-only fresh-venv gate uses a controlled offline wheelhouse.
+      - name: Validate packaged runtime assets
+        run: |
+          python tools/release/package_runtime_smoke.py --mode asset-and-target
+
       - name: Run CLI smoke chain
         shell: bash
         run: |
