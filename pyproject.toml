@@ -18,3 +18,24 @@ reposense = "reposense.cli:main"
 where = ["."]
 include = ["reposense*"]
 exclude = ["rulesets*", "tests*", "docs*", "tools*", "scripts*", ".github*"]
+
+[tool.setuptools.package-data]
+"reposense.shared.concepts" = ["concepts.json"]
+
+[tool.setuptools.data-files]
+"share/reposense/webui/studio" = [
+  "webui/studio/*.html",
+  "webui/studio/*.js",
+  "webui/studio/*.css",
+]
+"share/reposense/webui/static" = ["webui/static/*"]
+"share/reposense/rulesets/basic" = ["rulesets/basic/*"]
+"share/reposense/rulesets/demo_v1" = ["rulesets/demo_v1/*"]
+"share/reposense/rulesets/specs_v2" = ["rulesets/specs_v2/*"]
+"share/reposense/presets" = ["presets/*.json"]
+"share/reposense/presets/gates" = ["presets/gates/*.json"]
+"share/reposense/specs/concepts" = ["specs/concepts/*.yaml"]
+"share/reposense/specs/rulesets" = ["specs/rulesets/*.yaml"]
+"share/reposense/specs/schemas" = ["specs/schemas/*.json"]
+"share/reposense/specs/taxonomies" = ["specs/taxonomies/*.yaml"]
+"share/reposense/sql" = ["sql/*.sql"]

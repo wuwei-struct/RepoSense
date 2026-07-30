@@ -1,10 +1,11 @@
 import os
 import json
 from pathlib import Path
+from ..runtime_resources import get_concepts_file
 
 
 def default_concept_graph_path():
-    return str(Path(__file__).resolve().parent.parent / "shared" / "concepts" / "concepts.json")
+    return str(get_concepts_file())
 
 
 def load_concept_graph(path):

@@ -2,6 +2,11 @@ import os
 import json
 import time
 from .versioning import ruleset_fingerprint, generated_by
+from .runtime_resources import get_rulesets_dir
+
+def _default_ruleset(ruleset):
+    return ruleset or str(get_rulesets_dir() / "specs_v2")
+
 def _read_json(path, default=None):
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -10,7 +15,8 @@ def _read_json(path, default=None):
         return default if default is not None else {}
 def _sev_rank(s):
     return {"error": 3, "warning": 2, "note": 1}.get((s or "note").lower(), 0)
-def save_baseline(run_dir, out_path, profile="prod_lite", ruleset="rulesets/specs_v2", gate_id="prod_lite"):
+def save_baseline(run_dir, out_path, profile="prod_lite", ruleset=None, gate_id="prod_lite"):
+    ruleset = _default_ruleset(ruleset)
     sarif = _read_json(os.path.join(run_dir, "exports", "report.sarif.json"), {"runs": []})
     runs = sarif.get("runs") or []
     findings = []
@@ -54,7 +60,8 @@ def save_baseline(run_dir, out_path, profile="prod_lite", ruleset="rulesets/spec
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False)
     return out
-def compute_diff(base_path, new_run_dir, out_json_path, out_md_path=None, current_ruleset_dir="rulesets/specs_v2"):
+def compute_diff(base_path, new_run_dir, out_json_path, out_md_path=None, current_ruleset_dir=None):
+    current_ruleset_dir = _default_ruleset(current_ruleset_dir)
     base = _read_json(base_path, {"findings": []})
     sarif = _read_json(os.path.join(new_run_dir, "exports", "report.sarif.json"), {"runs": []})
     runs = sarif.get("runs") or []

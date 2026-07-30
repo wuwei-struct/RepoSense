@@ -46,6 +46,7 @@ This index keeps the full documentation map while the README stays focused on th
 - [docs/release/RELEASE_CHECKLIST_PUBLIC.md](release/RELEASE_CHECKLIST_PUBLIC.md)
 - [docs/release/RELEASE_PROCESS.md](release/RELEASE_PROCESS.md)
 - [docs/release/RELEASE_CANDIDATE_v0.1.0.md](release/RELEASE_CANDIDATE_v0.1.0.md)
+- [docs/release/PACKAGING_RUNTIME_ASSETS.md](release/PACKAGING_RUNTIME_ASSETS.md)
 
 ## Demo and Assets
 

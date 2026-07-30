@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 from .concept_graph import load_concept_graph, ConceptGraph
 from .case_extractor import extract_cases
+from ..runtime_resources import get_learn_webui_dir
 
 def _slug(s):
     import re
@@ -15,9 +16,7 @@ def _safe_outdir(out_dir):
     return p
 
 def copy_assets(out_dir):
-    # reposense/learn/site_builder.py -> reposense/learn/ -> reposense/ -> root -> webui/static
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    src = os.path.join(base_dir, "webui", "static")
+    src = str(get_learn_webui_dir())
     dst = os.path.join(out_dir, "assets")
     if os.path.exists(dst):
         shutil.rmtree(dst)

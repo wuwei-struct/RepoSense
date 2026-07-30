@@ -2,6 +2,7 @@ import os
 import webbrowser
 import json
 import shutil
+from .runtime_resources import get_report_webui_dir
 from .utils import write_json
 from .learn.concept_graph import load_concept_graph, default_concept_graph_path
 def _read_json(path, default=None):
@@ -87,10 +88,7 @@ def resolve_learn_links(risk_or_explain):
     return {"concept_id": cid, "href": f"./learn/index.html?concept_id={cid}"}
 
 def copy_assets(run_dir):
-    # Assume webui/static is at ../webui/static relative to this file's package root
-    # reposense/report.py -> reposense/ -> root -> webui/static
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    src = os.path.join(base_dir, "webui", "static")
+    src = str(get_report_webui_dir())
     dst = os.path.join(run_dir, "assets")
     if os.path.exists(dst):
         shutil.rmtree(dst)
