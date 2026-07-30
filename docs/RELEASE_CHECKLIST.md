@@ -94,7 +94,30 @@ python tools/release/fresh_venv_runtime_smoke.py
 See
 [Offline Wheelhouse and Fresh-Venv Validation](release/OFFLINE_WHEELHOUSE_FRESH_VENV.md).
 
-## 8. Final Sign-off
+## 8. v0.2.0 Readiness Audit
+
+The 2026-07-30 local audit at
+`edb05dcfa08446fcfa5fe6bf163eba97260902c8` concluded
+`READY_WITH_KNOWN_WARNINGS`. Packaging Gate A and Gate B passed, including two
+fresh-venv offline runs, and the Studio run API privacy blocker is resolved.
+This is approval to enter RC Preparation, not approval to publish.
+
+- [Readiness Audit](release/V0_2_0_RELEASE_READINESS_AUDIT.md)
+- [Release Plan](release/V0_2_0_RELEASE_PLAN.md)
+- [Changelog Draft](release/V0_2_0_CHANGELOG_DRAFT.md)
+- [Release Notes Draft](release/V0_2_0_RELEASE_NOTES_DRAFT.md)
+
+Before an RC push:
+
+- [ ] Refresh remotes and review divergence.
+- [ ] Update/consolidate product version authority.
+- [ ] Add explicit package license and README metadata.
+- [ ] Build and inspect wheel and sdist.
+- [ ] Rerun Gate A, Gate B, tests, demos, real-repository smoke, and Studio
+      privacy checks against the RC commit.
+- [ ] Record all known warnings in the RC notes.
+
+## 9. Final Sign-off
 
 - [ ] No schema changes (`schema_version` unchanged) unless explicitly planned.
 - [ ] No grounded-boundary violations.

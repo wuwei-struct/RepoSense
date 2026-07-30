@@ -48,6 +48,10 @@ This index keeps the full documentation map while the README stays focused on th
 - [docs/release/RELEASE_CANDIDATE_v0.1.0.md](release/RELEASE_CANDIDATE_v0.1.0.md)
 - [docs/release/PACKAGING_RUNTIME_ASSETS.md](release/PACKAGING_RUNTIME_ASSETS.md)
 - [docs/release/OFFLINE_WHEELHOUSE_FRESH_VENV.md](release/OFFLINE_WHEELHOUSE_FRESH_VENV.md)
+- [docs/release/V0_2_0_RELEASE_READINESS_AUDIT.md](release/V0_2_0_RELEASE_READINESS_AUDIT.md)
+- [docs/release/V0_2_0_RELEASE_PLAN.md](release/V0_2_0_RELEASE_PLAN.md)
+- [docs/release/V0_2_0_CHANGELOG_DRAFT.md](release/V0_2_0_CHANGELOG_DRAFT.md)
+- [docs/release/V0_2_0_RELEASE_NOTES_DRAFT.md](release/V0_2_0_RELEASE_NOTES_DRAFT.md)
 
 ## Demo and Assets
 
