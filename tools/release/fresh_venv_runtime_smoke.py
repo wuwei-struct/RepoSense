@@ -111,11 +111,16 @@ def _venv_binaries(venv):
 
 
 def _build_repo_wheel(paths):
+    from reposense.runtime_resources import runtime_resource_manifest
+
+    expected_runtime_assets = sum(
+        len(item.get("required_files") or []) for item in runtime_resource_manifest()
+    )
     _, built_wheel, _ = build_wheel(paths["build"])
     inspection = inspect_wheel(built_wheel)
     if (
         inspection["wheel_version"] != "0.1.0"
-        or inspection["runtime_asset_count"] != 52
+        or inspection["runtime_asset_count"] != expected_runtime_assets
         or inspection["missing_runtime_assets"]
         or inspection["forbidden_content"]
         or not inspection["license_present"]
@@ -307,7 +312,16 @@ def _studio_smoke(console, paths, environment):
     )
     statuses = {}
     try:
-        endpoints = ("/", "/artifact-cards.js", "/artifact-cards.css", "/api/runs")
+        endpoints = (
+            "/",
+            "/artifact-cards.js",
+            "/artifact-cards.css",
+            "/app-shell.js",
+            "/app-shell.css",
+            "/analyze-form.js",
+            "/run-workbench.js",
+            "/api/runs",
+        )
         deadline = time.time() + 20
         while time.time() < deadline:
             try:

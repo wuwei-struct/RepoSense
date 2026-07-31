@@ -62,3 +62,31 @@ All screenshots omit browser chrome and local absolute paths. No detection count
 - Markdown and JSON screenshots use read-only previews of canonical artifacts.
 - Studio does not register arbitrary external run directories automatically; the canonical run was copied unchanged into the ignored Studio workspace for display.
 - Visual QA validates presentation and navigation only, not the correctness of analysis findings.
+
+## Studio 2.0 Workbench QA record
+
+- Date: 2026-07-31
+- RepoSense commit under test: working tree based on `08e86d9a87f25a23638d7eaff80acc134f5f8943`
+- Branch: `pr-studio-05-workbench-foundation`
+- Browser: user-confirmed manual browser session; product/version not reported
+- Viewport: 1440 x 900 review target
+- Target run: `run-1785495179-79b715c3`
+- Manual visual QA result: passed
+
+The user confirmed the Home page, Analyze Repository profile selector,
+Pipeline Progress, Recent Runs, all ten Workbench tabs, Artifact Cards,
+missing/zero states, console, responsive layout, and local-path privacy. The
+target Full Repository Review completed all 13 steps; its Review Decision was
+`WARN` and its Quality Gate was `warn`, and neither state was presented as a
+safety guarantee.
+
+Automated HTTP checks for the same run returned 200 for the app shell, four new
+Workbench JS/CSS assets, profile API, run list, run detail, and a generated
+artifact. Recursive public-payload scanning found no local path leak,
+Recommended First contained four items, and missing artifacts had no fabricated
+URL.
+
+The seven existing screenshots remain historical Studio Artifact Cards assets
+and require a later refresh because the Workbench changes the product shell
+substantially. The exact browser product/version was not supplied with the
+manual confirmation and remains a documentation limitation.

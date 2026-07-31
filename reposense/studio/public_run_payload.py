@@ -19,6 +19,8 @@ _SAFE_HTTP_PATH_PREFIXES = (
     "/artifact-cards.",
 )
 _PUBLIC_SECTIONS = (
+    "profile",
+    "pipeline",
     "summary",
     "artifact_groups",
     "recommended_artifacts",
@@ -125,6 +127,9 @@ def build_public_run_payload(run_state: Any) -> dict:
             "run_id": "",
             "status": "",
             "phase": "",
+            "repo_label": "Repository",
+            "profile": {},
+            "pipeline": {},
             "logs_tail": [],
             "error_message": "",
             "warnings": ["invalid_internal_run_state"],
@@ -135,6 +140,9 @@ def build_public_run_payload(run_state: Any) -> dict:
         "run_id": _safe_text(run_state.get("run_id"), "", warnings, "run_id"),
         "status": _safe_text(run_state.get("status"), "", warnings, "status"),
         "phase": _safe_text(run_state.get("phase"), "", warnings, "phase"),
+        "repo_label": _safe_text(
+            run_state.get("repo_label"), "Repository", warnings, "repo_label"
+        ),
         "logs_tail": _safe_logs(
             run_state.get("logs_tail", run_state.get("logs", [])), warnings
         ),

@@ -99,9 +99,10 @@ Studio currently supports two local workflows:
 Current Studio flow:
 
 - Import by ZIP upload or local path.
-- Start an analysis run.
-- Track run status.
-- Open generated artifacts:
+- Choose `Full Repository Review` (recommended) or `Quick Scan`.
+- Track structured pipeline progress.
+- Open the run in the Repository Review Workbench.
+- Inspect native summaries or generated artifacts:
   - `report.html`
   - Learn UI
   - SARIF
@@ -109,7 +110,14 @@ Current Studio flow:
   - run manifest
   - backend verifier / AI-derived outputs when available
 
-Studio can also surface Repository Review artifacts, including human review required items, Code Health, Permission Review, AuthZ Matrix, and the Context Pack REVIEW section when those artifacts are generated.
+Full Repository Review runs the existing backend verifier, Code Health,
+Permission/AuthZ, transaction, queue reliability, Repository Review, Context
+Pack, strict verification, and quality-gate entry points. The Workbench exposes
+Overview, Human Review, domain review, Validation, Context Pack, and Artifacts
+views. Missing artifacts remain distinct from zero findings.
+
+See [Studio Repository Review Workbench](docs/studio/STUDIO_WORKBENCH.md) for
+profile, progress, availability, and privacy boundaries.
 
 ### Review Artifact Cards
 
