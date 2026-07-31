@@ -1,6 +1,12 @@
 (function () {
   'use strict';
 
+  const i18n = window.StudioI18n;
+  i18n.initI18n();
+
+  // English locale navigation: Home, Analyze Repository, Recent Runs,
+  // Review Workspace, Learn, Documentation.
+
   const state = {view: 'home', runs: [], currentRun: null, pollTimer: null};
   const view = document.getElementById('studio-view');
   const title = document.getElementById('page-title');
@@ -8,6 +14,7 @@
   const topStatus = document.getElementById('topbar-status');
   const topActions = document.getElementById('topbar-actions');
 
+  function t(key, params) { return i18n.t(key, params); }
   function escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -16,7 +23,7 @@
 
   function pill(value, label) {
     const status = String(value || 'unknown').toLowerCase();
-    return `<span class="status-pill ${escapeHtml(status)}">${escapeHtml(label || status.replaceAll('_', ' '))}</span>`;
+    return `<span class="status-pill ${escapeHtml(status)}">${escapeHtml(label || i18n.formatStatus(status))}</span>`;
   }
 
   async function fetchJson(path, options) {
@@ -26,9 +33,9 @@
     return data;
   }
 
-  function setHeader(pageTitle, pageKicker) {
-    title.textContent = pageTitle;
-    kicker.textContent = pageKicker || 'Repository Review Workbench';
+  function setHeader(titleKey, kickerKey) {
+    title.textContent = t(titleKey);
+    kicker.textContent = t(kickerKey || 'app.workbench');
     topStatus.innerHTML = '';
     topActions.innerHTML = '';
   }
@@ -37,17 +44,24 @@
     document.querySelectorAll('[data-view]').forEach(button => button.classList.toggle('active', button.dataset.view === name));
   }
 
+  function profileName(profile) {
+    if (!profile.profile_id) return t('runs.historical');
+    const key = `profile.${profile.profile_id}.name`;
+    const value = t(key);
+    return value === key ? profile.display_name || profile.profile_id : value;
+  }
+
   function runCard(run) {
     const summary = run.summary || {};
     const profile = run.profile || {};
-    const timestamp = new Date((run.updated_at || run.start_time || 0) * 1000).toLocaleString();
-    const human = summary.human_review_required_status === 'available' ? summary.human_review_required_count : 'not generated';
+    const timestamp = new Date((run.updated_at || run.start_time || 0) * 1000).toLocaleString(i18n.getLocale());
+    const human = summary.human_review_required_status === 'available' ? summary.human_review_required_count : t('runs.notGenerated');
     return `
       <article class="run-summary-card" data-open-run="${escapeHtml(run.run_id)}" tabindex="0">
-        <div class="run-card-top"><span class="run-profile">${escapeHtml(profile.display_name || profile.profile_id || 'Historical run')}</span>${pill(run.status)}</div>
-        <h3>${escapeHtml(run.repo_label || 'Repository')}</h3>
+        <div class="run-card-top"><span class="run-profile">${escapeHtml(profileName(profile))}</span>${pill(run.status)}</div>
+        <h3>${escapeHtml(run.repo_label || t('runs.repository'))}</h3>
         <div class="run-id">${escapeHtml(run.run_id)}</div>
-        <div class="run-card-meta"><span>Decision ${escapeHtml(summary.review_decision || 'unknown')}</span><span>Human review ${escapeHtml(human)}</span><span>Gate ${escapeHtml((summary.quality_gate || {}).status || 'not available')}</span><span>${escapeHtml(timestamp)}</span></div>
+        <div class="run-card-meta"><span>${escapeHtml(t('runs.decision', {value: i18n.formatStatus(summary.review_decision)}))}</span><span>${escapeHtml(t('runs.humanReview', {value: human}))}</span><span>${escapeHtml(t('runs.gate', {value: i18n.formatStatus((summary.quality_gate || {}).status)}))}</span><span>${escapeHtml(timestamp)}</span></div>
       </article>`;
   }
 
@@ -65,44 +79,37 @@
   }
 
   function capabilityCards() {
-    const capabilities = [
-      ['01', 'Backend Side Effects', 'Inspect API, database and external side-effect evidence.'],
-      ['02', 'Transactions & Database', 'Review explicit coverage, unknowns and TypeORM provenance.'],
-      ['03', 'Queue & Cache', 'Correlate producers, consumers, retry and idempotency signals.'],
-      ['04', 'Permission & AuthZ', 'Surface route protection and authorization review gaps.'],
-      ['05', 'Code Health', 'Prioritize maintainability findings without claiming correctness.'],
-      ['06', 'AI Maintenance Context', 'Build a grounded Context Pack REVIEW handoff.'],
-    ];
-    return capabilities.map(([number, name, description]) => `<article class="capability-card"><b>${number}</b><h3>${name}</h3><p>${description}</p></article>`).join('');
+    const capabilities = ['backend', 'transactions', 'messaging', 'permission', 'health', 'ai'];
+    return capabilities.map((id, index) => `<article class="capability-card"><b>${String(index + 1).padStart(2, '0')}</b><h3>${t(`home.capability.${id}.name`)}</h3><p>${t(`home.capability.${id}.description`)}</p></article>`).join('');
   }
 
   async function renderHome() {
-    setHeader('Home', 'Repository Review Workbench');
+    setHeader('nav.home', 'app.workbench');
     await refreshRuns();
     const recent = state.runs.slice(0, 6);
     view.innerHTML = `
       <section class="hero-grid">
-        <div class="hero-panel"><span class="eyebrow">Facts → Patterns → Review</span><h2>Turn a repository into an evidence-backed review workspace.</h2><p>Run the complete Repository Review pipeline, follow each stage, then move through human review, transactions, permissions, reliability, and AI maintenance context.</p><div class="hero-actions"><button class="studio-button primary" data-go="analyze">Analyze Repository</button><button class="studio-button ghost" data-go="runs">Browse Recent Runs</button></div></div>
-        <aside class="principle-panel"><div><h3>Review boundaries stay visible.</h3><ol><li>Static evidence only</li><li>Missing is not zero</li><li>Suspected requires review</li></ol></div><small>RepoSense does not execute target repositories and does not certify that a repository is secure or correct.</small></aside>
+        <div class="hero-panel"><span class="eyebrow">${t('home.kicker')}</span><h2>${t('home.title')}</h2><p>${t('home.description')}</p><div class="hero-actions"><button class="studio-button primary" data-go="analyze">${t('home.analyzeRepository')}</button><button class="studio-button ghost" data-go="runs">${t('home.browseRuns')}</button></div></div>
+        <aside class="principle-panel"><div><h3>${t('home.boundaryTitle')}</h3><ol><li>${t('home.boundaryStatic')}</li><li>${t('home.boundaryMissing')}</li><li>${t('home.boundarySuspected')}</li></ol></div><small>${t('home.boundaryNote')}</small></aside>
       </section>
-      <div class="section-heading"><div><span class="eyebrow">Continue where you left off</span><h2>Recent Runs</h2></div><button class="studio-button" data-go="runs">View all</button></div>
-      <div class="run-grid">${recent.length ? recent.map(runCard).join('') : '<div class="empty-panel">No local runs yet. Start with Full Repository Review.</div>'}</div>
-      <div class="section-heading"><div><span class="eyebrow">Native review surfaces</span><h2>What RepoSense Reviews</h2></div></div>
+      <div class="section-heading"><div><span class="eyebrow">${t('home.continue')}</span><h2>${t('home.recentRuns')}</h2></div><button class="studio-button" data-go="runs">${t('common.viewAll')}</button></div>
+      <div class="run-grid">${recent.length ? recent.map(runCard).join('') : `<div class="empty-panel">${t('home.noRuns')}</div>`}</div>
+      <div class="section-heading"><div><span class="eyebrow">${t('home.nativeSurfaces')}</span><h2>${t('home.whatReviews')}</h2></div></div>
       <div class="capability-grid">${capabilityCards()}</div>`;
     view.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.go)));
     bindRunCards();
   }
 
   async function renderRuns() {
-    setHeader('Recent Runs', 'Local review history');
+    setHeader('nav.runs', 'shell.localHistory');
     await refreshRuns();
-    view.innerHTML = `<div class="section-heading"><div><span class="eyebrow">Run history</span><h2>Open a Review Workspace</h2></div><button class="studio-button primary" data-go="analyze">New analysis</button></div><div class="run-grid">${state.runs.length ? state.runs.map(runCard).join('') : '<div class="empty-panel">No runs are available.</div>'}</div>`;
+    view.innerHTML = `<div class="section-heading"><div><span class="eyebrow">${t('runs.history')}</span><h2>${t('runs.openWorkspace')}</h2></div><button class="studio-button primary" data-go="analyze">${t('runs.newAnalysis')}</button></div><div class="run-grid">${state.runs.length ? state.runs.map(runCard).join('') : `<div class="empty-panel">${t('runs.none')}</div>`}</div>`;
     view.querySelector('[data-go="analyze"]').addEventListener('click', () => navigate('analyze'));
     bindRunCards();
   }
 
   async function renderAnalyze() {
-    setHeader('Analyze Repository', 'Choose source and review depth');
+    setHeader('nav.analyze', 'shell.analyzeSubtitle');
     await window.StudioAnalyzeForm.mount(view, {onRunCreated: runId => openRun(runId)});
   }
 
@@ -119,26 +126,27 @@
     stopPolling();
     state.view = 'workbench';
     setActiveNav('workbench');
-    setHeader('Review Workspace', 'Evidence-backed repository review');
-    view.innerHTML = '<div class="loading-panel">Loading review workspace...</div>';
+    setHeader('shell.reviewWorkspace', 'shell.evidenceReview');
+    view.innerHTML = `<div class="loading-panel">${t('shell.loadingWorkbench')}</div>`;
     try {
       state.currentRun = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
       renderCurrentRun();
       if (['queued', 'running'].includes(state.currentRun.status)) startPolling(runId);
     } catch (error) {
-      view.innerHTML = `<div class="empty-panel">Run could not be loaded: ${escapeHtml(error.message)}</div>`;
+      view.innerHTML = `<div class="empty-panel">${escapeHtml(t('shell.runLoadFailed', {message: error.message}))}</div>`;
     }
   }
 
   function renderCurrentRun() {
     const run = state.currentRun;
     const summary = run.summary || {};
-    topStatus.innerHTML = `${pill(run.status)} ${pill(summary.review_decision, 'Decision ' + (summary.review_decision || 'unknown'))}`;
-    topActions.innerHTML = '<button class="studio-button" id="back-to-runs">Run List</button>';
+    setHeader('shell.reviewWorkspace', 'shell.evidenceReview');
+    topStatus.innerHTML = `${pill(run.status)} ${pill(summary.review_decision, t('runs.decision', {value: i18n.formatStatus(summary.review_decision)}))}`;
+    topActions.innerHTML = `<button class="studio-button" id="back-to-runs">${t('shell.runList')}</button>`;
     const mainReport = findArtifact(run, 'main_html_report');
-    if (mainReport && mainReport.url) topActions.innerHTML += `<a class="studio-button primary" target="_blank" rel="noopener" href="${escapeHtml(mainReport.url)}">Open Main Report</a>`;
+    if (mainReport && mainReport.url) topActions.innerHTML += `<a class="studio-button primary" target="_blank" rel="noopener" href="${escapeHtml(mainReport.url)}">${t('shell.openMainReport')}</a>`;
     topActions.querySelector('#back-to-runs').addEventListener('click', () => navigate('runs'));
-    window.StudioRunWorkbench.render(view, run);
+    window.StudioRunWorkbench.render(view, run, {initialTab: window.StudioRunWorkbench.getActiveTab()});
   }
 
   function startPolling(runId) {
@@ -162,23 +170,32 @@
 
   async function renderWorkbenchPicker() {
     if (state.currentRun) { renderCurrentRun(); return; }
-    setHeader('Review Workspace', 'Select a local run');
+    setHeader('shell.reviewWorkspace', 'shell.selectRun');
     await refreshRuns();
-    view.innerHTML = `<div class="section-heading"><div><span class="eyebrow">Choose evidence</span><h2>Select a Run</h2></div></div><div class="run-grid">${state.runs.map(runCard).join('') || '<div class="empty-panel">No runs are available.</div>'}</div>`;
+    view.innerHTML = `<div class="section-heading"><div><span class="eyebrow">${t('shell.chooseEvidence')}</span><h2>${t('shell.selectRunTitle')}</h2></div></div><div class="run-grid">${state.runs.map(runCard).join('') || `<div class="empty-panel">${t('runs.none')}</div>`}</div>`;
     bindRunCards();
   }
 
   async function renderLearn() {
-    setHeader('Learn', 'Grounded Concepts → Cases → Evidence');
+    setHeader('nav.learn', 'shell.learnSubtitle');
     await refreshRuns();
     const withLearn = state.runs.filter(run => findArtifact(run, 'learn_index'));
-    view.innerHTML = `<div class="section-heading"><div><span class="eyebrow">Generated learning views</span><h2>Learn from a completed run</h2></div></div><div class="run-grid">${withLearn.map(runCard).join('') || '<div class="empty-panel">No run with a generated Learn site is available.</div>'}</div>`;
+    view.innerHTML = `<div class="section-heading"><div><span class="eyebrow">${t('shell.learnViews')}</span><h2>${t('shell.learnTitle')}</h2></div></div><div class="run-grid">${withLearn.map(runCard).join('') || `<div class="empty-panel">${t('shell.noLearn')}</div>`}</div>`;
     bindRunCards();
   }
 
   function renderDocumentation() {
-    setHeader('Documentation', 'Workbench quick reference');
-    view.innerHTML = `<article class="docs-panel"><span class="run-profile">Local documentation entry</span><h2>Repository Review Workbench</h2><p>Use <strong>Full Repository Review</strong> for the complete review workflow. Use <strong>Quick Scan</strong> for API, event graph, report, Context Pack and validation outputs with the deeper domain review stages skipped.</p><h3>Source documentation</h3><p>The source distribution documents this UI in <code>docs/studio/STUDIO_UI.md</code> and <code>docs/studio/STUDIO_WORKBENCH.md</code>.</p><h3>Interpretation boundary</h3><p>Available means the artifact was generated. Zero means a generated artifact reported zero observations. Not generated means no conclusion can be drawn from that capability. Malformed means the artifact requires inspection.</p></article>`;
+    setHeader('nav.docs', 'shell.docsSubtitle');
+    view.innerHTML = `<article class="docs-panel"><span class="run-profile">${t('shell.docsEntry')}</span><h2>${t('shell.docsTitle')}</h2><p>${t('shell.docsProfiles')}</p><h3>${t('shell.sourceDocs')}</h3><p>${t('shell.sourceDocsText')}</p><h3>${t('shell.interpretation')}</h3><p>${t('shell.interpretationText')}</p></article>`;
+  }
+
+  async function renderCurrentView() {
+    if (state.view === 'home') await renderHome();
+    else if (state.view === 'analyze') await renderAnalyze();
+    else if (state.view === 'runs') await renderRuns();
+    else if (state.view === 'workbench') await renderWorkbenchPicker();
+    else if (state.view === 'learn') await renderLearn();
+    else if (state.view === 'documentation') renderDocumentation();
   }
 
   async function navigate(name) {
@@ -187,18 +204,18 @@
     setActiveNav(name);
     view.focus();
     try {
-      if (name === 'home') await renderHome();
-      else if (name === 'analyze') await renderAnalyze();
-      else if (name === 'runs') await renderRuns();
-      else if (name === 'workbench') await renderWorkbenchPicker();
-      else if (name === 'learn') await renderLearn();
-      else if (name === 'documentation') renderDocumentation();
+      await renderCurrentView();
     } catch (error) {
-      view.innerHTML = `<div class="empty-panel">Studio could not load this view: ${escapeHtml(error.message)}</div>`;
+      view.innerHTML = `<div class="empty-panel">${escapeHtml(t('shell.loadFailed', {message: error.message}))}</div>`;
     }
   }
 
   document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.view)));
+  i18n.mountLanguageSwitcher(document.getElementById('language-switcher-mount'));
+  i18n.subscribeLocaleChange(async () => {
+    i18n.translateDocument(document);
+    try { await renderCurrentView(); } catch (error) { /* Existing safe view remains visible. */ }
+  });
   window.StudioWorkbenchApp = {navigate, openRun, state};
   navigate('home');
 }());

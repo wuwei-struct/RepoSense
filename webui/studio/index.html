@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,26 +7,27 @@
   <link rel="stylesheet" href="/static/reposense.css">
   <link rel="stylesheet" href="/app-shell.css">
   <link rel="stylesheet" href="/artifact-cards.css">
+  <link rel="stylesheet" href="/language-switcher.css">
 </head>
 <body>
   <div class="workbench-shell">
-    <aside class="workbench-sidebar" aria-label="Studio navigation">
+    <aside class="workbench-sidebar" aria-label="Studio navigation" data-i18n-aria="nav.label">
       <div class="brand-lockup">
         <span class="brand-mark">RS</span>
-        <span><strong>RepoSense</strong><small>Review Workbench</small></span>
+        <span><strong>RepoSense</strong><small data-i18n="app.workbench">Review Workbench</small></span>
       </div>
       <nav class="primary-nav">
-        <button type="button" data-view="home" class="active">Home</button>
-        <button type="button" data-view="analyze">Analyze Repository</button>
-        <button type="button" data-view="runs">Recent Runs</button>
-        <button type="button" data-view="workbench">Review Workspace</button>
-        <button type="button" data-view="learn">Learn</button>
-        <button type="button" data-view="documentation">Documentation</button>
+        <button type="button" data-view="home" class="active" data-i18n="nav.home">Home</button>
+        <button type="button" data-view="analyze" data-i18n="nav.analyze">Analyze Repository</button>
+        <button type="button" data-view="runs" data-i18n="nav.runs">Recent Runs</button>
+        <button type="button" data-view="workbench" data-i18n="nav.review">Review Workspace</button>
+        <button type="button" data-view="learn" data-i18n="nav.learn">Learn</button>
+        <button type="button" data-view="documentation" data-i18n="nav.docs">Documentation</button>
       </nav>
       <div class="sidebar-boundary">
-        <span>LOCAL WORKSPACE</span>
-        <p>Static analysis only. Repository code is not executed.</p>
-        <small>Version 0.1.0</small>
+        <span data-i18n="boundary.local">LOCAL WORKSPACE</span>
+        <p data-i18n="boundary.static">Static analysis only. Repository code is not executed.</p>
+        <small data-i18n="app.version">Version 0.1.0</small>
       </div>
     </aside>
 
@@ -37,14 +38,18 @@
           <h1 id="page-title">Home</h1>
         </div>
         <div id="topbar-status" class="topbar-status"></div>
+        <div id="language-switcher-mount"></div>
         <div id="topbar-actions" class="topbar-actions"></div>
       </header>
       <main id="studio-view" class="workbench-content" tabindex="-1" data-artifact-mount="current-artifact-cards">
-        <div class="loading-panel">Loading local runs...</div>
+        <div class="loading-panel" data-i18n="common.loading">Loading local runs...</div>
       </main>
     </section>
   </div>
 
+  <script src="/locales/en-US.js" defer></script>
+  <script src="/locales/zh-CN.js" defer></script>
+  <script src="/i18n.js" defer></script>
   <script src="/artifact-cards.js" defer></script>
   <script src="/analyze-form.js" defer></script>
   <script src="/run-workbench.js" defer></script>

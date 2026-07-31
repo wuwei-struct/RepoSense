@@ -90,3 +90,26 @@ The seven existing screenshots remain historical Studio Artifact Cards assets
 and require a later refresh because the Workbench changes the product shell
 substantially. The exact browser product/version was not supplied with the
 manual confirmation and remains a documentation limitation.
+
+## Studio 2.0 bilingual QA record
+
+- Date: 2026-07-31
+- RepoSense commit under test: working tree based on `b8f8f2760f5aca34e20ed2598bdc8912e152e636`
+- Branch: `pr-studio-06a-i18n-foundation`
+- Browser and viewport: Chromium through the Codex in-app browser, 1440 x 900,
+  with user confirmation against the same local Studio URL
+- Locales: `zh-CN` and `en-US`
+- Target run: `review_demo_full` / `run-1785495179-79b715c3`
+- Result: pass; the user explicitly confirmed the Chinese and English visual check
+
+Home, Analyze Repository, both profiles, pipeline progress, Recent Runs, all ten
+Workbench tabs, Artifact Cards, and available/missing/warn/failed states were
+checked in both locales. Language switching was immediate and retained the
+selected profile, local-path input, active run, and Workbench tab. Chinese text
+rendered without mojibake; neither locale showed horizontal overflow at the
+target viewport, and no browser-console error was observed. Recursive API checks
+found no local-path leak in run-list or run-detail payloads.
+
+No visual defect required a CSS or layout change during this QA pass. The seven
+existing English screenshots are historical; updated English and Chinese Studio
+2.0 screenshots remain a follow-up asset task.

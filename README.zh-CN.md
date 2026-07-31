@@ -107,6 +107,8 @@ Review、各领域审查、Validation、Context Pack 与 Artifacts 视图，并�
 Profile、进度、available/missing/zero 与隐私边界见
 [Studio Repository Review Workbench](docs/studio/STUDIO_WORKBENCH.md)。
 
+Studio 支持英文和简体中文界面。语言选择只保存在浏览器中，不会改变分析产物或 API ID。
+
 ### Review Artifact Cards
 
 ![Studio Review Artifact Cards](docs/assets/screenshots/studio-review-panel.png)

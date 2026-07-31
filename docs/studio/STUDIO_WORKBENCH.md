@@ -7,6 +7,11 @@ Repository Review Workbench. It provides one controlled entry point for a
 complete review, structured pipeline progress, native run summaries, and
 stable navigation to every generated review area.
 
+The Workbench has one bilingual shell for `en-US` and `zh-CN`. Locale changes
+preserve the active run, Workbench tab, and analysis-form state and never rerun
+analysis. Translation architecture and stable-data boundaries are documented in
+[STUDIO_I18N.md](STUDIO_I18N.md).
+
 The Workbench presents deterministic RepoSense artifacts. It does not execute
 the target repository, replace human code review, or prove that a repository
 is secure or correct.
@@ -107,3 +112,12 @@ Pattern, Review, Permission, AuthZ, transaction, TypeORM, or queue semantics.
 A `pass` status means the corresponding deterministic gate passed for the
 observed artifacts; it does not prove complete business intent, authorization,
 transaction safety, idempotency, or repository security.
+
+## Legacy UI audit
+
+Studio 2.0 is an in-place upgrade of the single routed Studio page. No second
+legacy Studio HTML page, renderer, or route remains accessible. No file was
+deleted in the i18n work because the audit found no unreferenced legacy asset
+with sufficient evidence for safe removal. The generated static report, Learn
+UI, artifact serving, screenshots, and Context Pack REVIEW remain supported and
+have distinct responsibilities.

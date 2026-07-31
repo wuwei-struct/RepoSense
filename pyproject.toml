@@ -28,6 +28,7 @@ exclude = ["rulesets*", "tests*", "docs*", "tools*", "scripts*", ".github*"]
   "webui/studio/*.js",
   "webui/studio/*.css",
 ]
+"share/reposense/webui/studio/locales" = ["webui/studio/locales/*.js"]
 "share/reposense/webui/static" = ["webui/static/*"]
 "share/reposense/rulesets/basic" = ["rulesets/basic/*"]
 "share/reposense/rulesets/demo_v1" = ["rulesets/demo_v1/*"]

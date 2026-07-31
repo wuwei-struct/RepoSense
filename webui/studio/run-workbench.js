@@ -1,19 +1,13 @@
 (function () {
   'use strict';
 
-  const TABS = [
-    ['overview', 'Overview'],
-    ['human', 'Human Review'],
-    ['architecture', 'Architecture & API'],
-    ['transactions', 'Transactions & Database'],
-    ['queue', 'Queue & Cache'],
-    ['permission', 'Permission & AuthZ'],
-    ['health', 'Code Health'],
-    ['validation', 'Validation'],
-    ['context', 'Context Pack'],
-    ['artifacts', 'Artifacts'],
-  ];
+  const TABS = ['overview', 'human', 'architecture', 'transactions', 'queue', 'permission', 'health', 'validation', 'context', 'artifacts'];
+  // English locale tabs: Overview, Human Review, Architecture & API,
+  // Transactions & Database, Queue & Cache, Permission & AuthZ,
+  // Code Health, Validation, Context Pack, Artifacts.
+  let activeTab = 'overview';
 
+  function t(key, params) { return window.StudioI18n.t(key, params); }
   function escapeHtml(value) {
     return String(value == null ? '' : value)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -22,7 +16,7 @@
 
   function statusPill(value, label) {
     const status = String(value || 'not_available').toLowerCase();
-    return `<span class="status-pill ${escapeHtml(status)}">${escapeHtml(label || status.replaceAll('_', ' '))}</span>`;
+    return `<span class="status-pill ${escapeHtml(status)}">${escapeHtml(label || window.StudioI18n.formatStatus(status))}</span>`;
   }
 
   function artifactMap(run) {
@@ -32,40 +26,48 @@
     return map;
   }
 
+  function artifactText(item, field) {
+    const catalogs = window.RepoSenseStudioLocales || {};
+    const locale = window.StudioI18n.getLocale();
+    const key = `artifacts.${item.artifact_id}.${field}`;
+    return (catalogs[locale] || {})[key] || (catalogs['en-US'] || {})[key] || item[field === 'name' ? 'display_name' : field] || '';
+  }
+
   function openArtifact(item, label) {
     if (!item || !item.url) return '';
-    return `<a class="studio-button" target="_blank" rel="noopener" href="${escapeHtml(item.url)}">${escapeHtml(label || 'Open')}</a>`;
+    return `<a class="studio-button" target="_blank" rel="noopener" href="${escapeHtml(item.url)}">${escapeHtml(label || t('common.open'))}</a>`;
   }
 
   function valueCard(label, value, availability, note) {
     if (availability === 'malformed') {
-      return `<div class="summary-stat"><span>${escapeHtml(label)}</span><strong>Needs review</strong><small>Artifact could not be parsed.</small></div>`;
+      return `<div class="summary-stat"><span>${escapeHtml(label)}</span><strong>${t('workbench.needsReview')}</strong><small>${t('workbench.malformed')}</small></div>`;
     }
     if (availability !== 'available') {
-      return `<div class="summary-stat"><span>${escapeHtml(label)}</span><strong>Not generated</strong><small>Capability output is unavailable for this run.</small></div>`;
+      return `<div class="summary-stat"><span>${escapeHtml(label)}</span><strong>${t('workbench.notGenerated')}</strong><small>${t('workbench.unavailable')}</small></div>`;
     }
     return `<div class="summary-stat"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>${note ? `<small>${escapeHtml(note)}</small>` : ''}</div>`;
   }
 
   function pipelineMarkup(run) {
     const steps = ((run.pipeline || {}).steps || []);
-    if (!steps.length) return '<p class="state-note">Structured pipeline progress is not available for this historical run.</p>';
-    return `<div class="pipeline-rail" aria-label="Pipeline progress">${steps.map(step => `
-      <div class="pipeline-step ${escapeHtml(step.status)}" title="${escapeHtml(step.label)}: ${escapeHtml(step.status)}">
-        <div class="step-line"></div><span>${escapeHtml(step.label)}</span>
-      </div>`).join('')}</div>`;
+    if (!steps.length) return `<p class="state-note">${t('pipeline.unavailable')}</p>`;
+    return `<div class="pipeline-rail" aria-label="${t('pipeline.label')}">${steps.map(step => {
+      const label = t(`pipeline.${step.step_id}`);
+      const status = window.StudioI18n.formatStatus(step.status);
+      return `<div class="pipeline-step ${escapeHtml(step.status)}" title="${escapeHtml(label)}: ${escapeHtml(status)}">
+        <div class="step-line"></div><span>${escapeHtml(label)}</span>
+      </div>`;
+    }).join('')}</div>`;
   }
 
   function artifactRows(run, categories) {
     const rows = [];
     (run.artifact_groups || []).forEach(group => {
-      (group.artifacts || []).forEach(item => {
-        if (categories.includes(item.category)) rows.push(item);
-      });
+      (group.artifacts || []).forEach(item => { if (categories.includes(item.category)) rows.push(item); });
     });
-    if (!rows.length) return '<p class="state-note">Artifact not generated for this review area.</p>';
+    if (!rows.length) return `<p class="state-note">${t('workbench.artifactMissing')}</p>`;
     return `<div class="action-list">${rows.map(item => `
-      <div class="artifact-link-row"><div><strong>${escapeHtml(item.display_name)}</strong><br><small>${escapeHtml(item.description)}</small></div>${openArtifact(item)}</div>`).join('')}</div>`;
+      <div class="artifact-link-row"><div><strong>${escapeHtml(artifactText(item, 'name'))}</strong><br><small>${escapeHtml(artifactText(item, 'description'))}</small></div>${openArtifact(item)}</div>`).join('')}</div>`;
   }
 
   function overview(run, artifacts) {
@@ -73,38 +75,39 @@
     const facts = summary.repository_facts || {};
     const actions = summary.recommended_actions || [];
     const factCards = [
-      ['API endpoints', facts.api_endpoints], ['DB reads', facts.db_reads], ['DB writes', facts.db_writes],
-      ['Transaction correlations', facts.transaction_correlations], ['Queue dispatch', facts.queue_dispatch],
-      ['Queue consumers', facts.queue_consumers], ['Cache operations', facts.cache_operations],
-      ['Permission risks', facts.permission_risks], ['Code Health findings', facts.code_health_findings],
-    ].map(([label, fact]) => valueCard(label, (fact || {}).value || 0, (fact || {}).availability)).join('');
+      ['metric.apiEndpoints', facts.api_endpoints], ['metric.dbReads', facts.db_reads], ['metric.dbWrites', facts.db_writes],
+      ['metric.transactions', facts.transaction_correlations], ['metric.queueDispatch', facts.queue_dispatch],
+      ['metric.queueConsumers', facts.queue_consumers], ['metric.cacheOperations', facts.cache_operations],
+      ['metric.permissionRisks', facts.permission_risks], ['metric.healthFindings', facts.code_health_findings],
+    ].map(([key, fact]) => valueCard(t(key), (fact || {}).value || 0, (fact || {}).availability)).join('');
     const reviewCards = [
-      ['Review Decision', summary.review_decision || 'UNKNOWN', 'available'],
-      ['Human Review Required', summary.human_review_required_count || 0, summary.human_review_required_status],
-      ['Patterns', (summary.counts || {}).patterns || 0, (summary.count_availability || {}).patterns],
-      ['Evidence Integrity', (summary.evidence_integrity || {}).status || 'not available', (summary.evidence_integrity || {}).status === 'not_available' ? 'not_generated' : 'available'],
-      ['Strict Verify', (summary.strict_verify || {}).status || 'not available', (summary.strict_verify || {}).status === 'not_available' ? 'not_generated' : 'available'],
-      ['Quality Gate', (summary.quality_gate || {}).status || 'not available', (summary.quality_gate || {}).status === 'not_available' ? 'not_generated' : 'available'],
-    ].map(([label, value, state]) => valueCard(label, value, state)).join('');
+      ['metric.reviewDecision', window.StudioI18n.formatStatus(summary.review_decision), 'available'],
+      ['metric.humanReview', summary.human_review_required_count || 0, summary.human_review_required_status],
+      ['metric.patterns', (summary.counts || {}).patterns || 0, (summary.count_availability || {}).patterns],
+      ['metric.evidence', window.StudioI18n.formatStatus((summary.evidence_integrity || {}).status), (summary.evidence_integrity || {}).status === 'not_available' ? 'not_generated' : 'available'],
+      ['metric.strict', window.StudioI18n.formatStatus((summary.strict_verify || {}).status), (summary.strict_verify || {}).status === 'not_available' ? 'not_generated' : 'available'],
+      ['metric.gate', window.StudioI18n.formatStatus((summary.quality_gate || {}).status), (summary.quality_gate || {}).status === 'not_available' ? 'not_generated' : 'available'],
+    ].map(([key, value, state]) => valueCard(t(key), value, state)).join('');
     const actionRows = actions.length ? actions.map(action => {
       const item = artifacts.get(action.artifact_id);
-      return `<div class="action-row"><span>${escapeHtml(action.label)}</span>${openArtifact(item)}</div>`;
-    }).join('') : '<p class="state-note">Recommended actions will appear when supporting artifacts are generated.</p>';
+      const label = t(`action.${action.action_id}`);
+      return `<div class="action-row"><span>${escapeHtml(label)}</span>${openArtifact(item)}</div>`;
+    }).join('') : `<p class="state-note">${t('workbench.actionsUnavailable')}</p>`;
     return `
-      <div class="section-heading"><div><span class="eyebrow">Decision and trust signals</span><h3>Review Summary</h3></div></div>
+      <div class="section-heading"><div><span class="eyebrow">${t('workbench.decisionSignals')}</span><h3>${t('workbench.reviewSummary')}</h3></div></div>
       <div class="summary-grid">${reviewCards}</div>
-      <div class="section-heading"><div><span class="eyebrow">Observed facts</span><h3>Repository Facts</h3></div></div>
+      <div class="section-heading"><div><span class="eyebrow">${t('workbench.observedFacts')}</span><h3>${t('workbench.repositoryFacts')}</h3></div></div>
       <div class="domain-grid">${factCards}</div>
-      <div class="section-heading"><div><span class="eyebrow">Evidence-backed routing</span><h3>Recommended Next Actions</h3></div></div>
+      <div class="section-heading"><div><span class="eyebrow">${t('workbench.evidenceRouting')}</span><h3>${t('workbench.nextActions')}</h3></div></div>
       <div class="action-list">${actionRows}</div>`;
   }
 
   function domainPanel(run, domain, categories, metrics) {
     const data = (((run.summary || {}).domain_summaries || {})[domain]) || {};
     const availability = data.availability || 'not_generated';
-    const state = availability === 'available' ? '' : `<p class="state-note ${availability === 'malformed' ? 'malformed' : ''}">${availability === 'malformed' ? 'A supporting artifact could not be parsed.' : 'This capability artifact was not generated. Values below are not interpreted as zero.'}</p>`;
-    const cards = metrics.map(([label, key, note]) => valueCard(label, data[key] || 0, availability, note)).join('');
-    return `${state}<div class="summary-grid">${cards}</div><div class="section-heading"><div><span class="eyebrow">Generated evidence</span><h3>Relevant artifacts</h3></div></div>${artifactRows(run, categories)}`;
+    const state = availability === 'available' ? '' : `<p class="state-note ${availability === 'malformed' ? 'malformed' : ''}">${availability === 'malformed' ? t('workbench.malformedSupporting') : t('workbench.missingSupporting')}</p>`;
+    const cards = metrics.map(([key, valueKey, noteKey]) => valueCard(t(key), data[valueKey] || 0, availability, noteKey ? t(noteKey) : '')).join('');
+    return `${state}<div class="summary-grid">${cards}</div><div class="section-heading"><div><span class="eyebrow">${t('workbench.generatedEvidence')}</span><h3>${t('workbench.relevantArtifacts')}</h3></div></div>${artifactRows(run, categories)}`;
   }
 
   function tabContent(run, tab, artifacts) {
@@ -112,39 +115,39 @@
     if (tab === 'overview') return overview(run, artifacts);
     if (tab === 'human') {
       const state = summary.human_review_required_status || 'not_available';
-      return `${valueCard('Human Review Required', summary.human_review_required_count || 0, state)}
-        <div class="section-heading"><div><span class="eyebrow">Reviewer handoff</span><h3>Review reports</h3></div></div>
+      return `${valueCard(t('metric.humanReview'), summary.human_review_required_count || 0, state)}
+        <div class="section-heading"><div><span class="eyebrow">${t('workbench.reviewerHandoff')}</span><h3>${t('workbench.reviewReports')}</h3></div></div>
         <div class="action-list">
-          <div class="action-row"><span>Human Review Required</span>${openArtifact(artifacts.get('human_review_required'))}</div>
-          <div class="action-row"><span>Repository Review Report</span>${openArtifact(artifacts.get('repository_review_report'))}</div>
+          <div class="action-row"><span>${t('metric.humanReview')}</span>${openArtifact(artifacts.get('human_review_required'))}</div>
+          <div class="action-row"><span>${artifactText(artifacts.get('repository_review_report') || {artifact_id: 'repository_review_report', display_name: 'Repository Review Report'}, 'name')}</span>${openArtifact(artifacts.get('repository_review_report'))}</div>
         </div>`;
     }
     if (tab === 'architecture') return domainPanel(run, 'architecture', ['overview', 'backend'], [
-      ['API endpoints', 'api_endpoints'], ['Cross-language links', 'cross_language_links'],
+      ['metric.apiEndpoints', 'api_endpoints'], ['metric.crossLanguage', 'cross_language_links'],
     ]);
     if (tab === 'transactions') return domainPanel(run, 'transactions', ['transaction', 'database'], [
-      ['DB reads', 'db_reads'], ['DB writes', 'db_writes'], ['Correlations', 'total_correlations'],
-      ['Covered', 'covered'], ['Uncovered', 'uncovered'], ['Unknown', 'unknown'],
-      ['TypeORM operations', 'typeorm_operations'], ['Resolved aliases', 'resolved_aliases'],
+      ['metric.dbReads', 'db_reads'], ['metric.dbWrites', 'db_writes'], ['metric.correlations', 'total_correlations'],
+      ['metric.covered', 'covered'], ['metric.uncovered', 'uncovered'], ['metric.unknown', 'unknown'],
+      ['metric.typeorm', 'typeorm_operations'], ['metric.aliases', 'resolved_aliases'],
     ]);
     if (tab === 'queue') return domainPanel(run, 'queue', ['messaging'], [
-      ['Dispatch', 'dispatch'], ['Consumers', 'consumers'], ['Matched channels', 'matched_channels'],
-      ['Cache operations', 'cache_operations'], ['Retry / idempotency risks', 'retry_risks'],
+      ['metric.dispatch', 'dispatch'], ['metric.consumers', 'consumers'], ['metric.channels', 'matched_channels'],
+      ['metric.cacheOperations', 'cache_operations'], ['metric.retryRisks', 'retry_risks'],
     ]);
     if (tab === 'permission') return domainPanel(run, 'permission', ['permission'], [
-      ['Permission risks', 'risks'], ['Routes', 'routes'], ['AuthZ Matrix mode', 'authz_mode'],
-      ['Missing auth', 'missing_auth'], ['Human review', 'human_review'],
+      ['metric.permissionRisks', 'risks'], ['metric.routes', 'routes'], ['metric.authzMode', 'authz_mode'],
+      ['metric.missingAuth', 'missing_auth'], ['metric.humanPermissionReview', 'human_review'],
     ]);
     if (tab === 'health') return domainPanel(run, 'code_health', ['code_health'], [
-      ['Findings', 'findings'], ['High', 'high'], ['Medium', 'medium'], ['Experimental score', 'score', 'Heuristic, not a correctness score'],
+      ['metric.findings', 'findings'], ['metric.high', 'high'], ['metric.medium', 'medium'], ['metric.score', 'score', 'workbench.heuristicScore'],
     ]);
     if (tab === 'validation') {
       return `<div class="summary-grid">
-        ${valueCard('Evidence Integrity', (summary.evidence_integrity || {}).status, (summary.evidence_integrity || {}).status === 'not_available' ? 'not_generated' : 'available')}
-        ${valueCard('Strict Verify', (summary.strict_verify || {}).status, (summary.strict_verify || {}).status === 'not_available' ? 'not_generated' : 'available')}
-        ${valueCard('Quality Gate', (summary.quality_gate || {}).status, (summary.quality_gate || {}).status === 'not_available' ? 'not_generated' : 'available')}
+        ${valueCard(t('metric.evidence'), window.StudioI18n.formatStatus((summary.evidence_integrity || {}).status), (summary.evidence_integrity || {}).status === 'not_available' ? 'not_generated' : 'available')}
+        ${valueCard(t('metric.strict'), window.StudioI18n.formatStatus((summary.strict_verify || {}).status), (summary.strict_verify || {}).status === 'not_available' ? 'not_generated' : 'available')}
+        ${valueCard(t('metric.gate'), window.StudioI18n.formatStatus((summary.quality_gate || {}).status), (summary.quality_gate || {}).status === 'not_available' ? 'not_generated' : 'available')}
       </div>${(summary.warnings || []).length ? `<p class="state-note malformed">${escapeHtml(summary.warnings.join(' '))}</p>` : ''}
-      <div class="section-heading"><div><span class="eyebrow">Trust evidence</span><h3>Validation artifacts</h3></div></div>${artifactRows(run, ['validation'])}`;
+      <div class="section-heading"><div><span class="eyebrow">${t('workbench.trustEvidence')}</span><h3>${t('workbench.validationArtifacts')}</h3></div></div>${artifactRows(run, ['validation'])}`;
     }
     if (tab === 'context') return artifactRows(run, ['context']);
     if (tab === 'artifacts') return '<div id="current-artifact-cards"></div>';
@@ -154,18 +157,21 @@
   function render(target, run, options) {
     const artifacts = artifactMap(run || {});
     const profile = run.profile || {};
+    activeTab = (options || {}).initialTab || activeTab || 'overview';
+    const profileName = t(`profile.${profile.profile_id}.name`);
     target.innerHTML = `
       <section class="workbench-run-header">
-        <div class="header-row"><div><span class="run-profile">${escapeHtml(profile.display_name || profile.profile_id || 'Historical run')}</span>
-        <h2>${escapeHtml(run.repo_label || 'Repository review')}</h2><div class="run-id">${escapeHtml(run.run_id)}</div></div>
-        <div>${statusPill(run.status)} ${statusPill((run.summary || {}).review_decision, 'Decision ' + ((run.summary || {}).review_decision || 'unknown'))}</div></div>
+        <div class="header-row"><div><span class="run-profile">${escapeHtml(profile.profile_id ? profileName : t('runs.historical'))}</span>
+        <h2>${escapeHtml(run.repo_label || t('workbench.repositoryReview'))}</h2><div class="run-id">${escapeHtml(run.run_id)}</div></div>
+        <div>${statusPill(run.status)} ${statusPill((run.summary || {}).review_decision, t('runs.decision', {value: window.StudioI18n.formatStatus((run.summary || {}).review_decision)}))}</div></div>
         ${pipelineMarkup(run)}
         ${run.error_message ? `<p class="state-note malformed">${escapeHtml(run.error_message)}</p>` : ''}
       </section>
-      <nav class="workbench-tabs" aria-label="Review workspace sections">${TABS.map(([id, label], index) => `<button type="button" data-workbench-tab="${id}" class="${index === 0 ? 'active' : ''}">${label}</button>`).join('')}</nav>
+      <nav class="workbench-tabs" aria-label="${t('workbench.sectionsLabel')}">${TABS.map(id => `<button type="button" data-workbench-tab="${id}" class="${id === activeTab ? 'active' : ''}">${t(`workbench.${id}`)}</button>`).join('')}</nav>
       <section id="workbench-tab-content"></section>`;
     const content = target.querySelector('#workbench-tab-content');
     function show(tab) {
+      activeTab = tab;
       target.querySelectorAll('[data-workbench-tab]').forEach(button => button.classList.toggle('active', button.dataset.workbenchTab === tab));
       content.innerHTML = tabContent(run, tab, artifacts);
       if (tab === 'artifacts' && window.StudioArtifactCards) {
@@ -173,8 +179,8 @@
       }
     }
     target.querySelectorAll('[data-workbench-tab]').forEach(button => button.addEventListener('click', () => show(button.dataset.workbenchTab)));
-    show((options || {}).initialTab || 'overview');
+    show(activeTab);
   }
 
-  window.StudioRunWorkbench = {render, tabs: TABS.map(item => item[0])};
+  window.StudioRunWorkbench = {render, tabs: TABS.slice(), getActiveTab: () => activeTab};
 }());

@@ -119,6 +119,9 @@ views. Missing artifacts remain distinct from zero findings.
 See [Studio Repository Review Workbench](docs/studio/STUDIO_WORKBENCH.md) for
 profile, progress, availability, and privacy boundaries.
 
+Studio supports English and Simplified Chinese in the same Workbench. Language
+selection stays in the browser and does not change analysis artifacts or API IDs.
+
 ### Review Artifact Cards
 
 ![Studio Review Artifact Cards](docs/assets/screenshots/studio-review-panel.png)

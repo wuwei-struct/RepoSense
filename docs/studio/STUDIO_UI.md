@@ -72,6 +72,11 @@ Validation, Context Pack, and Artifacts views. See
 [STUDIO_WORKBENCH.md](STUDIO_WORKBENCH.md) for the profile, progress, privacy,
 and availability contracts.
 
+Studio supports English (`en-US`) and Simplified Chinese (`zh-CN`) in the same
+Workbench. The language switch is browser-local and does not alter run data or
+public API payloads. See [STUDIO_I18N.md](STUDIO_I18N.md) for fallback, stable-ID,
+and translation-contribution rules.
+
 For a complete local demo that produces the artifacts shown in this panel:
 
 ```powershell
@@ -142,6 +147,10 @@ Then open:
 ```
 
 ## Implementation references
+
+Studio 2.0 upgraded the original `webui/studio/index.html` in place. The server
+does not route a second legacy Studio page. Generated `report.html` files and the
+Learn site remain separate product surfaces, not obsolete Studio implementations.
 
 - `webui/studio/index.html`
 - `webui/studio/app-shell.js`
