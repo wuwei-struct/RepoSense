@@ -7,6 +7,8 @@ This index keeps the full documentation map while the README stays focused on th
 - [docs/DEMO_QUICKSTART.md](DEMO_QUICKSTART.md)
 - [docs/ARCHITECTURE.md](ARCHITECTURE.md)
 - [docs/studio/STUDIO_UI.md](studio/STUDIO_UI.md)
+- [docs/studio/STUDIO_WORKBENCH.md](studio/STUDIO_WORKBENCH.md)
+- [docs/studio/STUDIO_I18N.md](studio/STUDIO_I18N.md)
 - [docs/reports/BACKEND_VERIFIER_REPORT.md](reports/BACKEND_VERIFIER_REPORT.md)
 - [docs/context-pack/CONTEXT_PACK_SPEC.md](context-pack/CONTEXT_PACK_SPEC.md)
 - [docs/AI_GROUNDED_PRINCIPLES.md](AI_GROUNDED_PRINCIPLES.md)

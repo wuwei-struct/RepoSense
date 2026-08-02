@@ -1,0 +1,40 @@
+.language-switcher {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line, #d7d0c2);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+}
+
+.language-switcher button {
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 11px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.language-switcher button.active {
+  background: var(--ink, #15211d);
+  color: #fff;
+}
+
+.language-switcher button:focus-visible {
+  outline: 3px solid rgba(196, 92, 47, 0.3);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .language-switcher {
+    order: -1;
+  }
+
+  .language-switcher button {
+    padding: 6px 9px;
+  }
+}

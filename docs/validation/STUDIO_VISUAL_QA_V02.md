@@ -62,3 +62,54 @@ All screenshots omit browser chrome and local absolute paths. No detection count
 - Markdown and JSON screenshots use read-only previews of canonical artifacts.
 - Studio does not register arbitrary external run directories automatically; the canonical run was copied unchanged into the ignored Studio workspace for display.
 - Visual QA validates presentation and navigation only, not the correctness of analysis findings.
+
+## Studio 2.0 Workbench QA record
+
+- Date: 2026-07-31
+- RepoSense commit under test: working tree based on `08e86d9a87f25a23638d7eaff80acc134f5f8943`
+- Branch: `pr-studio-05-workbench-foundation`
+- Browser: user-confirmed manual browser session; product/version not reported
+- Viewport: 1440 x 900 review target
+- Target run: `run-1785495179-79b715c3`
+- Manual visual QA result: passed
+
+The user confirmed the Home page, Analyze Repository profile selector,
+Pipeline Progress, Recent Runs, all ten Workbench tabs, Artifact Cards,
+missing/zero states, console, responsive layout, and local-path privacy. The
+target Full Repository Review completed all 13 steps; its Review Decision was
+`WARN` and its Quality Gate was `warn`, and neither state was presented as a
+safety guarantee.
+
+Automated HTTP checks for the same run returned 200 for the app shell, four new
+Workbench JS/CSS assets, profile API, run list, run detail, and a generated
+artifact. Recursive public-payload scanning found no local path leak,
+Recommended First contained four items, and missing artifacts had no fabricated
+URL.
+
+The seven existing screenshots remain historical Studio Artifact Cards assets
+and require a later refresh because the Workbench changes the product shell
+substantially. The exact browser product/version was not supplied with the
+manual confirmation and remains a documentation limitation.
+
+## Studio 2.0 bilingual QA record
+
+- Date: 2026-07-31
+- RepoSense commit under test: working tree based on `b8f8f2760f5aca34e20ed2598bdc8912e152e636`
+- Branch: `pr-studio-06a-i18n-foundation`
+- Browser and viewport: Chromium through the Codex in-app browser, 1440 x 900,
+  with user confirmation against the same local Studio URL
+- Locales: `zh-CN` and `en-US`
+- Target run: `review_demo_full` / `run-1785495179-79b715c3`
+- Result: pass; the user explicitly confirmed the Chinese and English visual check
+
+Home, Analyze Repository, both profiles, pipeline progress, Recent Runs, all ten
+Workbench tabs, Artifact Cards, and available/missing/warn/failed states were
+checked in both locales. Language switching was immediate and retained the
+selected profile, local-path input, active run, and Workbench tab. Chinese text
+rendered without mojibake; neither locale showed horizontal overflow at the
+target viewport, and no browser-console error was observed. Recursive API checks
+found no local-path leak in run-list or run-detail payloads.
+
+No visual defect required a CSS or layout change during this QA pass. The seven
+existing English screenshots are historical; updated English and Chinese Studio
+2.0 screenshots remain a follow-up asset task.

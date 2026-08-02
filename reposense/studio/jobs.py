@@ -1,282 +1,240 @@
-import threading
-import subprocess
-import os
-import sys
-import time
 import json
-import zipfile
-from ..runtime_resources import get_presets_dir
+import os
+import subprocess
+import sys
+import threading
+import time
+from pathlib import Path
+
+from .analysis_profiles import get_analysis_profile, public_analysis_profile
+from .pipeline_status import (
+    build_pipeline_steps,
+    build_public_pipeline,
+    safe_pipeline_message,
+    transition_pipeline_step,
+)
+from .review_pipeline import (
+    PipelineContext,
+    PipelineStageError,
+    execute_review_pipeline,
+)
 from .workspace import WorkspaceManager
+
+
+class PipelineCommandError(RuntimeError):
+    def __init__(self, label, return_code):
+        super().__init__(f"{label} failed with exit code {return_code}")
+        self.label = label
+        self.return_code = return_code
+
 
 class JobManager:
     def __init__(self, workspace: WorkspaceManager):
         self.workspace = workspace
-        self.jobs = {}  # run_id -> {status, thread, logs, phase}
+        self.jobs = {}
         self.lock = threading.RLock()
 
-    def start_run(self, project_id, ruleset, budget, specs, concept_graph=None):
-        run_id, run_dir = self.workspace.create_run(project_id)
+    def start_run(
+        self,
+        project_id,
+        ruleset=None,
+        budget=None,
+        specs=None,
+        concept_graph=None,
+        profile_id="quick_scan",
+    ):
+        del concept_graph  # Retained for backwards-compatible callers.
+        profile = get_analysis_profile(profile_id)
         repo_path = self.workspace.get_project_path(project_id)
-        
+        repo_label = Path(repo_path).name or "Imported repository"
+        run_id, run_dir = self.workspace.create_run(project_id)
+        now = int(time.time())
         job_info = {
             "status": "queued",
             "phase": "queued",
             "logs": [],
             "logs_tail": [],
             "project_id": project_id,
+            "repo_label": repo_label,
             "run_dir": run_dir,
-            "start_time": time.time(),
-            "updated_at": int(time.time()),
+            "start_time": now,
+            "updated_at": now,
             "error": "",
             "log_path": os.path.join(run_dir, "logs.txt"),
             "output_paths": {"run_dir": run_dir},
+            "profile": public_analysis_profile(profile["profile_id"]),
+            "pipeline_steps": build_pipeline_steps(),
         }
-        
         with self.lock:
             self.jobs[run_id] = job_info
+        self._persist_state(run_id)
+        self._append_log_file(run_id, "[INIT] queued")
+
+        context = PipelineContext(
+            profile_id=profile["profile_id"],
+            python=sys.executable,
+            repo_path=repo_path,
+            run_dir=run_dir,
+            ruleset_path=str(ruleset or profile["ruleset_path"]),
+            budget_path=str(budget or profile["budget_path"]),
+            specs_path=str(specs or profile["specs_path"]),
+            gate_path=profile["gate_path"],
+        )
+        thread = threading.Thread(
+            target=self._run_pipeline,
+            args=(run_id, context),
+            daemon=True,
+        )
+        with self.lock:
+            self.jobs[run_id]["thread"] = thread
+        thread.start()
+        return run_id
+
+    def _append_log_file(self, run_id, line):
         try:
-            with open(job_info["log_path"], "a", encoding="utf-8") as f:
-                f.write("[INIT] queued\n")
+            with open(self.jobs[run_id]["log_path"], "a", encoding="utf-8") as handle:
+                handle.write(line + "\n")
         except Exception:
             pass
 
-        t = threading.Thread(target=self._run_pipeline, args=(run_id, repo_path, run_dir, ruleset, budget, specs, concept_graph))
-        t.start()
-        return run_id
+    def _state_snapshot(self, run_id):
+        info = self.jobs[run_id]
+        return {
+            "run_id": run_id,
+            "project_id": info["project_id"],
+            "repo_label": info.get("repo_label", "Repository"),
+            "status": info["status"],
+            "phase": info["phase"],
+            "created_at": int(info["start_time"]),
+            "updated_at": int(info["updated_at"]),
+            "error_message": info.get("error", ""),
+            "log_path": info["log_path"],
+            "output_paths": info.get("output_paths", {"run_dir": info["run_dir"]}),
+            "stats": info.get("stats", {}),
+            "profile": info.get("profile", {}),
+            "pipeline": build_public_pipeline(
+                info.get("profile", {}),
+                info.get("pipeline_steps", []),
+                info.get("phase", ""),
+            ),
+        }
 
-    def _log(self, run_id, msg):
-        with self.lock:
-            if run_id in self.jobs:
-                ts = time.strftime("[%H:%M:%S] ", time.localtime())
-                line = ts + msg
-                self.jobs[run_id]["logs"].append(line)
-                self.jobs[run_id]["logs_tail"].append(line)
-                if len(self.jobs[run_id]["logs_tail"]) > 400:
-                    self.jobs[run_id]["logs_tail"] = self.jobs[run_id]["logs_tail"][-400:]
-                self.jobs[run_id]["updated_at"] = int(time.time())
-                try:
-                    with open(self.jobs[run_id]["log_path"], "a", encoding="utf-8") as f:
-                        f.write(line + "\n")
-                except Exception:
-                    pass
-                try:
-                    state = {
-                        "run_id": run_id,
-                        "project_id": self.jobs[run_id]["project_id"],
-                        "status": self.jobs[run_id]["status"],
-                        "phase": self.jobs[run_id]["phase"],
-                        "created_at": int(self.jobs[run_id]["start_time"]),
-                        "updated_at": self.jobs[run_id]["updated_at"],
-                        "error_message": self.jobs[run_id].get("error", ""),
-                        "log_path": self.jobs[run_id]["log_path"],
-                        "output_paths": self.jobs[run_id].get("output_paths", {"run_dir": self.jobs[run_id]["run_dir"]}),
-                        "stats": self.jobs[run_id].get("stats", {}),
-                    }
-                    self.workspace.write_run_state(run_id, state)
-                except Exception:
-                    pass
-
-    def _set_phase(self, run_id, phase):
-        with self.lock:
-            if run_id in self.jobs:
-                self.jobs[run_id]["phase"] = phase
-        self._log(run_id, f"Phase changed to: {phase}")
-
-    def _run_pipeline(self, run_id, repo_path, run_dir, ruleset, budget, specs, concept_graph):
+    def _persist_state(self, run_id):
         try:
             with self.lock:
-                if run_id in self.jobs:
-                    self.jobs[run_id]["status"] = "running"
-                    self.jobs[run_id]["updated_at"] = int(time.time())
-            self._log(run_id, "Pipeline started")
-            # 1. Scan
-            self._set_phase(run_id, "scan")
-            cmd_scan = [
-                sys.executable, "-m", "reposense", "scan", repo_path,
-                "--out", run_dir,
-                "--ruleset", ruleset,
-                "--budget", budget
-            ]
-            if specs:
-                cmd_scan.extend(["--specs", specs])
-            
-            self._run_cmd(run_id, cmd_scan)
-            cov_path = os.path.join(run_dir, "coverage.json")
+                if run_id not in self.jobs:
+                    return
+                snapshot = self._state_snapshot(run_id)
+            self.workspace.write_run_state(run_id, snapshot)
+        except Exception:
+            pass
+
+    def _log(self, run_id, message):
+        with self.lock:
+            if run_id not in self.jobs:
+                return
+            stamp = time.strftime("[%H:%M:%S] ", time.localtime())
+            line = stamp + str(message)
+            self.jobs[run_id]["logs"].append(line)
+            self.jobs[run_id]["logs_tail"].append(line)
+            self.jobs[run_id]["logs_tail"] = self.jobs[run_id]["logs_tail"][-400:]
+            self.jobs[run_id]["updated_at"] = int(time.time())
+        self._append_log_file(run_id, line)
+        self._persist_state(run_id)
+
+    def _update_step(self, run_id, step_id, status, message="", artifact_ids=None, warning=False):
+        with self.lock:
+            info = self.jobs[run_id]
+            info["pipeline_steps"] = transition_pipeline_step(
+                info["pipeline_steps"],
+                step_id,
+                status,
+                message,
+                artifact_ids,
+                warning,
+            )
+            info["phase"] = step_id
+            info["updated_at"] = int(time.time())
+        if status in {"running", "warned", "failed"}:
+            suffix = f": {message}" if message else ""
+            self._log(run_id, f"{step_id} {status}{suffix}")
+        else:
+            self._persist_state(run_id)
+
+    def _run_pipeline(self, run_id, context):
+        try:
             with self.lock:
-                self.jobs[run_id].setdefault("output_paths", {"run_dir": run_dir})
-                self.jobs[run_id]["output_paths"]["coverage_path"] = cov_path
-            try:
-                if os.path.exists(cov_path):
-                    with open(cov_path, "r", encoding="utf-8") as f:
-                        cov = json.load(f)
-                    with self.lock:
-                        self.jobs[run_id]["stats"] = {"coverage": cov}
-            except Exception:
-                pass
-
-            # 2. Verify
-            self._set_phase(run_id, "verify")
-            cmd_verify = [
-                sys.executable, "-m", "reposense", "verify", run_dir, "--json"
-            ]
-            self._run_cmd(run_id, cmd_verify)
-
-            # 3. Learn
-            self._set_phase(run_id, "learn")
-            learn_out = os.path.join(run_dir, "learn_site")
-            # Ensure concept graph path
-            concept_graph_path = concept_graph
-            if not concept_graph_path:
-                concept_graph_path = os.path.join(run_dir, "concepts.json")
-                if not os.path.exists(concept_graph_path):
-                    if not specs:
-                        raise Exception("Learn build requires --concept-graph. Provide concept_graph or specs.")
-                    cmd_graph = [
-                        sys.executable, "-m", "reposense", "specs", "graph", "build",
-                        "--specs", specs,
-                        "--out", concept_graph_path
-                    ]
-                    self._run_cmd(run_id, cmd_graph)
-            cmd_learn = [
-                sys.executable, "-m", "reposense", "learn", "build", run_dir,
-                "--out", learn_out,
-                "--concept-graph", concept_graph_path
-            ]
-            self._run_cmd(run_id, cmd_learn)
-
-            # 4. Export
-            self._set_phase(run_id, "export")
-            exports_dir = os.path.join(run_dir, "exports")
-            try:
-                os.makedirs(exports_dir, exist_ok=True)
-            except Exception:
-                pass
-            sarif_path = os.path.join(exports_dir, "report.sarif.json")
-            cmd_sarif = [
-                sys.executable, "-m", "reposense", "export", "sarif", run_dir, "--out", sarif_path
-            ]
-            self._run_cmd(run_id, cmd_sarif)
-
-            context_dir = os.path.join(run_dir, "context_pack")
-            cmd_ctx = [
-                sys.executable, "-m", "reposense", "context", "pack", run_dir, "--out", context_dir
-            ]
-            self._run_cmd(run_id, cmd_ctx)
-
-            # optional zip
-            context_zip = os.path.join(exports_dir, "context_pack.zip")
-            try:
-                with zipfile.ZipFile(context_zip, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-                    for base, _, files in os.walk(context_dir):
-                        for f in files:
-                            p = os.path.join(base, f)
-                            rel = os.path.relpath(p, context_dir).replace("\\", "/")
-                            zf.write(p, arcname=rel)
-            except Exception as e:
-                self._log(run_id, f"Context pack zip failed: {e}")
-                # still proceed; export is considered required, but zip optional
-
-            # update output paths
+                self.jobs[run_id]["status"] = "running"
+                self.jobs[run_id]["updated_at"] = int(time.time())
+            self._log(run_id, "Review pipeline started")
+            execute_review_pipeline(
+                context,
+                lambda step_id, label, command: self._run_cmd(run_id, step_id, label, command),
+                lambda step_id, status, message, artifacts, warning: self._update_step(
+                    run_id, step_id, status, message, artifacts, warning
+                ),
+            )
             with self.lock:
+                self.jobs[run_id]["status"] = "completed"
+                self.jobs[run_id]["phase"] = "done"
+                self.jobs[run_id]["error"] = ""
+                self.jobs[run_id]["updated_at"] = int(time.time())
                 self.jobs[run_id]["output_paths"] = {
-                    "run_dir": run_dir,
-                    "sarif_path": sarif_path,
-                    "context_pack_dir": context_dir,
-                    "context_pack_zip": context_zip,
+                    "run_dir": context.run_dir,
+                    "sarif_path": os.path.join(context.run_dir, "exports", "report.sarif.json"),
+                    "context_pack_dir": os.path.join(context.run_dir, "context_pack"),
+                    "context_pack_zip": os.path.join(context.run_dir, "exports", "context_pack.zip"),
+                    "quality_gate_path": os.path.join(context.run_dir, "quality_gate.json"),
                 }
-            self._log(run_id, "Export completed")
-            # hard checks: export must exist and be non-trivial
-            try:
-                if (not os.path.exists(sarif_path)) or (os.path.getsize(sarif_path) < 200):
-                    raise Exception("export_sarif_missing_or_too_small")
-                if (not os.path.isdir(context_dir)) or (not os.path.exists(os.path.join(context_dir, "context_manifest.json"))):
-                    raise Exception("context_pack_missing_or_invalid")
-                if (not os.path.exists(context_zip)) or (os.path.getsize(context_zip) < 200):
-                    raise Exception("context_pack_zip_missing_or_too_small")
-            except Exception as e:
-                raise Exception(f"Export validation failed: {e}")
-
-            # 5. Quality Gate
-            self._set_phase(run_id, "gate")
-            qpath = ""
-            gate_status = "N/A"
-            try:
-                from ..quality_gate import load_gate_config, collect_metrics, evaluate, write_quality_gate
-                cfg = load_gate_config(str(get_presets_dir() / "gates" / "prod_lite.json"))
-                obj = evaluate(collect_metrics(run_dir), cfg)
-                qpath = write_quality_gate(run_dir, obj)
-                gate_status = obj.get("status", "N/A")
-            except Exception as e:
-                self._log(run_id, f"Gate failed to run: {e}")
-
-            # 6. Post Gate Patch
-            self._set_phase(run_id, "post_gate_patch")
-            try:
-                cmd_patch = [sys.executable, "-m", "reposense", "patch", "exports", run_dir]
-                self._run_cmd(run_id, cmd_patch)
-                with self.lock:
-                    self.jobs[run_id]["output_paths"]["patched_at"] = int(time.time())
-                # build run manifest
-                try:
-                    from ..run_manifest import build_run_manifest
-                    build_run_manifest(run_dir, write=True)
-                except Exception as e:
-                    self._log(run_id, f"Run manifest build failed: {e}")
-            except Exception as e:
-                self._log(run_id, f"Post gate patch failed: {e}")
-
+            self._log(run_id, "Review pipeline completed")
+        except PipelineStageError as exc:
+            message = safe_pipeline_message(exc.reason, "Stage failed; see local logs.")
             with self.lock:
-                self.jobs[run_id]["output_paths"]["quality_gate_path"] = qpath
-                if gate_status == "fail":
-                    self.jobs[run_id]["status"] = "failed"
-                    self.jobs[run_id]["phase"] = "failed"
-                    self.jobs[run_id]["error"] = "quality_gate_fail"
-                else:
-                    self.jobs[run_id]["status"] = "completed"
-                    self.jobs[run_id]["phase"] = "done"
-                self.jobs[run_id]["updated_at"] = int(time.time())
-            self._log(run_id, f"Pipeline completed, gate={gate_status}")
-
-        except Exception as e:
+                info = self.jobs[run_id]
+                info["status"] = "failed"
+                info["phase"] = exc.step_id
+                info["error"] = f"{exc.step_id}: {message}"
+                info["updated_at"] = int(time.time())
+            try:
+                self._update_step(run_id, exc.step_id, "failed", message, [], True)
+            except ValueError:
+                pass
+            self._log(run_id, f"Pipeline stopped at {exc.step_id}")
+        except Exception as exc:
+            message = safe_pipeline_message(exc.__class__.__name__, "Pipeline failed; see local logs.")
             with self.lock:
-                self.jobs[run_id]["status"] = "failed"
-                self.jobs[run_id]["error"] = str(e)
-                self.jobs[run_id]["phase"] = "failed"
-                self.jobs[run_id]["updated_at"] = int(time.time())
-            self._log(run_id, f"Pipeline failed: {str(e)}")
+                info = self.jobs[run_id]
+                info["status"] = "failed"
+                info["phase"] = "failed"
+                info["error"] = message
+                info["updated_at"] = int(time.time())
+            self._log(run_id, "Review pipeline failed")
 
-    def _run_cmd(self, run_id, cmd):
-        self._log(run_id, f"Executing: {' '.join(cmd)}")
-        # On windows, sometimes closing std handles helps prevent hangs
+    def _run_cmd(self, run_id, step_id, label, command):
+        self._log(run_id, f"Running {label}")
         env = os.environ.copy()
         env["PYTHONUNBUFFERED"] = "1"
         process = subprocess.Popen(
-            cmd,
+            list(command),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            encoding='utf-8',
-            errors='replace',
-            bufsize=1, # Line buffered
-            close_fds=False, # Windows issue with close_fds=True
-            env=env
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+            close_fds=False,
+            env=env,
         )
-        
         try:
-            try:
+            if process.stdout:
                 for line in process.stdout:
                     self._log(run_id, line.strip())
-            except Exception as e:
-                self._log(run_id, f"Log read error: {e}")
         finally:
-            try:
-                if process.stdout:
-                    process.stdout.close()
-            except Exception:
-                pass
+            if process.stdout:
+                process.stdout.close()
         process.wait()
         if process.returncode != 0:
-            raise Exception(f"Command failed with exit code {process.returncode}")
+            raise PipelineCommandError(label, process.returncode)
 
     def get_job_status(self, run_id):
         with self.lock:
@@ -287,17 +245,35 @@ class JobManager:
                 "run_id": run_id,
                 "status": info.get("status"),
                 "phase": info.get("phase"),
-                "logs_tail": info.get("logs_tail", []),
+                "logs_tail": list(info.get("logs_tail", [])),
                 "updated_at": info.get("updated_at", int(time.time())),
+                "start_time": info.get("start_time", 0),
                 "error_message": info.get("error", ""),
+                "repo_label": info.get("repo_label", "Repository"),
+                "profile": dict(info.get("profile", {})),
+                "pipeline": build_public_pipeline(
+                    info.get("profile", {}),
+                    info.get("pipeline_steps", []),
+                    info.get("phase", ""),
+                ),
             }
 
     def get_all_jobs(self):
         with self.lock:
-            # Return summary list
-            return [{
-                "run_id": rid,
-                "status": j["status"],
-                "phase": j["phase"],
-                "start_time": j["start_time"]
-            } for rid, j in self.jobs.items()]
+            return [
+                {
+                    "run_id": run_id,
+                    "status": info["status"],
+                    "phase": info["phase"],
+                    "start_time": info["start_time"],
+                    "updated_at": info.get("updated_at", info["start_time"]),
+                    "repo_label": info.get("repo_label", "Repository"),
+                    "profile": dict(info.get("profile", {})),
+                    "pipeline": build_public_pipeline(
+                        info.get("profile", {}),
+                        info.get("pipeline_steps", []),
+                        info.get("phase", ""),
+                    ),
+                }
+                for run_id, info in self.jobs.items()
+            ]

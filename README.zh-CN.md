@@ -93,11 +93,21 @@ Studio 当前支持两种本地流程：
 当前 Studio 支持：
 
 - 通过 ZIP 或本地路径导入仓库；
-- 点击开始分析；
-- 查看 run 状态；
-- 打开生成的 report、Learn、SARIF、Context Pack、run manifest 等产物。
+- 选择推荐的 `Full Repository Review` 或更快的 `Quick Scan`；
+- 查看结构化 Pipeline Progress；
+- 在 Repository Review Workbench 中打开 run；
+- 查看原生摘要，以及 report、Learn、SARIF、Context Pack、run manifest 等产物。
 
-当相关产物已生成时，Studio 还可以展示 Repository Review 结果，包括人工复核清单、Code Health、Permission Review、AuthZ Matrix 和 Context Pack 的 REVIEW section。
+Full Repository Review 会串联现有 Backend Verifier、Code Health、
+Permission/AuthZ、Transaction、Queue Reliability、Repository Review、Context
+Pack、Strict Verify 与 Quality Gate 入口。Workbench 提供 Overview、Human
+Review、各领域审查、Validation、Context Pack 与 Artifacts 视图，并明确区分
+缺失产物与零结果。
+
+Profile、进度、available/missing/zero 与隐私边界见
+[Studio Repository Review Workbench](docs/studio/STUDIO_WORKBENCH.md)。
+
+Studio 支持英文和简体中文界面。语言选择只保存在浏览器中，不会改变分析产物或 API ID。
 
 ### Review Artifact Cards
 
@@ -119,7 +129,7 @@ powershell -ExecutionPolicy Bypass -File tools/review_demo.ps1
 - 本地路径分析只适用于本机 Studio。
 - 浏览器不会默认把整个本地目录上传到云端。
 - RepoSense 做静态读取分析，不执行仓库代码。
-- 如果要分析本地目录，继续使用 CLI。
+- 脚本化和自动化场景仍建议使用 CLI。
 
 ```powershell
 .\.venv\Scripts\python.exe -m reposense ci run --repo <repo-path> --out .reposense_runs --profile demo --with-context-pack

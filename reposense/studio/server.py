@@ -14,10 +14,13 @@ from .public_run_payload import (
     build_public_run_payload,
 )
 from .run_summary import build_run_summary
+from .analysis_profiles import (
+    DEFAULT_ANALYSIS_PROFILE,
+    get_analysis_profile,
+    list_public_analysis_profiles,
+    public_analysis_profile,
+)
 from ..runtime_resources import (
-    get_presets_dir,
-    get_rulesets_dir,
-    get_specs_dir,
     get_studio_webui_dir,
 )
 
@@ -226,6 +229,12 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
         self.send_error(404, "Not found")
 
     def handle_api(self):
+        if self.path == "/api/studio/profiles":
+            self.send_json({
+                "default_profile_id": DEFAULT_ANALYSIS_PROFILE,
+                "profiles": list_public_analysis_profiles(),
+            })
+            return
         if self.path == "/api/profiles":
             try:
                 from ..profiles import list_profiles
@@ -242,13 +251,23 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
             out = []
             for pr in persisted:
                 rid = pr["run_id"]
+                stored = workspace.read_run_state(rid)
+                if isinstance(stored, dict):
+                    pr["repo_label"] = stored.get("repo_label", "Repository")
+                    pr["profile"] = stored.get("profile") if isinstance(stored.get("profile"), dict) else {}
+                    pr["pipeline"] = stored.get("pipeline") if isinstance(stored.get("pipeline"), dict) else {}
                 if rid in mem:
                     m = mem[rid]
                     pr = {
+                        **pr,
                         "run_id": rid,
                         "status": m.get("status", pr.get("status")),
                         "phase": m.get("phase", pr.get("phase")),
                         "start_time": pr.get("start_time"),
+                        "updated_at": m.get("updated_at", pr.get("updated_at", 0)),
+                        "repo_label": m.get("repo_label", pr.get("repo_label", "Repository")),
+                        "profile": m.get("profile", pr.get("profile", {})),
+                        "pipeline": m.get("pipeline", pr.get("pipeline", {})),
                     }
                 # attach lightweight summary if artifacts exist
                 try:
@@ -309,6 +328,10 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                         "status": m.get("status", ""),
                         "phase": m.get("phase", ""),
                         "start_time": m.get("start_time", 0),
+                        "updated_at": m.get("updated_at", 0),
+                        "repo_label": m.get("repo_label", "Repository"),
+                        "profile": m.get("profile", {}),
+                        "pipeline": m.get("pipeline", {}),
                     }))
             out.sort(key=lambda x: x.get("start_time", 0), reverse=True)
             self.send_json(out)
@@ -338,6 +361,10 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
                     "logs_tail": [],
                     "error_message": st.get("error_message", ""),
                     "updated_at": st.get("updated_at", 0),
+                    "start_time": st.get("created_at", 0),
+                    "repo_label": st.get("repo_label", "Repository"),
+                    "profile": st.get("profile") if isinstance(st.get("profile"), dict) else {},
+                    "pipeline": st.get("pipeline") if isinstance(st.get("pipeline"), dict) else {},
                 }
                 try:
                     run_dir = workspace.get_run_dir(run_id)
@@ -409,18 +436,43 @@ class StudioHandler(http.server.SimpleHTTPRequestHandler):
         elif self.path == "/api/runs":
             length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(length)
-            data = json.loads(body)
-            
-            project_id = data.get("project_id")
-            ruleset = data.get("ruleset") or str(get_rulesets_dir() / "specs_v2")
-            budget = data.get("budget") or str(get_presets_dir() / "default.json")
-            specs = data.get("specs") or str(get_specs_dir())
-            
             try:
-                run_id = jobs.start_run(project_id, ruleset, budget, specs)
-                self.send_json({"run_id": run_id, "id": run_id, "status": "queued"})
+                data = json.loads(body or b"{}")
+            except Exception:
+                self.send_json_error(400, {"error": "invalid_json", "message": "invalid JSON body"})
+                return
+            project_id = data.get("project_id")
+            profile_id = data.get("profile_id") or DEFAULT_ANALYSIS_PROFILE
+            try:
+                profile = get_analysis_profile(profile_id)
+            except ValueError:
+                self.send_json_error(400, {
+                    "error": "unknown_analysis_profile",
+                    "message": "Unknown Studio analysis profile.",
+                })
+                return
+            ruleset = data.get("ruleset") or profile["ruleset_path"]
+            budget = data.get("budget") or profile["budget_path"]
+            specs = data.get("specs") or profile["specs_path"]
+            try:
+                run_id = jobs.start_run(
+                    project_id,
+                    ruleset,
+                    budget,
+                    specs,
+                    profile_id=profile_id,
+                )
+                self.send_json({
+                    "run_id": run_id,
+                    "id": run_id,
+                    "status": "queued",
+                    "profile": public_analysis_profile(profile_id),
+                })
             except Exception as e:
-                self.send_error(500, str(e))
+                self.send_json_error(500, {
+                    "error": "run_start_failed",
+                    "message": "Run could not be started; local details are available in Studio logs.",
+                })
         elif self.path == "/api/projects/import-path":
             length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(length)
